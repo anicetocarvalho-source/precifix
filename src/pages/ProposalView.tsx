@@ -1,0 +1,479 @@
+import { useParams, useNavigate } from 'react-router-dom';
+import { MainLayout } from '@/components/layout/MainLayout';
+import { Button } from '@/components/ui/button';
+import { useProposalStore } from '@/stores/proposalStore';
+import { formatCurrency, formatNumber } from '@/lib/pricing';
+import {
+  ArrowLeft,
+  Download,
+  FileText,
+  Printer,
+  Send,
+  Check,
+  Building,
+  Calendar,
+  MapPin,
+  Users,
+  Target,
+  TrendingUp,
+  Clock,
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useState } from 'react';
+
+type DocumentTab = 'diagnostic' | 'technical' | 'budget';
+
+export default function ProposalView() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { getProposal, updateProposalStatus } = useProposalStore();
+  const [activeTab, setActiveTab] = useState<DocumentTab>('diagnostic');
+
+  const proposal = id ? getProposal(id) : undefined;
+
+  if (!proposal) {
+    return (
+      <MainLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <h1 className="text-2xl font-bold text-foreground mb-4">Proposta não encontrada</h1>
+          <Button onClick={() => navigate('/')}>Voltar ao Dashboard</Button>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  const { formData, pricing } = proposal;
+
+  const tabs = [
+    { id: 'diagnostic' as const, label: 'Diagnóstico', icon: Target },
+    { id: 'technical' as const, label: 'Proposta Técnica', icon: FileText },
+    { id: 'budget' as const, label: 'Proposta Orçamental', icon: TrendingUp },
+  ];
+
+  const serviceLabels: Record<string, string> = {
+    pmo: 'PMO - Gestão de Portfólio de Projectos',
+    restructuring: 'Reestruturação Organizacional',
+    monitoring: 'Acompanhamento e Monitorização',
+    training: 'Formação e Capacitação',
+    audit: 'Auditoria de Processos',
+    strategy: 'Planeamento Estratégico',
+  };
+
+  const complexityLabels: Record<string, string> = {
+    low: 'Baixa',
+    medium: 'Média',
+    high: 'Alta',
+  };
+
+  const methodologyLabels: Record<string, string> = {
+    traditional: 'Tradicional (Waterfall)',
+    agile: 'Ágil (Scrum/Kanban)',
+    hybrid: 'Híbrida',
+  };
+
+  return (
+    <MainLayout>
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6 animate-slide-up">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              Voltar
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">
+                {formData.clientName || 'Proposta'}
+              </h1>
+              <p className="text-muted-foreground">
+                {serviceLabels[formData.serviceType]} • {formData.estimatedDuration} meses
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button variant="outline" className="gap-2">
+              <Printer className="w-4 h-4" />
+              Imprimir
+            </Button>
+            <Button variant="outline" className="gap-2">
+              <Download className="w-4 h-4" />
+              Exportar PDF
+            </Button>
+            <Button
+              onClick={() => updateProposalStatus(proposal.id, 'sent')}
+              className="gap-2"
+            >
+              <Send className="w-4 h-4" />
+              Enviar ao Cliente
+            </Button>
+          </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <div className="bg-card rounded-xl p-4 border border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Building className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Cliente</p>
+                <p className="font-semibold text-foreground">{formData.clientName}</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card rounded-xl p-4 border border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Clock className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Duração</p>
+                <p className="font-semibold text-foreground">{formData.estimatedDuration} meses</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card rounded-xl p-4 border border-border">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Users className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Equipa</p>
+                <p className="font-semibold text-foreground">{pricing.teamMembers.length} perfis</p>
+              </div>
+            </div>
+          </div>
+          <div className="bg-card rounded-xl p-4 border border-border gradient-brand text-primary-foreground">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary-foreground/20 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-primary-foreground" />
+              </div>
+              <div>
+                <p className="text-sm text-primary-foreground/80">Valor Total</p>
+                <p className="font-bold text-lg">{formatCurrency(pricing.finalPrice)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Document Tabs */}
+        <div className="bg-card rounded-xl border border-border overflow-hidden animate-slide-up" style={{ animationDelay: '0.2s' }}>
+          <div className="flex border-b border-border">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  'flex items-center gap-2 px-6 py-4 font-medium transition-colors relative',
+                  activeTab === tab.id
+                    ? 'text-primary'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
+                {activeTab === tab.id && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 gradient-brand" />
+                )}
+              </button>
+            ))}
+          </div>
+
+          <div className="p-8">
+            {/* Diagnostic Document */}
+            {activeTab === 'diagnostic' && (
+              <div className="space-y-8 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-border pb-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground uppercase tracking-wider">Documento 1</p>
+                    <h2 className="text-xl font-bold text-foreground">Diagnóstico de Necessidades</h2>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Data</p>
+                    <p className="font-medium">{new Date().toLocaleDateString('pt-BR')}</p>
+                  </div>
+                </div>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full gradient-brand text-primary-foreground text-sm flex items-center justify-center">1</span>
+                    Contexto e Desafios
+                  </h3>
+                  <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                    <p className="text-foreground">
+                      A <strong>{formData.clientName}</strong>, {formData.clientType === 'public' ? 'instituição pública' : formData.clientType === 'private' ? 'empresa privada' : formData.clientType === 'ngo' ? 'organização não-governamental' : 'startup'} do sector de {formData.sector}, 
+                      procura apoio especializado em gestão de projectos para {formData.serviceType === 'pmo' ? 'implementar um escritório de projectos (PMO)' : formData.serviceType === 'restructuring' ? 'reestruturar os seus processos organizacionais' : formData.serviceType === 'monitoring' ? 'estabelecer um sistema de monitorização contínua' : formData.serviceType === 'training' ? 'capacitar a sua equipa' : formData.serviceType === 'audit' ? 'auditar os seus processos actuais' : 'definir a sua estratégia organizacional'}.
+                    </p>
+                    <p className="text-foreground">
+                      O projecto envolve {formData.locations.length} localização(ões): <strong>{formData.locations.join(', ')}</strong>, 
+                      com uma complexidade classificada como <strong>{complexityLabels[formData.complexity].toLowerCase()}</strong> e 
+                      maturidade do cliente considerada <strong>{complexityLabels[formData.clientMaturity].toLowerCase()}</strong> em termos de gestão de projectos.
+                    </p>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full gradient-brand text-primary-foreground text-sm flex items-center justify-center">2</span>
+                    Objectivos do Projecto
+                  </h3>
+                  <ul className="space-y-2">
+                    {[
+                      `Implementar ${serviceLabels[formData.serviceType]} ao longo de ${formData.estimatedDuration} meses`,
+                      `Garantir entregáveis de alta qualidade: ${formData.deliverables.join(', ')}`,
+                      `Utilizar metodologia ${methodologyLabels[formData.methodology]}`,
+                      formData.hasExistingTeam ? 'Trabalhar em colaboração com a equipa existente do cliente' : 'Fornecer equipa completa de consultoria',
+                    ].map((objective, index) => (
+                      <li key={index} className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-foreground">{objective}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <span className="w-6 h-6 rounded-full gradient-brand text-primary-foreground text-sm flex items-center justify-center">3</span>
+                    Tipo de Apoio Necessário
+                  </h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p className="text-sm text-muted-foreground mb-1">Equipa Alocada</p>
+                      <p className="font-semibold text-foreground">{pricing.teamMembers.length} profissionais</p>
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <p className="text-sm text-muted-foreground mb-1">Total de Horas</p>
+                      <p className="font-semibold text-foreground">{formatNumber(pricing.totalHours)} horas</p>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            )}
+
+            {/* Technical Proposal */}
+            {activeTab === 'technical' && (
+              <div className="space-y-8 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-border pb-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground uppercase tracking-wider">Documento 2</p>
+                    <h2 className="text-xl font-bold text-foreground">Proposta Técnica</h2>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Referência</p>
+                    <p className="font-medium">PT-{proposal.id.slice(0, 8).toUpperCase()}</p>
+                  </div>
+                </div>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Escopo Detalhado</h3>
+                  <p className="text-foreground bg-muted/50 rounded-lg p-4">
+                    {serviceLabels[formData.serviceType]} para {formData.clientName}, abrangendo {formData.locations.join(', ')}, 
+                    com duração de {formData.estimatedDuration} meses e metodologia {methodologyLabels[formData.methodology].toLowerCase()}.
+                  </p>
+                </section>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Metodologia</h3>
+                  <div className={cn(
+                    'rounded-lg p-4 border-l-4',
+                    formData.methodology === 'traditional' ? 'bg-blue-50 border-blue-500' :
+                    formData.methodology === 'agile' ? 'bg-green-50 border-green-500' :
+                    'bg-amber-50 border-amber-500'
+                  )}>
+                    <p className="font-semibold text-foreground">{methodologyLabels[formData.methodology]}</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {formData.methodology === 'traditional' && 'Abordagem sequencial com fases bem definidas, ideal para projectos com escopo estável.'}
+                      {formData.methodology === 'agile' && 'Abordagem iterativa com entregas incrementais, ideal para projectos com requisitos evolutivos.'}
+                      {formData.methodology === 'hybrid' && 'Combinação de métodos tradicionais para planeamento macro e ágeis para execução, oferecendo flexibilidade.'}
+                    </p>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Entregáveis por Fase</h3>
+                  <div className="grid gap-3">
+                    {[
+                      { phase: 'Fase 1 - Diagnóstico', items: ['Análise de situação actual', 'Identificação de gaps', 'Relatório de diagnóstico'] },
+                      { phase: 'Fase 2 - Planeamento', items: ['Plano de projecto detalhado', 'Cronograma', 'Matriz RACI'] },
+                      { phase: 'Fase 3 - Implementação', items: formData.deliverables.map(d => {
+                        const labels: Record<string, string> = {
+                          reports: 'Relatórios de progresso',
+                          dashboards: 'Dashboards de acompanhamento',
+                          kpis: 'Sistema de KPIs',
+                          schedules: 'Cronogramas actualizados',
+                          training: 'Sessões de formação',
+                          documentation: 'Documentação de processos',
+                        };
+                        return labels[d] || d;
+                      }) },
+                      { phase: 'Fase 4 - Encerramento', items: ['Relatório final', 'Lições aprendidas', 'Transferência de conhecimento'] },
+                    ].map((phase) => (
+                      <div key={phase.phase} className="bg-muted/30 rounded-lg p-4">
+                        <p className="font-semibold text-foreground mb-2">{phase.phase}</p>
+                        <ul className="space-y-1">
+                          {phase.items.map((item, i) => (
+                            <li key={i} className="text-sm text-muted-foreground flex items-center gap-2">
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                              {item}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Equipa Alocada</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Perfil</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Dedicação</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Horas/Mês</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pricing.teamMembers.map((member, index) => (
+                          <tr key={index} className="border-b border-border">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                  <Users className="w-4 h-4 text-primary" />
+                                </div>
+                                <span className="font-medium text-foreground">{member.role}</span>
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              <span className="px-2 py-1 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                                {member.dedication}%
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-center text-foreground">
+                              {formatNumber(member.hoursPerMonth)}h
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              </div>
+            )}
+
+            {/* Budget Proposal */}
+            {activeTab === 'budget' && (
+              <div className="space-y-8 animate-fade-in">
+                <div className="flex items-center justify-between border-b border-border pb-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground uppercase tracking-wider">Documento 3</p>
+                    <h2 className="text-xl font-bold text-foreground">Proposta Orçamental</h2>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Válido até</p>
+                    <p className="font-medium">
+                      {new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                </div>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Detalhe de Custos por Perfil</h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-border bg-muted/50">
+                          <th className="text-left py-3 px-4 text-sm font-medium text-muted-foreground">Perfil</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Valor/Hora</th>
+                          <th className="text-center py-3 px-4 text-sm font-medium text-muted-foreground">Horas Totais</th>
+                          <th className="text-right py-3 px-4 text-sm font-medium text-muted-foreground">Subtotal</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pricing.teamMembers.map((member, index) => {
+                          const totalHours = member.hoursPerMonth * formData.estimatedDuration;
+                          const subtotal = member.hourlyRate * totalHours;
+                          return (
+                            <tr key={index} className="border-b border-border">
+                              <td className="py-3 px-4 font-medium text-foreground">{member.role}</td>
+                              <td className="py-3 px-4 text-center text-muted-foreground">
+                                {formatCurrency(member.hourlyRate)}
+                              </td>
+                              <td className="py-3 px-4 text-center text-muted-foreground">
+                                {formatNumber(totalHours)}h
+                              </td>
+                              <td className="py-3 px-4 text-right font-medium text-foreground">
+                                {formatCurrency(subtotal)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Resumo Financeiro</h3>
+                  <div className="bg-muted/30 rounded-xl p-6 space-y-4">
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-muted-foreground">Custo Base</span>
+                      <span className="font-medium text-foreground">{formatCurrency(pricing.baseCost)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-muted-foreground">
+                        Multiplicador de Complexidade ({complexityLabels[formData.complexity]})
+                      </span>
+                      <span className="font-medium text-foreground">×{pricing.complexityMultiplier}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2 border-t border-border pt-4">
+                      <span className="text-muted-foreground">Custo Ajustado</span>
+                      <span className="font-medium text-foreground">
+                        {formatCurrency(pricing.baseCost * pricing.complexityMultiplier)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-muted-foreground">Overhead (15%)</span>
+                      <span className="font-medium text-foreground">{formatCurrency(pricing.overhead)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-2">
+                      <span className="text-muted-foreground">Margem Nodix (25%)</span>
+                      <span className="font-medium text-foreground">{formatCurrency(pricing.margin)}</span>
+                    </div>
+                    <div className="flex justify-between items-center py-4 border-t-2 border-primary">
+                      <span className="text-lg font-bold text-foreground">VALOR TOTAL</span>
+                      <span className="text-2xl font-bold text-primary">{formatCurrency(pricing.finalPrice)}</span>
+                    </div>
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Modelo de Pagamento</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {[
+                      { phase: 'Assinatura', percent: 20 },
+                      { phase: 'Fase 1-2', percent: 30 },
+                      { phase: 'Fase 3', percent: 30 },
+                      { phase: 'Encerramento', percent: 20 },
+                    ].map((payment, index) => (
+                      <div key={index} className="bg-muted/50 rounded-lg p-4 text-center">
+                        <p className="text-sm text-muted-foreground mb-1">{payment.phase}</p>
+                        <p className="text-lg font-bold text-foreground">{payment.percent}%</p>
+                        <p className="text-sm text-primary font-medium">
+                          {formatCurrency(pricing.finalPrice * (payment.percent / 100))}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </MainLayout>
+  );
+}
