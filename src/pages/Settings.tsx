@@ -8,17 +8,20 @@ import {
   Calculator,
   Link as LinkIcon,
   Save,
+  FlaskConical,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { PricingParametersForm } from '@/components/settings/PricingParametersForm';
+import { PricingImpactSimulator } from '@/components/settings/PricingImpactSimulator';
 
-type SettingsTab = 'profile' | 'company' | 'pricing' | 'appearance' | 'notifications' | 'integrations';
+type SettingsTab = 'profile' | 'company' | 'pricing' | 'simulator' | 'appearance' | 'notifications' | 'integrations';
 
 const tabs = [
   { id: 'profile' as const, label: 'Perfil', icon: User },
   { id: 'company' as const, label: 'Empresa', icon: Building },
   { id: 'pricing' as const, label: 'Precificação', icon: Calculator },
+  { id: 'simulator' as const, label: 'Simulador', icon: FlaskConical },
   { id: 'appearance' as const, label: 'Aparência', icon: Palette },
   { id: 'notifications' as const, label: 'Notificações', icon: Bell },
   { id: 'integrations' as const, label: 'Integrações', icon: LinkIcon },
@@ -162,6 +165,8 @@ export default function Settings() {
             )}
 
             {activeTab === 'pricing' && <PricingParametersForm />}
+
+            {activeTab === 'simulator' && <PricingImpactSimulator />}
 
             {activeTab === 'integrations' && (
               <div className="space-y-6 animate-fade-in">
