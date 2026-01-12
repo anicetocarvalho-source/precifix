@@ -68,11 +68,11 @@ export default function ProposalView() {
   const [activeTab, setActiveTab] = useState<DocumentTab>('diagnostic');
   const [versionToRestore, setVersionToRestore] = useState<ProposalVersion | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
-  const [clientEmail, setClientEmail] = useState('');
   const [customMessage, setCustomMessage] = useState('');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const proposal = id ? getProposal(id) : undefined;
+  const [clientEmail, setClientEmail] = useState(proposal?.formData?.clientEmail || '');
 
   if (isLoading) {
     return (

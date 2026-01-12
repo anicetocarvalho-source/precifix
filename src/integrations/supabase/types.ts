@@ -47,6 +47,7 @@ export type Database = {
       proposal_versions: {
         Row: {
           change_summary: string | null
+          client_email: string | null
           client_name: string
           client_type: string
           complexity: string
@@ -68,6 +69,7 @@ export type Database = {
         }
         Insert: {
           change_summary?: string | null
+          client_email?: string | null
           client_name: string
           client_type: string
           complexity: string
@@ -89,6 +91,7 @@ export type Database = {
         }
         Update: {
           change_summary?: string | null
+          client_email?: string | null
           client_name?: string
           client_type?: string
           complexity?: string
@@ -121,6 +124,7 @@ export type Database = {
       proposals: {
         Row: {
           challenges: string | null
+          client_email: string | null
           client_name: string
           client_type: string
           complexity: string
@@ -142,6 +146,7 @@ export type Database = {
         }
         Insert: {
           challenges?: string | null
+          client_email?: string | null
           client_name: string
           client_type: string
           complexity?: string
@@ -163,6 +168,7 @@ export type Database = {
         }
         Update: {
           challenges?: string | null
+          client_email?: string | null
           client_name?: string
           client_type?: string
           complexity?: string
