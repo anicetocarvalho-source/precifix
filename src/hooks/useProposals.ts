@@ -2,15 +2,57 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProposalFormData, Proposal, ProposalStatus, ClientType, ServiceType, Complexity, Methodology } from '@/types/proposal';
-import { calculatePricing } from '@/lib/pricing';
+import { calculatePricing, PricingParams, DEFAULT_PRICING_PARAMS } from '@/lib/pricing';
 import { toast } from 'sonner';
+
+// Hook to fetch pricing parameters
+function usePricingParams(userId: string | undefined) {
+  return useQuery({
+    queryKey: ['pricing-parameters', userId],
+    queryFn: async (): Promise<PricingParams> => {
+      if (!userId) return DEFAULT_PRICING_PARAMS;
+
+      const { data, error } = await supabase
+        .from('pricing_parameters')
+        .select('*')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (!data) {
+        return DEFAULT_PRICING_PARAMS;
+      }
+
+      return {
+        hourlyRates: {
+          seniorManager: Number(data.rate_senior_manager),
+          consultant: Number(data.rate_consultant),
+          analyst: Number(data.rate_analyst),
+          coordinator: Number(data.rate_coordinator),
+          trainer: Number(data.rate_trainer),
+        },
+        complexityMultipliers: {
+          low: Number(data.multiplier_low),
+          medium: Number(data.multiplier_medium),
+          high: Number(data.multiplier_high),
+        },
+        overheadPercentage: Number(data.overhead_percentage),
+        marginPercentage: Number(data.margin_percentage),
+      };
+    },
+    enabled: !!userId,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+}
 
 export function useProposals() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { data: pricingParams = DEFAULT_PRICING_PARAMS } = usePricingParams(user?.id);
 
   const { data: proposals = [], isLoading } = useQuery({
-    queryKey: ['proposals', user?.id],
+    queryKey: ['proposals', user?.id, pricingParams],
     queryFn: async () => {
       if (!user) return [];
       
@@ -45,7 +87,7 @@ export function useProposals() {
         return {
           id: row.id,
           formData,
-          pricing: calculatePricing(formData),
+          pricing: calculatePricing(formData, pricingParams),
           status: row.status as ProposalStatus,
           createdAt: new Date(row.created_at),
           updatedAt: new Date(row.updated_at),
@@ -59,7 +101,7 @@ export function useProposals() {
     mutationFn: async (formData: ProposalFormData) => {
       if (!user) throw new Error('User not authenticated');
 
-      const pricing = calculatePricing(formData);
+      const pricing = calculatePricing(formData, pricingParams);
 
       const { data, error } = await supabase
         .from('proposals')
@@ -143,7 +185,7 @@ export function useProposals() {
       if (!proposal) throw new Error('Proposal not found');
 
       const { formData } = proposal;
-      const pricing = calculatePricing(formData);
+      const pricing = calculatePricing(formData, pricingParams);
 
       const { data, error } = await supabase
         .from('proposals')
@@ -202,7 +244,7 @@ export function useProposals() {
           ? (existingVersions[0] as { version_number: number }).version_number + 1
           : 1;
 
-        const currentPricing = calculatePricing(currentProposal.formData);
+        const currentPricing = calculatePricing(currentProposal.formData, pricingParams);
 
         await supabase
           .from('proposal_versions')
@@ -227,7 +269,7 @@ export function useProposals() {
           });
       }
 
-      const pricing = calculatePricing(formData);
+      const pricing = calculatePricing(formData, pricingParams);
 
       const { error } = await supabase
         .from('proposals')
