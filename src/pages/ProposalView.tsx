@@ -5,6 +5,7 @@ import { useProposals } from '@/hooks/useProposals';
 import { ProposalVersionHistory } from '@/components/ProposalVersionHistory';
 import { useProposalVersions, ProposalVersion } from '@/hooks/useProposalVersions';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
+import { exportProposalToPDF, exportSingleDocument } from '@/lib/pdfExport';
 import {
   ArrowLeft,
   Download,
@@ -33,6 +34,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
@@ -138,14 +146,41 @@ export default function ProposalView() {
               <Copy className="w-4 h-4" />
               Duplicar
             </Button>
-            <Button variant="outline" className="gap-2">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => window.print()}
+            >
               <Printer className="w-4 h-4" />
               Imprimir
             </Button>
-            <Button variant="outline" className="gap-2">
-              <Download className="w-4 h-4" />
-              Exportar PDF
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Download className="w-4 h-4" />
+                  Exportar PDF
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => exportProposalToPDF(proposal, 'all')}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Exportar Tudo
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => exportSingleDocument(proposal, 'diagnostic')}>
+                  <Target className="w-4 h-4 mr-2" />
+                  Diagnostico
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportSingleDocument(proposal, 'technical')}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Proposta Tecnica
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => exportSingleDocument(proposal, 'budget')}>
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Proposta Orcamental
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               onClick={() => updateProposalStatus.mutate({ id: proposal.id, status: 'sent' })}
               className="gap-2"
