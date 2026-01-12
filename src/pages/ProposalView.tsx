@@ -29,6 +29,7 @@ import {
   Copy,
   Pencil,
   Mail,
+  Phone,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -248,15 +249,31 @@ export default function ProposalView() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6 animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <div className="bg-card rounded-xl p-4 border border-border">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Building className="w-5 h-5 text-primary" />
               </div>
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-sm text-muted-foreground">Cliente</p>
-                <p className="font-semibold text-foreground">{formData.clientName}</p>
+                <p className="font-semibold text-foreground truncate">{formData.clientName}</p>
+                {(formData.clientEmail || formData.clientPhone) && (
+                  <div className="flex flex-col gap-0.5 mt-1">
+                    {formData.clientEmail && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 truncate">
+                        <Mail className="w-3 h-3 flex-shrink-0" />
+                        <span className="truncate">{formData.clientEmail}</span>
+                      </p>
+                    )}
+                    {formData.clientPhone && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Phone className="w-3 h-3 flex-shrink-0" />
+                        {formData.clientPhone}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -282,7 +299,7 @@ export default function ProposalView() {
               </div>
             </div>
           </div>
-          <div className="bg-card rounded-xl p-4 border border-border gradient-brand text-primary-foreground">
+          <div className="bg-card rounded-xl p-4 border border-border gradient-brand text-primary-foreground lg:col-span-2">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-primary-foreground/20 flex items-center justify-center">
                 <TrendingUp className="w-5 h-5 text-primary-foreground" />
