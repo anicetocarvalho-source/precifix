@@ -18,6 +18,7 @@ import {
   TrendingUp,
   Clock,
   Loader2,
+  Copy,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -27,7 +28,7 @@ type DocumentTab = 'diagnostic' | 'technical' | 'budget';
 export default function ProposalView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getProposal, updateProposalStatus, isLoading } = useProposals();
+  const { getProposal, updateProposalStatus, duplicateProposal, isLoading } = useProposals();
   const [activeTab, setActiveTab] = useState<DocumentTab>('diagnostic');
 
   const proposal = id ? getProposal(id) : undefined;
@@ -102,6 +103,14 @@ export default function ProposalView() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => duplicateProposal.mutate(proposal.id)}
+            >
+              <Copy className="w-4 h-4" />
+              Duplicar
+            </Button>
             <Button variant="outline" className="gap-2">
               <Printer className="w-4 h-4" />
               Imprimir
