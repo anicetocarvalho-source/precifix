@@ -69,6 +69,13 @@ const questions: Question[] = [
     placeholder: 'Ex: cliente@empresa.com',
   },
   {
+    id: 'clientPhone',
+    type: 'text',
+    title: 'Qual é o telefone do cliente?',
+    subtitle: 'Formato angolano: 9 dígitos começando com 9 (opcional)',
+    placeholder: 'Ex: 923456789',
+  },
+  {
     id: 'clientType',
     type: 'select',
     title: 'Qual o tipo de cliente?',
@@ -182,6 +189,14 @@ const isValidEmail = (email: string): boolean => {
   return emailRegex.test(email);
 };
 
+// Angolan phone validation helper (9 digits starting with 9)
+const isValidAngolanPhone = (phone: string): boolean => {
+  if (!phone) return true; // Empty is valid (field is optional)
+  const cleaned = phone.replace(/\s/g, '');
+  const phoneRegex = /^9[0-9]{8}$/;
+  return phoneRegex.test(cleaned);
+};
+
 export default function NewProposal() {
   const navigate = useNavigate();
   const { createProposal } = useProposals();
@@ -193,6 +208,7 @@ export default function NewProposal() {
   });
   const [locations, setLocations] = useState<string[]>(['']);
   const [emailTouched, setEmailTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
 
   const currentQuestion = questions[currentStep];
   const progress = ((currentStep) / (questions.length - 1)) * 100;
@@ -201,6 +217,11 @@ export default function NewProposal() {
   const emailValue = (formData.clientEmail as string) || '';
   const emailIsValid = isValidEmail(emailValue);
   const showEmailError = emailTouched && emailValue && !emailIsValid;
+  
+  // Phone validation state
+  const phoneValue = (formData.clientPhone as string) || '';
+  const phoneIsValid = isValidAngolanPhone(phoneValue);
+  const showPhoneError = phoneTouched && phoneValue && !phoneIsValid;
 
   const handleNext = async () => {
     if (currentStep < questions.length - 1) {
@@ -212,6 +233,7 @@ export default function NewProposal() {
         clientType: (formData.clientType as ClientType) || 'private',
         clientName: formData.clientName || '',
         clientEmail: formData.clientEmail || undefined,
+        clientPhone: formData.clientPhone || undefined,
         sector: formData.sector || '',
         serviceType: (formData.serviceType as ServiceType) || 'pmo',
         estimatedDuration: formData.estimatedDuration || 6,
@@ -289,6 +311,10 @@ export default function NewProposal() {
       // clientEmail is optional but must be valid if provided
       if (currentQuestion.id === 'clientEmail') {
         return emailIsValid;
+      }
+      // clientPhone is optional but must be valid if provided
+      if (currentQuestion.id === 'clientPhone') {
+        return phoneIsValid;
       }
       const value = formData[currentQuestion.id as keyof ProposalFormData];
       return typeof value === 'string' && value.trim().length > 0;
@@ -458,25 +484,31 @@ export default function NewProposal() {
               <div className="space-y-2">
                 <div className="relative">
                   <input
-                    type={currentQuestion.id === 'clientEmail' ? 'email' : 'text'}
+                    type={currentQuestion.id === 'clientEmail' ? 'email' : currentQuestion.id === 'clientPhone' ? 'tel' : 'text'}
                     value={(formData[currentQuestion.id as keyof ProposalFormData] as string) || ''}
                     onChange={(e) => {
                       handleTextInput(e.target.value);
                       if (currentQuestion.id === 'clientEmail') {
                         setEmailTouched(true);
                       }
+                      if (currentQuestion.id === 'clientPhone') {
+                        setPhoneTouched(true);
+                      }
                     }}
                     onBlur={() => {
                       if (currentQuestion.id === 'clientEmail') {
                         setEmailTouched(true);
                       }
+                      if (currentQuestion.id === 'clientPhone') {
+                        setPhoneTouched(true);
+                      }
                     }}
                     placeholder={currentQuestion.placeholder}
                     className={cn(
                       "w-full text-xl p-4 pr-12 rounded-xl border-2 bg-background focus:outline-none transition-colors",
-                      currentQuestion.id === 'clientEmail' && showEmailError
+                      (currentQuestion.id === 'clientEmail' && showEmailError) || (currentQuestion.id === 'clientPhone' && showPhoneError)
                         ? "border-destructive focus:border-destructive"
-                        : currentQuestion.id === 'clientEmail' && emailValue && emailIsValid
+                        : (currentQuestion.id === 'clientEmail' && emailValue && emailIsValid) || (currentQuestion.id === 'clientPhone' && phoneValue && phoneIsValid)
                         ? "border-green-500 focus:border-green-500"
                         : "border-border focus:border-primary"
                     )}
@@ -485,6 +517,15 @@ export default function NewProposal() {
                   {currentQuestion.id === 'clientEmail' && emailValue && (
                     <div className="absolute right-4 top-1/2 -translate-y-1/2">
                       {emailIsValid ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5 text-destructive" />
+                      )}
+                    </div>
+                  )}
+                  {currentQuestion.id === 'clientPhone' && phoneValue && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      {phoneIsValid ? (
                         <CheckCircle2 className="w-5 h-5 text-green-500" />
                       ) : (
                         <AlertCircle className="w-5 h-5 text-destructive" />
@@ -502,6 +543,18 @@ export default function NewProposal() {
                   <p className="text-sm text-green-600 flex items-center gap-1">
                     <CheckCircle2 className="w-4 h-4" />
                     Email válido
+                  </p>
+                )}
+                {currentQuestion.id === 'clientPhone' && showPhoneError && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    Formato inválido. Use 9 dígitos começando com 9 (ex: 923456789)
+                  </p>
+                )}
+                {currentQuestion.id === 'clientPhone' && phoneValue && phoneIsValid && (
+                  <p className="text-sm text-green-600 flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Telefone válido
                   </p>
                 )}
               </div>

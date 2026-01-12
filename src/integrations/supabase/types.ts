@@ -49,6 +49,7 @@ export type Database = {
           change_summary: string | null
           client_email: string | null
           client_name: string
+          client_phone: string | null
           client_type: string
           complexity: string
           created_at: string
@@ -71,6 +72,7 @@ export type Database = {
           change_summary?: string | null
           client_email?: string | null
           client_name: string
+          client_phone?: string | null
           client_type: string
           complexity: string
           created_at?: string
@@ -93,6 +95,7 @@ export type Database = {
           change_summary?: string | null
           client_email?: string | null
           client_name?: string
+          client_phone?: string | null
           client_type?: string
           complexity?: string
           created_at?: string
@@ -126,6 +129,7 @@ export type Database = {
           challenges: string | null
           client_email: string | null
           client_name: string
+          client_phone: string | null
           client_type: string
           complexity: string
           created_at: string
@@ -148,6 +152,7 @@ export type Database = {
           challenges?: string | null
           client_email?: string | null
           client_name: string
+          client_phone?: string | null
           client_type: string
           complexity?: string
           created_at?: string
@@ -170,6 +175,7 @@ export type Database = {
           challenges?: string | null
           client_email?: string | null
           client_name?: string
+          client_phone?: string | null
           client_type?: string
           complexity?: string
           created_at?: string
