@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import NewProposal from "./pages/NewProposal";
+import EditProposal from "./pages/EditProposal";
 import ProposalView from "./pages/ProposalView";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
@@ -45,6 +46,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <ProposalView />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/proposta/:id/editar"
+              element={
+                <ProtectedRoute>
+                  <EditProposal />
                 </ProtectedRoute>
               }
             />
