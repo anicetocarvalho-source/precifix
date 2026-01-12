@@ -16,9 +16,12 @@ import {
   Building,
   ArrowUpRight,
   Loader2,
+  BarChart3,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
+import { DashboardCharts } from '@/components/DashboardCharts';
+import { useState } from 'react';
 
 const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
   draft: { label: 'Rascunho', color: 'bg-muted text-muted-foreground' },
@@ -30,6 +33,7 @@ const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
 
 export default function Dashboard() {
   const { proposals, isLoading } = useProposals();
+  const [showCharts, setShowCharts] = useState(true);
 
   const stats = [
     {
@@ -77,12 +81,23 @@ export default function Dashboard() {
               Crie cotações precisas e documentos profissionais em minutos
             </p>
           </div>
-          <Link to="/nova-proposta">
-            <Button size="lg" className="gap-2">
-              <Plus className="w-5 h-5" />
-              Nova Cotação
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="lg"
+              className="gap-2"
+              onClick={() => setShowCharts(!showCharts)}
+            >
+              <BarChart3 className="w-5 h-5" />
+              {showCharts ? 'Ocultar Gráficos' : 'Ver Gráficos'}
             </Button>
-          </Link>
+            <Link to="/nova-proposta">
+              <Button size="lg" className="gap-2">
+                <Plus className="w-5 h-5" />
+                Nova Cotação
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats */}
@@ -115,6 +130,11 @@ export default function Dashboard() {
             </div>
           ))}
         </div>
+
+        {/* Charts Section */}
+        {showCharts && proposals.length > 0 && (
+          <DashboardCharts proposals={proposals} />
+        )}
 
         {/* Proposals Table */}
         <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden animate-slide-up" style={{ animationDelay: '0.2s' }}>
