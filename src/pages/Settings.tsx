@@ -9,17 +9,22 @@ import {
   Link as LinkIcon,
   Save,
   FlaskConical,
+  Shield,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { PricingParametersForm } from '@/components/settings/PricingParametersForm';
 import { PricingImpactSimulator } from '@/components/settings/PricingImpactSimulator';
+import { UserManagement } from '@/components/settings/UserManagement';
+import { useUserRole } from '@/hooks/useUserRole';
+import { Badge } from '@/components/ui/badge';
 
-type SettingsTab = 'profile' | 'company' | 'pricing' | 'simulator' | 'appearance' | 'notifications' | 'integrations';
+type SettingsTab = 'profile' | 'company' | 'users' | 'pricing' | 'simulator' | 'appearance' | 'notifications' | 'integrations';
 
 const tabs = [
   { id: 'profile' as const, label: 'Perfil', icon: User },
   { id: 'company' as const, label: 'Empresa', icon: Building },
+  { id: 'users' as const, label: 'Utilizadores', icon: Shield, adminOnly: true },
   { id: 'pricing' as const, label: 'Precificação', icon: Calculator },
   { id: 'simulator' as const, label: 'Simulador', icon: FlaskConical },
   { id: 'appearance' as const, label: 'Aparência', icon: Palette },
@@ -29,6 +34,7 @@ const tabs = [
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+  const { isAdmin, role, loading: roleLoading } = useUserRole();
 
   return (
     <MainLayout>
@@ -38,22 +44,37 @@ export default function Settings() {
         <div className="flex gap-6">
           {/* Sidebar */}
           <div className="w-56 flex-shrink-0 animate-slide-up" style={{ animationDelay: '0.1s' }}>
+            {/* Role Badge */}
+            {!roleLoading && role && (
+              <div className="mb-4 p-3 bg-muted/50 rounded-lg">
+                <p className="text-xs text-muted-foreground mb-1">O seu papel</p>
+                <Badge variant={role === 'admin' ? 'destructive' : role === 'gestor' ? 'default' : 'secondary'}>
+                  {role === 'admin' ? 'Administrador' : role === 'gestor' ? 'Gestor' : 'Comercial'}
+                </Badge>
+              </div>
+            )}
             <nav className="space-y-1">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left',
-                    activeTab === tab.id
-                      ? 'bg-primary text-primary-foreground shadow-brand'
-                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                  )}
-                >
-                  <tab.icon className="w-4 h-4" />
-                  <span className="font-medium">{tab.label}</span>
-                </button>
-              ))}
+              {tabs.map((tab) => {
+                // Hide admin-only tabs from non-admins
+                if ('adminOnly' in tab && tab.adminOnly && !isAdmin) {
+                  return null;
+                }
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={cn(
+                      'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-left',
+                      activeTab === tab.id
+                        ? 'bg-primary text-primary-foreground shadow-brand'
+                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    )}
+                  >
+                    <tab.icon className="w-4 h-4" />
+                    <span className="font-medium">{tab.label}</span>
+                  </button>
+                );
+              })}
             </nav>
           </div>
 
@@ -163,6 +184,8 @@ export default function Settings() {
                 </div>
               </div>
             )}
+
+            {activeTab === 'users' && <UserManagement />}
 
             {activeTab === 'pricing' && <PricingParametersForm />}
 
