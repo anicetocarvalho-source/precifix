@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { useProposals } from '@/hooks/useProposals';
+import { ProposalVersionHistory } from '@/components/ProposalVersionHistory';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
 import {
   ArrowLeft,
@@ -104,6 +105,7 @@ export default function ProposalView() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <ProposalVersionHistory proposalId={proposal.id} />
             <Button 
               variant="outline" 
               className="gap-2"

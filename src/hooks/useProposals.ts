@@ -176,8 +176,50 @@ export function useProposals() {
   });
 
   const updateProposal = useMutation({
-    mutationFn: async ({ id, formData }: { id: string; formData: ProposalFormData }) => {
+    mutationFn: async ({ id, formData, changeSummary }: { id: string; formData: ProposalFormData; changeSummary?: string }) => {
       if (!user) throw new Error('User not authenticated');
+
+      // Get current proposal state before updating
+      const currentProposal = proposals.find((p) => p.id === id);
+      
+      // Save current state as a version before updating
+      if (currentProposal) {
+        // Get max version number
+        const { data: existingVersions } = await supabase
+          .from('proposal_versions')
+          .select('version_number')
+          .eq('proposal_id', id)
+          .order('version_number', { ascending: false })
+          .limit(1);
+
+        const nextVersionNumber = existingVersions && existingVersions.length > 0
+          ? (existingVersions[0] as { version_number: number }).version_number + 1
+          : 1;
+
+        const currentPricing = calculatePricing(currentProposal.formData);
+
+        await supabase
+          .from('proposal_versions')
+          .insert({
+            proposal_id: id,
+            version_number: nextVersionNumber,
+            client_name: currentProposal.formData.clientName,
+            client_type: currentProposal.formData.clientType,
+            sector: currentProposal.formData.sector,
+            service_type: currentProposal.formData.serviceType,
+            duration_months: currentProposal.formData.estimatedDuration,
+            locations: currentProposal.formData.locations,
+            complexity: currentProposal.formData.complexity,
+            maturity_level: currentProposal.formData.clientMaturity,
+            deliverables: currentProposal.formData.deliverables,
+            has_existing_team: currentProposal.formData.hasExistingTeam,
+            methodology: currentProposal.formData.methodology,
+            total_value: currentPricing.finalPrice,
+            status: currentProposal.status,
+            change_summary: changeSummary || 'Versão anterior guardada',
+            created_by: user.id,
+          });
+      }
 
       const pricing = calculatePricing(formData);
 
@@ -201,8 +243,9 @@ export function useProposals() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposal-versions', variables.id] });
       toast.success('Proposta atualizada com sucesso!');
     },
     onError: (error) => {
