@@ -8,11 +8,22 @@ import { Slider } from '@/components/ui/slider';
 import { useProposals } from '@/hooks/useProposals';
 import { usePricingParameters } from '@/hooks/usePricingParameters';
 import { calculatePricing, formatCurrency, PricingParams } from '@/lib/pricing';
-import { TrendingUp, TrendingDown, Minus, Calculator, RotateCcw, ArrowRight } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Calculator, RotateCcw, ArrowRight, Save, Loader2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 export function PricingImpactSimulator() {
   const { proposals } = useProposals();
-  const { parameters, isLoading } = usePricingParameters();
+  const { parameters, isLoading, saveParameters } = usePricingParameters();
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
   // Simulated parameters (editable)
   const [simulatedParams, setSimulatedParams] = useState<{
@@ -40,6 +51,26 @@ export function PricingImpactSimulator() {
       ...(prev || parameters),
       [key]: value,
     }));
+  };
+
+  const handleApplyParameters = async () => {
+    if (!simulatedParams) return;
+    
+    await saveParameters.mutateAsync({
+      rateSeniorManager: simulatedParams.rateSeniorManager,
+      rateConsultant: simulatedParams.rateConsultant,
+      rateAnalyst: simulatedParams.rateAnalyst,
+      rateCoordinator: simulatedParams.rateCoordinator,
+      rateTrainer: simulatedParams.rateTrainer,
+      multiplierLow: simulatedParams.multiplierLow,
+      multiplierMedium: simulatedParams.multiplierMedium,
+      multiplierHigh: simulatedParams.multiplierHigh,
+      overheadPercentage: simulatedParams.overheadPercentage,
+      marginPercentage: simulatedParams.marginPercentage,
+    });
+    
+    setSimulatedParams(null);
+    setShowConfirmDialog(false);
   };
 
   // Calculate impact on all proposals
@@ -166,10 +197,25 @@ export function PricingImpactSimulator() {
               </div>
             </div>
             {hasChanges && (
-              <Button variant="outline" size="sm" onClick={resetSimulation} className="gap-2">
-                <RotateCcw className="w-4 h-4" />
-                Repor
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={resetSimulation} className="gap-2">
+                  <RotateCcw className="w-4 h-4" />
+                  Repor
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={() => setShowConfirmDialog(true)} 
+                  className="gap-2"
+                  disabled={saveParameters.isPending}
+                >
+                  {saveParameters.isPending ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4" />
+                  )}
+                  Aplicar Parâmetros
+                </Button>
+              </div>
             )}
           </div>
         </CardHeader>
@@ -422,6 +468,36 @@ export function PricingImpactSimulator() {
           </CardContent>
         </Card>
       )}
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aplicar Parâmetros Simulados?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acção irá guardar os parâmetros simulados como os novos parâmetros de precificação globais.
+              {impactAnalysis && impactAnalysis.proposalImpacts.length > 0 && (
+                <span className="block mt-2">
+                  <strong>{impactAnalysis.proposalImpacts.length}</strong> proposta(s) sem parâmetros guardados terão os valores recalculados.
+                </span>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApplyParameters} disabled={saveParameters.isPending}>
+              {saveParameters.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  A guardar...
+                </>
+              ) : (
+                'Aplicar Parâmetros'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
