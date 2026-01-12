@@ -24,6 +24,8 @@ import {
   Landmark,
   Heart,
   Rocket,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -173,6 +175,13 @@ const questions: Question[] = [
   },
 ];
 
+// Email validation helper
+const isValidEmail = (email: string): boolean => {
+  if (!email) return true; // Empty is valid (field is optional)
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
 export default function NewProposal() {
   const navigate = useNavigate();
   const { createProposal } = useProposals();
@@ -183,9 +192,15 @@ export default function NewProposal() {
     deliverables: [],
   });
   const [locations, setLocations] = useState<string[]>(['']);
+  const [emailTouched, setEmailTouched] = useState(false);
 
   const currentQuestion = questions[currentStep];
   const progress = ((currentStep) / (questions.length - 1)) * 100;
+  
+  // Email validation state
+  const emailValue = (formData.clientEmail as string) || '';
+  const emailIsValid = isValidEmail(emailValue);
+  const showEmailError = emailTouched && emailValue && !emailIsValid;
 
   const handleNext = async () => {
     if (currentStep < questions.length - 1) {
@@ -271,8 +286,10 @@ export default function NewProposal() {
   const canProceed = () => {
     if (currentQuestion.type === 'intro') return true;
     if (currentQuestion.type === 'text') {
-      // clientEmail is optional
-      if (currentQuestion.id === 'clientEmail') return true;
+      // clientEmail is optional but must be valid if provided
+      if (currentQuestion.id === 'clientEmail') {
+        return emailIsValid;
+      }
       const value = formData[currentQuestion.id as keyof ProposalFormData];
       return typeof value === 'string' && value.trim().length > 0;
     }
@@ -438,14 +455,56 @@ export default function NewProposal() {
 
             {/* Text input */}
             {currentQuestion.type === 'text' && (
-              <input
-                type="text"
-                value={(formData[currentQuestion.id as keyof ProposalFormData] as string) || ''}
-                onChange={(e) => handleTextInput(e.target.value)}
-                placeholder={currentQuestion.placeholder}
-                className="w-full text-xl p-4 rounded-xl border-2 border-border bg-background focus:outline-none focus:border-primary transition-colors"
-                autoFocus
-              />
+              <div className="space-y-2">
+                <div className="relative">
+                  <input
+                    type={currentQuestion.id === 'clientEmail' ? 'email' : 'text'}
+                    value={(formData[currentQuestion.id as keyof ProposalFormData] as string) || ''}
+                    onChange={(e) => {
+                      handleTextInput(e.target.value);
+                      if (currentQuestion.id === 'clientEmail') {
+                        setEmailTouched(true);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (currentQuestion.id === 'clientEmail') {
+                        setEmailTouched(true);
+                      }
+                    }}
+                    placeholder={currentQuestion.placeholder}
+                    className={cn(
+                      "w-full text-xl p-4 pr-12 rounded-xl border-2 bg-background focus:outline-none transition-colors",
+                      currentQuestion.id === 'clientEmail' && showEmailError
+                        ? "border-destructive focus:border-destructive"
+                        : currentQuestion.id === 'clientEmail' && emailValue && emailIsValid
+                        ? "border-green-500 focus:border-green-500"
+                        : "border-border focus:border-primary"
+                    )}
+                    autoFocus
+                  />
+                  {currentQuestion.id === 'clientEmail' && emailValue && (
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                      {emailIsValid ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <AlertCircle className="w-5 h-5 text-destructive" />
+                      )}
+                    </div>
+                  )}
+                </div>
+                {currentQuestion.id === 'clientEmail' && showEmailError && (
+                  <p className="text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    Por favor, insira um email válido
+                  </p>
+                )}
+                {currentQuestion.id === 'clientEmail' && emailValue && emailIsValid && (
+                  <p className="text-sm text-green-600 flex items-center gap-1">
+                    <CheckCircle2 className="w-4 h-4" />
+                    Email válido
+                  </p>
+                )}
+              </div>
             )}
 
             {/* Number input */}
