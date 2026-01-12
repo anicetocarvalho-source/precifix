@@ -19,6 +19,7 @@ import {
   Clock,
   Loader2,
   Copy,
+  Pencil,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -103,6 +104,14 @@ export default function ProposalView() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Button 
+              variant="outline" 
+              className="gap-2"
+              onClick={() => navigate(`/proposta/${proposal.id}/editar`)}
+            >
+              <Pencil className="w-4 h-4" />
+              Editar
+            </Button>
             <Button 
               variant="outline" 
               className="gap-2"

@@ -1,7 +1,7 @@
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useProposals } from '@/hooks/useProposals';
 import { formatCurrency } from '@/lib/pricing';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import {
   Search,
@@ -14,6 +14,7 @@ import {
   Plus,
   Loader2,
   Copy,
+  Pencil,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
@@ -28,6 +29,7 @@ const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
 };
 
 export default function History() {
+  const navigate = useNavigate();
   const { proposals, isLoading, deleteProposal, duplicateProposal } = useProposals();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProposalStatus | 'all'>('all');
@@ -188,6 +190,15 @@ export default function History() {
                               <ArrowUpRight className="w-3 h-3" />
                             </Button>
                           </Link>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => navigate(`/proposta/${proposal.id}/editar`)}
+                            className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Editar proposta"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"

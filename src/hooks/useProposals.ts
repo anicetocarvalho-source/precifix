@@ -175,6 +175,42 @@ export function useProposals() {
     },
   });
 
+  const updateProposal = useMutation({
+    mutationFn: async ({ id, formData }: { id: string; formData: ProposalFormData }) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const pricing = calculatePricing(formData);
+
+      const { error } = await supabase
+        .from('proposals')
+        .update({
+          client_name: formData.clientName,
+          client_type: formData.clientType,
+          sector: formData.sector,
+          service_type: formData.serviceType,
+          duration_months: formData.estimatedDuration,
+          locations: formData.locations,
+          complexity: formData.complexity,
+          maturity_level: formData.clientMaturity,
+          deliverables: formData.deliverables,
+          has_existing_team: formData.hasExistingTeam,
+          methodology: formData.methodology,
+          total_value: pricing.finalPrice,
+        })
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      toast.success('Proposta atualizada com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Error updating proposal:', error);
+      toast.error('Erro ao atualizar proposta');
+    },
+  });
+
   const getProposal = (id: string) => {
     return proposals.find((p) => p.id === id);
   };
@@ -183,6 +219,7 @@ export function useProposals() {
     proposals,
     isLoading,
     createProposal,
+    updateProposal,
     updateProposalStatus,
     deleteProposal,
     duplicateProposal,
