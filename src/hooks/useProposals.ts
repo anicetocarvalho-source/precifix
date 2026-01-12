@@ -29,6 +29,7 @@ export function useProposals() {
         const formData: ProposalFormData = {
           clientType: row.client_type as ClientType,
           clientName: row.client_name,
+          clientEmail: row.client_email || undefined,
           sector: row.sector,
           serviceType: row.service_type as ServiceType,
           estimatedDuration: row.duration_months,
@@ -64,6 +65,7 @@ export function useProposals() {
         .insert({
           user_id: user.id,
           client_name: formData.clientName,
+          client_email: formData.clientEmail || null,
           client_type: formData.clientType,
           sector: formData.sector,
           service_type: formData.serviceType,
@@ -146,6 +148,7 @@ export function useProposals() {
         .insert({
           user_id: user.id,
           client_name: `${formData.clientName} (Cópia)`,
+          client_email: formData.clientEmail || null,
           client_type: formData.clientType,
           sector: formData.sector,
           service_type: formData.serviceType,
@@ -227,6 +230,7 @@ export function useProposals() {
         .from('proposals')
         .update({
           client_name: formData.clientName,
+          client_email: formData.clientEmail || null,
           client_type: formData.clientType,
           sector: formData.sector,
           service_type: formData.serviceType,

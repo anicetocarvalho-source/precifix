@@ -60,6 +60,13 @@ const questions: Question[] = [
     placeholder: 'Ex: Ministério da Saúde',
   },
   {
+    id: 'clientEmail',
+    type: 'text',
+    title: 'Qual é o email do cliente?',
+    subtitle: 'Para envio da proposta (opcional)',
+    placeholder: 'Ex: cliente@empresa.com',
+  },
+  {
     id: 'clientType',
     type: 'select',
     title: 'Qual o tipo de cliente?',
@@ -189,6 +196,7 @@ export default function NewProposal() {
       const finalData: ProposalFormData = {
         clientType: (formData.clientType as ClientType) || 'private',
         clientName: formData.clientName || '',
+        clientEmail: formData.clientEmail || undefined,
         sector: formData.sector || '',
         serviceType: (formData.serviceType as ServiceType) || 'pmo',
         estimatedDuration: formData.estimatedDuration || 6,
@@ -263,6 +271,8 @@ export default function NewProposal() {
   const canProceed = () => {
     if (currentQuestion.type === 'intro') return true;
     if (currentQuestion.type === 'text') {
+      // clientEmail is optional
+      if (currentQuestion.id === 'clientEmail') return true;
       const value = formData[currentQuestion.id as keyof ProposalFormData];
       return typeof value === 'string' && value.trim().length > 0;
     }
