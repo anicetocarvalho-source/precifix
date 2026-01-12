@@ -131,6 +131,50 @@ export function useProposals() {
     },
   });
 
+  const duplicateProposal = useMutation({
+    mutationFn: async (id: string) => {
+      if (!user) throw new Error('User not authenticated');
+
+      const proposal = proposals.find((p) => p.id === id);
+      if (!proposal) throw new Error('Proposal not found');
+
+      const { formData } = proposal;
+      const pricing = calculatePricing(formData);
+
+      const { data, error } = await supabase
+        .from('proposals')
+        .insert({
+          user_id: user.id,
+          client_name: `${formData.clientName} (Cópia)`,
+          client_type: formData.clientType,
+          sector: formData.sector,
+          service_type: formData.serviceType,
+          duration_months: formData.estimatedDuration,
+          locations: formData.locations,
+          complexity: formData.complexity,
+          maturity_level: formData.clientMaturity,
+          deliverables: formData.deliverables,
+          has_existing_team: formData.hasExistingTeam,
+          methodology: formData.methodology,
+          total_value: pricing.finalPrice,
+          status: 'draft',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      toast.success('Proposta duplicada com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Error duplicating proposal:', error);
+      toast.error('Erro ao duplicar proposta');
+    },
+  });
+
   const getProposal = (id: string) => {
     return proposals.find((p) => p.id === id);
   };
@@ -141,6 +185,7 @@ export function useProposals() {
     createProposal,
     updateProposalStatus,
     deleteProposal,
+    duplicateProposal,
     getProposal,
   };
 }
