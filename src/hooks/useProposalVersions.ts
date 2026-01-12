@@ -120,10 +120,76 @@ export function useProposalVersions(proposalId?: string) {
     return versions.length > 0 ? versions[0] : null;
   };
 
+  const restoreVersion = useMutation({
+    mutationFn: async (version: ProposalVersion) => {
+      if (!user) throw new Error('User not authenticated');
+
+      // Update the main proposal with the version data
+      const { error } = await supabase
+        .from('proposals')
+        .update({
+          client_name: version.client_name,
+          client_type: version.client_type,
+          sector: version.sector,
+          service_type: version.service_type,
+          duration_months: version.duration_months,
+          locations: version.locations,
+          complexity: version.complexity,
+          maturity_level: version.maturity_level,
+          deliverables: version.deliverables,
+          has_existing_team: version.has_existing_team,
+          methodology: version.methodology,
+          total_value: version.total_value,
+          status: version.status,
+        })
+        .eq('id', version.proposal_id)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      // Create a new version entry to record the restoration
+      const nextVersionNumber = versions.length > 0 ? versions[0].version_number + 1 : 1;
+
+      await supabase
+        .from('proposal_versions')
+        .insert({
+          proposal_id: version.proposal_id,
+          version_number: nextVersionNumber,
+          client_name: version.client_name,
+          client_type: version.client_type,
+          sector: version.sector,
+          service_type: version.service_type,
+          duration_months: version.duration_months,
+          locations: version.locations,
+          complexity: version.complexity,
+          maturity_level: version.maturity_level,
+          deliverables: version.deliverables,
+          has_existing_team: version.has_existing_team,
+          methodology: version.methodology,
+          total_value: version.total_value,
+          status: version.status,
+          change_summary: `Restaurado para versão ${version.version_number}`,
+          created_by: user.id,
+        });
+
+      return version;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      queryClient.invalidateQueries({ queryKey: ['proposal-versions', proposalId] });
+      toast.success('Proposta restaurada com sucesso');
+    },
+    onError: (error) => {
+      console.error('Error restoring version:', error);
+      toast.error('Erro ao restaurar versão');
+    },
+  });
+
   return {
     versions,
     isLoading,
     createVersion,
     getLatestVersion,
+    restoreVersion,
   };
 }

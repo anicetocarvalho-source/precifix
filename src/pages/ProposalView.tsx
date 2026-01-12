@@ -3,6 +3,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { useProposals } from '@/hooks/useProposals';
 import { ProposalVersionHistory } from '@/components/ProposalVersionHistory';
+import { useProposalVersions, ProposalVersion } from '@/hooks/useProposalVersions';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
 import {
   ArrowLeft,
@@ -22,6 +23,16 @@ import {
   Copy,
   Pencil,
 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
@@ -31,7 +42,9 @@ export default function ProposalView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getProposal, updateProposalStatus, duplicateProposal, isLoading } = useProposals();
+  const { restoreVersion } = useProposalVersions(id);
   const [activeTab, setActiveTab] = useState<DocumentTab>('diagnostic');
+  const [versionToRestore, setVersionToRestore] = useState<ProposalVersion | null>(null);
 
   const proposal = id ? getProposal(id) : undefined;
 
@@ -105,7 +118,10 @@ export default function ProposalView() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <ProposalVersionHistory proposalId={proposal.id} />
+            <ProposalVersionHistory 
+              proposalId={proposal.id} 
+              onRestoreVersion={(version) => setVersionToRestore(version)}
+            />
             <Button 
               variant="outline" 
               className="gap-2"
@@ -505,6 +521,32 @@ export default function ProposalView() {
           </div>
         </div>
       </div>
+
+      {/* Restore Version Confirmation Dialog */}
+      <AlertDialog open={!!versionToRestore} onOpenChange={(open) => !open && setVersionToRestore(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Restaurar versão {versionToRestore?.version_number}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação irá substituir os dados actuais da proposta pelos dados da versão {versionToRestore?.version_number}. 
+              A versão actual será guardada no histórico antes do restauro.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (versionToRestore) {
+                  restoreVersion.mutate(versionToRestore);
+                  setVersionToRestore(null);
+                }
+              }}
+            >
+              Restaurar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </MainLayout>
   );
 }
