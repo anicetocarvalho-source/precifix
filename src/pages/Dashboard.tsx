@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { useProposalStore } from '@/stores/proposalStore';
+import { useProposals } from '@/hooks/useProposals';
 import { formatCurrency } from '@/lib/pricing';
 import {
   Plus,
@@ -15,6 +15,7 @@ import {
   Calendar,
   Building,
   ArrowUpRight,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
@@ -28,7 +29,7 @@ const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
 };
 
 export default function Dashboard() {
-  const { proposals } = useProposalStore();
+  const { proposals, isLoading } = useProposals();
 
   const stats = [
     {
@@ -47,7 +48,9 @@ export default function Dashboard() {
     },
     {
       label: 'Taxa de aprovação',
-      value: '78%',
+      value: proposals.length > 0 
+        ? `${Math.round((proposals.filter(p => p.status === 'approved').length / proposals.length) * 100)}%`
+        : '0%',
       icon: CheckCircle,
       change: '+5%',
       changeType: 'positive',
@@ -133,7 +136,11 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {proposals.length === 0 ? (
+          {isLoading ? (
+            <div className="p-12 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : proposals.length === 0 ? (
             <div className="p-12 text-center">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-8 h-8 text-muted-foreground" />
