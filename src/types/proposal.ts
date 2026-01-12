@@ -9,6 +9,7 @@ export interface ProposalFormData {
   clientType: ClientType;
   clientName: string;
   clientEmail?: string;
+  clientPhone?: string;
   sector: string;
   
   // Service details
