@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useProposals } from '@/hooks/useProposals';
 import { ProposalVersionHistory } from '@/components/ProposalVersionHistory';
 import { useProposalVersions, ProposalVersion } from '@/hooks/useProposalVersions';
+import { usePricingParameters } from '@/hooks/usePricingParameters';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
 import { exportProposalToPDF, exportSingleDocument } from '@/lib/pdfExport';
 import { supabase } from '@/integrations/supabase/client';
@@ -66,6 +67,7 @@ export default function ProposalView() {
   const navigate = useNavigate();
   const { getProposal, updateProposalStatus, duplicateProposal, isLoading } = useProposals();
   const { restoreVersion } = useProposalVersions(id);
+  const { parameters: pricingParams } = usePricingParameters();
   const [activeTab, setActiveTab] = useState<DocumentTab>('diagnostic');
   const [versionToRestore, setVersionToRestore] = useState<ProposalVersion | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
@@ -622,6 +624,72 @@ export default function ProposalView() {
                         </p>
                       </div>
                     ))}
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">Parâmetros de Precificação Utilizados</h3>
+                  <div className="bg-muted/30 rounded-xl p-6 space-y-6">
+                    {/* Hourly Rates */}
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Taxas Horárias</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground">Gestor Sénior</p>
+                          <p className="font-semibold text-foreground">{formatCurrency(pricingParams.rateSeniorManager)}/h</p>
+                        </div>
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground">Consultor</p>
+                          <p className="font-semibold text-foreground">{formatCurrency(pricingParams.rateConsultant)}/h</p>
+                        </div>
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground">Analista</p>
+                          <p className="font-semibold text-foreground">{formatCurrency(pricingParams.rateAnalyst)}/h</p>
+                        </div>
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground">Coordenador</p>
+                          <p className="font-semibold text-foreground">{formatCurrency(pricingParams.rateCoordinator)}/h</p>
+                        </div>
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground">Formador</p>
+                          <p className="font-semibold text-foreground">{formatCurrency(pricingParams.rateTrainer)}/h</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Complexity Multipliers */}
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Multiplicadores de Complexidade</h4>
+                      <div className="grid grid-cols-3 gap-3">
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground">Baixa</p>
+                          <p className="font-semibold text-foreground">×{pricingParams.multiplierLow}</p>
+                        </div>
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground">Média</p>
+                          <p className="font-semibold text-foreground">×{pricingParams.multiplierMedium}</p>
+                        </div>
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground">Alta</p>
+                          <p className="font-semibold text-foreground">×{pricingParams.multiplierHigh}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Percentages */}
+                    <div>
+                      <h4 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">Percentagens</h4>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground">Overhead</p>
+                          <p className="font-semibold text-foreground">{(pricingParams.overheadPercentage * 100).toFixed(0)}%</p>
+                        </div>
+                        <div className="bg-background rounded-lg p-3 border border-border">
+                          <p className="text-xs text-muted-foreground">Margem</p>
+                          <p className="font-semibold text-foreground">{(pricingParams.marginPercentage * 100).toFixed(0)}%</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </section>
               </div>
