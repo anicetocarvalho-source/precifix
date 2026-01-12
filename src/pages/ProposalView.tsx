@@ -67,7 +67,7 @@ export default function ProposalView() {
   const navigate = useNavigate();
   const { getProposal, updateProposalStatus, duplicateProposal, isLoading } = useProposals();
   const { restoreVersion } = useProposalVersions(id);
-  const { parameters: pricingParams } = usePricingParameters();
+  const { parameters: currentPricingParams } = usePricingParameters();
   const [activeTab, setActiveTab] = useState<DocumentTab>('diagnostic');
   const [versionToRestore, setVersionToRestore] = useState<ProposalVersion | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
@@ -98,7 +98,21 @@ export default function ProposalView() {
     );
   }
 
-  const { formData, pricing } = proposal;
+  const { formData, pricing, pricingParams: savedPricingParams } = proposal;
+
+  // Use saved pricing params from proposal if available, otherwise use current params
+  const displayPricingParams = savedPricingParams ? {
+    rateSeniorManager: savedPricingParams.hourlyRates.seniorManager,
+    rateConsultant: savedPricingParams.hourlyRates.consultant,
+    rateAnalyst: savedPricingParams.hourlyRates.analyst,
+    rateCoordinator: savedPricingParams.hourlyRates.coordinator,
+    rateTrainer: savedPricingParams.hourlyRates.trainer,
+    multiplierLow: savedPricingParams.complexityMultipliers.low,
+    multiplierMedium: savedPricingParams.complexityMultipliers.medium,
+    multiplierHigh: savedPricingParams.complexityMultipliers.high,
+    overheadPercentage: savedPricingParams.overheadPercentage,
+    marginPercentage: savedPricingParams.marginPercentage,
+  } : currentPricingParams;
 
   const handleSendEmail = async () => {
     if (!clientEmail) {
@@ -628,7 +642,14 @@ export default function ProposalView() {
                 </section>
 
                 <section>
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Parâmetros de Precificação Utilizados</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
+                    Parâmetros de Precificação Utilizados
+                    {savedPricingParams && (
+                      <span className="ml-2 text-xs font-normal text-muted-foreground bg-muted px-2 py-1 rounded">
+                        Guardados com a proposta
+                      </span>
+                    )}
+                  </h3>
                   <div className="bg-muted/30 rounded-xl p-6 space-y-6">
                     {/* Hourly Rates */}
                     <div>
@@ -636,23 +657,23 @@ export default function ProposalView() {
                       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <p className="text-xs text-muted-foreground">Gestor Sénior</p>
-                          <p className="font-semibold text-foreground">{formatCurrency(pricingParams.rateSeniorManager)}/h</p>
+                          <p className="font-semibold text-foreground">{formatCurrency(displayPricingParams.rateSeniorManager)}/h</p>
                         </div>
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <p className="text-xs text-muted-foreground">Consultor</p>
-                          <p className="font-semibold text-foreground">{formatCurrency(pricingParams.rateConsultant)}/h</p>
+                          <p className="font-semibold text-foreground">{formatCurrency(displayPricingParams.rateConsultant)}/h</p>
                         </div>
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <p className="text-xs text-muted-foreground">Analista</p>
-                          <p className="font-semibold text-foreground">{formatCurrency(pricingParams.rateAnalyst)}/h</p>
+                          <p className="font-semibold text-foreground">{formatCurrency(displayPricingParams.rateAnalyst)}/h</p>
                         </div>
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <p className="text-xs text-muted-foreground">Coordenador</p>
-                          <p className="font-semibold text-foreground">{formatCurrency(pricingParams.rateCoordinator)}/h</p>
+                          <p className="font-semibold text-foreground">{formatCurrency(displayPricingParams.rateCoordinator)}/h</p>
                         </div>
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <p className="text-xs text-muted-foreground">Formador</p>
-                          <p className="font-semibold text-foreground">{formatCurrency(pricingParams.rateTrainer)}/h</p>
+                          <p className="font-semibold text-foreground">{formatCurrency(displayPricingParams.rateTrainer)}/h</p>
                         </div>
                       </div>
                     </div>
@@ -663,15 +684,15 @@ export default function ProposalView() {
                       <div className="grid grid-cols-3 gap-3">
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <p className="text-xs text-muted-foreground">Baixa</p>
-                          <p className="font-semibold text-foreground">×{pricingParams.multiplierLow}</p>
+                          <p className="font-semibold text-foreground">×{displayPricingParams.multiplierLow}</p>
                         </div>
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <p className="text-xs text-muted-foreground">Média</p>
-                          <p className="font-semibold text-foreground">×{pricingParams.multiplierMedium}</p>
+                          <p className="font-semibold text-foreground">×{displayPricingParams.multiplierMedium}</p>
                         </div>
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <p className="text-xs text-muted-foreground">Alta</p>
-                          <p className="font-semibold text-foreground">×{pricingParams.multiplierHigh}</p>
+                          <p className="font-semibold text-foreground">×{displayPricingParams.multiplierHigh}</p>
                         </div>
                       </div>
                     </div>
@@ -682,11 +703,11 @@ export default function ProposalView() {
                       <div className="grid grid-cols-2 gap-3">
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <p className="text-xs text-muted-foreground">Overhead</p>
-                          <p className="font-semibold text-foreground">{(pricingParams.overheadPercentage * 100).toFixed(0)}%</p>
+                          <p className="font-semibold text-foreground">{(displayPricingParams.overheadPercentage * 100).toFixed(0)}%</p>
                         </div>
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <p className="text-xs text-muted-foreground">Margem</p>
-                          <p className="font-semibold text-foreground">{(pricingParams.marginPercentage * 100).toFixed(0)}%</p>
+                          <p className="font-semibold text-foreground">{(displayPricingParams.marginPercentage * 100).toFixed(0)}%</p>
                         </div>
                       </div>
                     </div>
