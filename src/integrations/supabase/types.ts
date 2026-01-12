@@ -112,6 +112,7 @@ export type Database = {
           locations: string[]
           maturity_level: string
           methodology: string
+          pricing_params: Json | null
           proposal_id: string
           sector: string
           service_type: string
@@ -135,6 +136,7 @@ export type Database = {
           locations?: string[]
           maturity_level: string
           methodology: string
+          pricing_params?: Json | null
           proposal_id: string
           sector: string
           service_type: string
@@ -158,6 +160,7 @@ export type Database = {
           locations?: string[]
           maturity_level?: string
           methodology?: string
+          pricing_params?: Json | null
           proposal_id?: string
           sector?: string
           service_type?: string
@@ -192,6 +195,7 @@ export type Database = {
           maturity_level: string
           methodology: string
           objectives: string | null
+          pricing_params: Json | null
           sector: string
           service_type: string
           status: string
@@ -215,6 +219,7 @@ export type Database = {
           maturity_level?: string
           methodology?: string
           objectives?: string | null
+          pricing_params?: Json | null
           sector: string
           service_type: string
           status?: string
@@ -238,6 +243,7 @@ export type Database = {
           maturity_level?: string
           methodology?: string
           objectives?: string | null
+          pricing_params?: Json | null
           sector?: string
           service_type?: string
           status?: string

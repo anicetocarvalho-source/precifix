@@ -44,10 +44,28 @@ export interface PricingResult {
   finalPrice: number;
 }
 
+export interface SavedPricingParams {
+  hourlyRates: {
+    seniorManager: number;
+    consultant: number;
+    analyst: number;
+    coordinator: number;
+    trainer: number;
+  };
+  complexityMultipliers: {
+    low: number;
+    medium: number;
+    high: number;
+  };
+  overheadPercentage: number;
+  marginPercentage: number;
+}
+
 export interface Proposal {
   id: string;
   formData: ProposalFormData;
   pricing: PricingResult;
+  pricingParams?: SavedPricingParams;
   status: ProposalStatus;
   createdAt: Date;
   updatedAt: Date;

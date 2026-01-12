@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { ProposalFormData, Proposal, ProposalStatus, ClientType, ServiceType, Complexity, Methodology } from '@/types/proposal';
+import { ProposalFormData, Proposal, ProposalStatus, ClientType, ServiceType, Complexity, Methodology, SavedPricingParams } from '@/types/proposal';
 import { calculatePricing, PricingParams, DEFAULT_PRICING_PARAMS } from '@/lib/pricing';
 import { toast } from 'sonner';
 
@@ -84,10 +84,20 @@ export function useProposals() {
           methodology: row.methodology as Methodology,
         };
 
+        // Use saved pricing params if available, otherwise use current params
+        const savedPricingParams = row.pricing_params as unknown as SavedPricingParams | null;
+        const paramsToUse = savedPricingParams ? {
+          hourlyRates: savedPricingParams.hourlyRates,
+          complexityMultipliers: savedPricingParams.complexityMultipliers,
+          overheadPercentage: savedPricingParams.overheadPercentage,
+          marginPercentage: savedPricingParams.marginPercentage,
+        } : pricingParams;
+
         return {
           id: row.id,
           formData,
-          pricing: calculatePricing(formData, pricingParams),
+          pricing: calculatePricing(formData, paramsToUse),
+          pricingParams: savedPricingParams || undefined,
           status: row.status as ProposalStatus,
           createdAt: new Date(row.created_at),
           updatedAt: new Date(row.updated_at),
@@ -102,6 +112,14 @@ export function useProposals() {
       if (!user) throw new Error('User not authenticated');
 
       const pricing = calculatePricing(formData, pricingParams);
+
+      // Create pricing params snapshot to store with proposal
+      const pricingParamsSnapshot = {
+        hourlyRates: pricingParams.hourlyRates,
+        complexityMultipliers: pricingParams.complexityMultipliers,
+        overheadPercentage: pricingParams.overheadPercentage,
+        marginPercentage: pricingParams.marginPercentage,
+      };
 
       const { data, error } = await supabase
         .from('proposals')
@@ -122,6 +140,7 @@ export function useProposals() {
           methodology: formData.methodology,
           total_value: pricing.finalPrice,
           status: 'draft',
+          pricing_params: pricingParamsSnapshot,
         })
         .select()
         .single();
@@ -187,6 +206,14 @@ export function useProposals() {
       const { formData } = proposal;
       const pricing = calculatePricing(formData, pricingParams);
 
+      // Create pricing params snapshot for the duplicate
+      const pricingParamsSnapshot = {
+        hourlyRates: pricingParams.hourlyRates,
+        complexityMultipliers: pricingParams.complexityMultipliers,
+        overheadPercentage: pricingParams.overheadPercentage,
+        marginPercentage: pricingParams.marginPercentage,
+      };
+
       const { data, error } = await supabase
         .from('proposals')
         .insert({
@@ -206,6 +233,7 @@ export function useProposals() {
           methodology: formData.methodology,
           total_value: pricing.finalPrice,
           status: 'draft',
+          pricing_params: pricingParamsSnapshot,
         })
         .select()
         .single();
@@ -271,6 +299,14 @@ export function useProposals() {
 
       const pricing = calculatePricing(formData, pricingParams);
 
+      // Create pricing params snapshot for the update
+      const pricingParamsSnapshot = {
+        hourlyRates: pricingParams.hourlyRates,
+        complexityMultipliers: pricingParams.complexityMultipliers,
+        overheadPercentage: pricingParams.overheadPercentage,
+        marginPercentage: pricingParams.marginPercentage,
+      };
+
       const { error } = await supabase
         .from('proposals')
         .update({
@@ -288,6 +324,7 @@ export function useProposals() {
           has_existing_team: formData.hasExistingTeam,
           methodology: formData.methodology,
           total_value: pricing.finalPrice,
+          pricing_params: pricingParamsSnapshot,
         })
         .eq('id', id);
 
