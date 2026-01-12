@@ -1,11 +1,16 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useProposals } from '@/hooks/useProposals';
 import { ProposalVersionHistory } from '@/components/ProposalVersionHistory';
 import { useProposalVersions, ProposalVersion } from '@/hooks/useProposalVersions';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
 import { exportProposalToPDF, exportSingleDocument } from '@/lib/pdfExport';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import {
   ArrowLeft,
   Download,
@@ -23,6 +28,7 @@ import {
   Loader2,
   Copy,
   Pencil,
+  Mail,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -34,6 +40,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -53,6 +67,10 @@ export default function ProposalView() {
   const { restoreVersion } = useProposalVersions(id);
   const [activeTab, setActiveTab] = useState<DocumentTab>('diagnostic');
   const [versionToRestore, setVersionToRestore] = useState<ProposalVersion | null>(null);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [clientEmail, setClientEmail] = useState('');
+  const [customMessage, setCustomMessage] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const proposal = id ? getProposal(id) : undefined;
 
@@ -78,6 +96,44 @@ export default function ProposalView() {
   }
 
   const { formData, pricing } = proposal;
+
+  const handleSendEmail = async () => {
+    if (!clientEmail) {
+      toast.error('Por favor, introduza o email do cliente');
+      return;
+    }
+
+    setIsSendingEmail(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('send-proposal-email', {
+        body: {
+          clientEmail,
+          clientName: formData.clientName,
+          proposalId: proposal.id,
+          serviceType: formData.serviceType,
+          sector: formData.sector,
+          totalValue: pricing.finalPrice,
+          duration: formData.estimatedDuration,
+          deliverables: formData.deliverables,
+          methodology: formData.methodology,
+          customMessage: customMessage || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success('Proposta enviada com sucesso!');
+      setShowEmailDialog(false);
+      setClientEmail('');
+      setCustomMessage('');
+      updateProposalStatus.mutate({ id: proposal.id, status: 'sent' });
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast.error(error.message || 'Erro ao enviar proposta');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
 
   const tabs = [
     { id: 'diagnostic' as const, label: 'Diagnóstico', icon: Target },
@@ -182,11 +238,11 @@ export default function ProposalView() {
               </DropdownMenuContent>
             </DropdownMenu>
             <Button
-              onClick={() => updateProposalStatus.mutate({ id: proposal.id, status: 'sent' })}
+              onClick={() => setShowEmailDialog(true)}
               className="gap-2"
             >
-              <Send className="w-4 h-4" />
-              Enviar ao Cliente
+              <Mail className="w-4 h-4" />
+              Enviar por Email
             </Button>
           </div>
         </div>
@@ -582,6 +638,67 @@ export default function ProposalView() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Send Email Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Enviar Proposta por Email</DialogTitle>
+            <DialogDescription>
+              Envie a proposta diretamente para o email do cliente.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="clientEmail">Email do Cliente *</Label>
+              <Input
+                id="clientEmail"
+                type="email"
+                placeholder="cliente@empresa.com"
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customMessage">Mensagem Personalizada (opcional)</Label>
+              <Textarea
+                id="customMessage"
+                placeholder="Adicione uma mensagem personalizada para o cliente..."
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+              <p className="text-sm font-medium text-foreground">Resumo da Proposta</p>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p><strong>Cliente:</strong> {formData.clientName}</p>
+                <p><strong>Serviço:</strong> {serviceLabels[formData.serviceType]}</p>
+                <p><strong>Valor:</strong> {formatCurrency(pricing.finalPrice)}</p>
+                <p><strong>Duração:</strong> {formData.estimatedDuration} meses</p>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEmailDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSendEmail} disabled={isSendingEmail} className="gap-2">
+              {isSendingEmail ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  A enviar...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  Enviar Proposta
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }
