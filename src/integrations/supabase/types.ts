@@ -44,6 +44,80 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_versions: {
+        Row: {
+          change_summary: string | null
+          client_name: string
+          client_type: string
+          complexity: string
+          created_at: string
+          created_by: string
+          deliverables: string[]
+          duration_months: number
+          has_existing_team: boolean
+          id: string
+          locations: string[]
+          maturity_level: string
+          methodology: string
+          proposal_id: string
+          sector: string
+          service_type: string
+          status: string
+          total_value: number
+          version_number: number
+        }
+        Insert: {
+          change_summary?: string | null
+          client_name: string
+          client_type: string
+          complexity: string
+          created_at?: string
+          created_by: string
+          deliverables?: string[]
+          duration_months: number
+          has_existing_team?: boolean
+          id?: string
+          locations?: string[]
+          maturity_level: string
+          methodology: string
+          proposal_id: string
+          sector: string
+          service_type: string
+          status: string
+          total_value: number
+          version_number: number
+        }
+        Update: {
+          change_summary?: string | null
+          client_name?: string
+          client_type?: string
+          complexity?: string
+          created_at?: string
+          created_by?: string
+          deliverables?: string[]
+          duration_months?: number
+          has_existing_team?: boolean
+          id?: string
+          locations?: string[]
+          maturity_level?: string
+          methodology?: string
+          proposal_id?: string
+          sector?: string
+          service_type?: string
+          status?: string
+          total_value?: number
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_versions_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposals: {
         Row: {
           challenges: string | null
