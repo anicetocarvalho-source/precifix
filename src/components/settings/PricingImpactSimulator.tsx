@@ -77,16 +77,9 @@ export function PricingImpactSimulator() {
   const impactAnalysis = useMemo(() => {
     if (!proposals.length) return null;
 
-    // Filter proposals that don't have saved pricing params (they use current params)
-    const affectedProposals = proposals.filter(p => !p.pricingParams);
-
-    if (!affectedProposals.length) return { 
-      totalCurrentValue: 0, 
-      totalSimulatedValue: 0, 
-      difference: 0, 
-      percentChange: 0,
-      proposalImpacts: [] 
-    };
+    // Separate proposals by whether they have saved params
+    const proposalsWithoutSavedParams = proposals.filter(p => !p.pricingParams);
+    const proposalsWithSavedParams = proposals.filter(p => !!p.pricingParams);
 
     const currentPricingParams: PricingParams = {
       hourlyRates: {
@@ -122,7 +115,8 @@ export function PricingImpactSimulator() {
       marginPercentage: activeSimulatedParams.marginPercentage,
     };
 
-    const proposalImpacts = affectedProposals.map(proposal => {
+    // Calculate impact for proposals WITHOUT saved params (will be affected by changes)
+    const affectedProposalImpacts = proposalsWithoutSavedParams.map(proposal => {
       const currentPricing = calculatePricing(proposal.formData, currentPricingParams);
       const simulatedPricing = calculatePricing(proposal.formData, simulatedPricingParams);
       const difference = simulatedPricing.finalPrice - currentPricing.finalPrice;
@@ -137,11 +131,34 @@ export function PricingImpactSimulator() {
         simulatedValue: simulatedPricing.finalPrice,
         difference,
         percentChange,
+        hasSavedParams: false,
       };
     });
 
-    const totalCurrentValue = proposalImpacts.reduce((sum, p) => sum + p.currentValue, 0);
-    const totalSimulatedValue = proposalImpacts.reduce((sum, p) => sum + p.simulatedValue, 0);
+    // Calculate what proposals WITH saved params would be if recalculated
+    const savedProposalImpacts = proposalsWithSavedParams.map(proposal => {
+      const currentPricing = proposal.pricing; // Use their current saved pricing
+      const simulatedPricing = calculatePricing(proposal.formData, simulatedPricingParams);
+      const difference = simulatedPricing.finalPrice - currentPricing.finalPrice;
+      const percentChange = currentPricing.finalPrice > 0 
+        ? ((difference / currentPricing.finalPrice) * 100) 
+        : 0;
+
+      return {
+        id: proposal.id,
+        clientName: proposal.formData.clientName,
+        currentValue: currentPricing.finalPrice,
+        simulatedValue: simulatedPricing.finalPrice,
+        difference,
+        percentChange,
+        hasSavedParams: true,
+      };
+    });
+
+    const allProposalImpacts = [...affectedProposalImpacts, ...savedProposalImpacts];
+
+    const totalCurrentValue = allProposalImpacts.reduce((sum, p) => sum + p.currentValue, 0);
+    const totalSimulatedValue = allProposalImpacts.reduce((sum, p) => sum + p.simulatedValue, 0);
     const totalDifference = totalSimulatedValue - totalCurrentValue;
     const totalPercentChange = totalCurrentValue > 0 
       ? ((totalDifference / totalCurrentValue) * 100) 
@@ -152,7 +169,9 @@ export function PricingImpactSimulator() {
       totalSimulatedValue,
       difference: totalDifference,
       percentChange: totalPercentChange,
-      proposalImpacts,
+      affectedCount: proposalsWithoutSavedParams.length,
+      savedCount: proposalsWithSavedParams.length,
+      proposalImpacts: allProposalImpacts,
     };
   }, [proposals, parameters, activeSimulatedParams]);
 
@@ -378,7 +397,12 @@ export function PricingImpactSimulator() {
           <CardHeader>
             <CardTitle className="text-lg">Impacto nas Propostas</CardTitle>
             <CardDescription>
-              {impactAnalysis.proposalImpacts.length} proposta(s) sem parâmetros guardados serão afectadas
+              {impactAnalysis.affectedCount > 0 && (
+                <span className="block">{impactAnalysis.affectedCount} proposta(s) sem parâmetros guardados serão afectadas automaticamente</span>
+              )}
+              {impactAnalysis.savedCount > 0 && (
+                <span className="block">{impactAnalysis.savedCount} proposta(s) com parâmetros guardados (não serão alteradas)</span>
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -420,7 +444,12 @@ export function PricingImpactSimulator() {
                 {impactAnalysis.proposalImpacts.map((impact) => (
                   <div key={impact.id} className="flex items-center justify-between p-4 bg-card hover:bg-muted/50 transition-colors">
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{impact.clientName}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium truncate">{impact.clientName}</p>
+                        {impact.hasSavedParams && (
+                          <Badge variant="secondary" className="text-xs">Params guardados</Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <span>{formatCurrency(impact.currentValue)}</span>
                         <ArrowRight className="w-3 h-3" />
@@ -457,13 +486,12 @@ export function PricingImpactSimulator() {
       )}
 
       {/* No proposals message */}
-      {impactAnalysis && impactAnalysis.proposalImpacts.length === 0 && (
+      {/* No proposals message */}
+      {(!impactAnalysis || proposals.length === 0) && (
         <Card>
           <CardContent className="p-8 text-center">
             <p className="text-muted-foreground">
-              {proposals.length === 0 
-                ? 'Não existem propostas para simular o impacto.'
-                : 'Todas as propostas têm parâmetros de precificação guardados, por isso não serão afectadas por alterações nos parâmetros globais.'}
+              Não existem propostas para simular o impacto. Crie uma proposta primeiro.
             </p>
           </CardContent>
         </Card>
@@ -476,9 +504,9 @@ export function PricingImpactSimulator() {
             <AlertDialogTitle>Aplicar Parâmetros Simulados?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acção irá guardar os parâmetros simulados como os novos parâmetros de precificação globais.
-              {impactAnalysis && impactAnalysis.proposalImpacts.length > 0 && (
+              {impactAnalysis && impactAnalysis.affectedCount > 0 && (
                 <span className="block mt-2">
-                  <strong>{impactAnalysis.proposalImpacts.length}</strong> proposta(s) sem parâmetros guardados terão os valores recalculados.
+                  <strong>{impactAnalysis.affectedCount}</strong> proposta(s) sem parâmetros guardados terão os valores recalculados.
                 </span>
               )}
             </AlertDialogDescription>
