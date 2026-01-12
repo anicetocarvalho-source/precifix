@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      pricing_parameters: {
+        Row: {
+          created_at: string
+          id: string
+          margin_percentage: number
+          multiplier_high: number
+          multiplier_low: number
+          multiplier_medium: number
+          overhead_percentage: number
+          rate_analyst: number
+          rate_consultant: number
+          rate_coordinator: number
+          rate_senior_manager: number
+          rate_trainer: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          margin_percentage?: number
+          multiplier_high?: number
+          multiplier_low?: number
+          multiplier_medium?: number
+          overhead_percentage?: number
+          rate_analyst?: number
+          rate_consultant?: number
+          rate_coordinator?: number
+          rate_senior_manager?: number
+          rate_trainer?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          margin_percentage?: number
+          multiplier_high?: number
+          multiplier_low?: number
+          multiplier_medium?: number
+          overhead_percentage?: number
+          rate_analyst?: number
+          rate_consultant?: number
+          rate_coordinator?: number
+          rate_senior_manager?: number
+          rate_trainer?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
