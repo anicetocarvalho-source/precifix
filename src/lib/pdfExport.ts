@@ -117,6 +117,26 @@ function generateDiagnosticDocument(doc: jsPDF, proposal: Proposal): void {
   
   let y = 50;
   
+  // Client Contact Info
+  if (formData.clientEmail || formData.clientPhone) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    
+    let contactInfo = 'Contacto: ';
+    if (formData.clientEmail && formData.clientPhone) {
+      contactInfo += `${formData.clientEmail} | Tel: ${formData.clientPhone}`;
+    } else if (formData.clientEmail) {
+      contactInfo += formData.clientEmail;
+    } else if (formData.clientPhone) {
+      contactInfo += `Tel: ${formData.clientPhone}`;
+    }
+    
+    doc.text(contactInfo, 20, y);
+    doc.setTextColor(0, 0, 0);
+    y += 10;
+  }
+  
   // Section 1: Context
   y = addSectionTitle(doc, '1. Contexto e Desafios', y);
   
@@ -262,6 +282,26 @@ function generateBudgetDocument(doc: jsPDF, proposal: Proposal): void {
   addFooter(doc, doc.getNumberOfPages());
   
   let y = 50;
+  
+  // Client Contact Info
+  if (formData.clientEmail || formData.clientPhone) {
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    
+    let contactInfo = 'Contacto: ';
+    if (formData.clientEmail && formData.clientPhone) {
+      contactInfo += `${formData.clientEmail} | Tel: ${formData.clientPhone}`;
+    } else if (formData.clientEmail) {
+      contactInfo += formData.clientEmail;
+    } else if (formData.clientPhone) {
+      contactInfo += `Tel: ${formData.clientPhone}`;
+    }
+    
+    doc.text(contactInfo, 20, y);
+    doc.setTextColor(0, 0, 0);
+    y += 10;
+  }
   
   // Cost Breakdown
   y = addSectionTitle(doc, 'Decomposicao de Custos por Perfil', y);
