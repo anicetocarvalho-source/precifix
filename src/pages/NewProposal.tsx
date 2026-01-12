@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
-import { useProposalStore } from '@/stores/proposalStore';
+import { useProposals } from '@/hooks/useProposals';
 import {
   ProposalFormData,
   ClientType,
@@ -168,8 +168,9 @@ const questions: Question[] = [
 
 export default function NewProposal() {
   const navigate = useNavigate();
-  const { createProposal } = useProposalStore();
+  const { createProposal } = useProposals();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<ProposalFormData>>({
     locations: [''],
     deliverables: [],
@@ -179,11 +180,12 @@ export default function NewProposal() {
   const currentQuestion = questions[currentStep];
   const progress = ((currentStep) / (questions.length - 1)) * 100;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < questions.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
       // Submit form
+      setIsSubmitting(true);
       const finalData: ProposalFormData = {
         clientType: (formData.clientType as ClientType) || 'private',
         clientName: formData.clientName || '',
@@ -197,8 +199,15 @@ export default function NewProposal() {
         hasExistingTeam: formData.hasExistingTeam === true,
         methodology: (formData.methodology as Methodology) || 'hybrid',
       };
-      const proposal = createProposal(finalData);
-      navigate(`/proposta/${proposal.id}`);
+      
+      try {
+        const result = await createProposal.mutateAsync(finalData);
+        navigate(`/proposta/${result.id}`);
+      } catch (error) {
+        console.error('Error creating proposal:', error);
+      } finally {
+        setIsSubmitting(false);
+      }
     }
   };
 

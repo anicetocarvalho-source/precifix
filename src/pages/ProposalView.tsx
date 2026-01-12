@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
-import { useProposalStore } from '@/stores/proposalStore';
+import { useProposals } from '@/hooks/useProposals';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
 import {
   ArrowLeft,
@@ -17,6 +17,7 @@ import {
   Target,
   TrendingUp,
   Clock,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -26,10 +27,20 @@ type DocumentTab = 'diagnostic' | 'technical' | 'budget';
 export default function ProposalView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getProposal, updateProposalStatus } = useProposalStore();
+  const { getProposal, updateProposalStatus, isLoading } = useProposals();
   const [activeTab, setActiveTab] = useState<DocumentTab>('diagnostic');
 
   const proposal = id ? getProposal(id) : undefined;
+
+  if (isLoading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        </div>
+      </MainLayout>
+    );
+  }
 
   if (!proposal) {
     return (
@@ -100,7 +111,7 @@ export default function ProposalView() {
               Exportar PDF
             </Button>
             <Button
-              onClick={() => updateProposalStatus(proposal.id, 'sent')}
+              onClick={() => updateProposalStatus.mutate({ id: proposal.id, status: 'sent' })}
               className="gap-2"
             >
               <Send className="w-4 h-4" />

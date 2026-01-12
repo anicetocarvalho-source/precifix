@@ -14,7 +14,102 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          company_name: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          company_name?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      proposals: {
+        Row: {
+          challenges: string | null
+          client_name: string
+          client_type: string
+          complexity: string
+          created_at: string
+          deliverables: string[]
+          duration_months: number
+          has_existing_team: boolean
+          id: string
+          locations: string[]
+          maturity_level: string
+          methodology: string
+          objectives: string | null
+          sector: string
+          service_type: string
+          status: string
+          total_value: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          challenges?: string | null
+          client_name: string
+          client_type: string
+          complexity?: string
+          created_at?: string
+          deliverables?: string[]
+          duration_months: number
+          has_existing_team?: boolean
+          id?: string
+          locations?: string[]
+          maturity_level?: string
+          methodology?: string
+          objectives?: string | null
+          sector: string
+          service_type: string
+          status?: string
+          total_value: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          challenges?: string | null
+          client_name?: string
+          client_type?: string
+          complexity?: string
+          created_at?: string
+          deliverables?: string[]
+          duration_months?: number
+          has_existing_team?: boolean
+          id?: string
+          locations?: string[]
+          maturity_level?: string
+          methodology?: string
+          objectives?: string | null
+          sector?: string
+          service_type?: string
+          status?: string
+          total_value?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,5 +1,5 @@
 import { MainLayout } from '@/components/layout/MainLayout';
-import { useProposalStore } from '@/stores/proposalStore';
+import { useProposals } from '@/hooks/useProposals';
 import { formatCurrency } from '@/lib/pricing';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,10 +9,10 @@ import {
   Calendar,
   Building,
   ArrowUpRight,
-  MoreHorizontal,
   Trash2,
   FileText,
   Plus,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
@@ -27,7 +27,7 @@ const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
 };
 
 export default function History() {
-  const { proposals, deleteProposal } = useProposalStore();
+  const { proposals, isLoading, deleteProposal } = useProposals();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProposalStatus | 'all'>('all');
 
@@ -91,7 +91,11 @@ export default function History() {
 
         {/* Table */}
         <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          {filteredProposals.length === 0 ? (
+          {isLoading ? (
+            <div className="p-12 flex items-center justify-center">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          ) : filteredProposals.length === 0 ? (
             <div className="p-12 text-center">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-8 h-8 text-muted-foreground" />
@@ -186,7 +190,7 @@ export default function History() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => deleteProposal(proposal.id)}
+                            onClick={() => deleteProposal.mutate(proposal.id)}
                             className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <Trash2 className="w-4 h-4" />
