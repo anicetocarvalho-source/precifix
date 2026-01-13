@@ -95,6 +95,113 @@ export type Database = {
         }
         Relationships: []
       }
+      proposal_services: {
+        Row: {
+          complexity: string
+          coverage_duration: string | null
+          created_at: string
+          deliverable_formats: string[] | null
+          deliverables: string[]
+          display_order: number
+          duration_unit: string
+          estimated_duration: number
+          event_date: string | null
+          event_days: number | null
+          event_extras: Json | null
+          event_staffing: Json | null
+          event_type: string | null
+          has_crm_integration: boolean | null
+          has_erp_integration: boolean | null
+          has_maintenance: boolean | null
+          has_payment_integration: boolean | null
+          id: string
+          includes_brand_guidelines: boolean | null
+          maintenance_months: number | null
+          number_of_concepts: number | null
+          number_of_modules: number | null
+          number_of_pages: number | null
+          number_of_revisions: number | null
+          post_production_hours: number | null
+          proposal_id: string
+          service_type: string
+          service_value: number
+          updated_at: string
+          web_project_type: string | null
+        }
+        Insert: {
+          complexity?: string
+          coverage_duration?: string | null
+          created_at?: string
+          deliverable_formats?: string[] | null
+          deliverables?: string[]
+          display_order?: number
+          duration_unit?: string
+          estimated_duration?: number
+          event_date?: string | null
+          event_days?: number | null
+          event_extras?: Json | null
+          event_staffing?: Json | null
+          event_type?: string | null
+          has_crm_integration?: boolean | null
+          has_erp_integration?: boolean | null
+          has_maintenance?: boolean | null
+          has_payment_integration?: boolean | null
+          id?: string
+          includes_brand_guidelines?: boolean | null
+          maintenance_months?: number | null
+          number_of_concepts?: number | null
+          number_of_modules?: number | null
+          number_of_pages?: number | null
+          number_of_revisions?: number | null
+          post_production_hours?: number | null
+          proposal_id: string
+          service_type: string
+          service_value?: number
+          updated_at?: string
+          web_project_type?: string | null
+        }
+        Update: {
+          complexity?: string
+          coverage_duration?: string | null
+          created_at?: string
+          deliverable_formats?: string[] | null
+          deliverables?: string[]
+          display_order?: number
+          duration_unit?: string
+          estimated_duration?: number
+          event_date?: string | null
+          event_days?: number | null
+          event_extras?: Json | null
+          event_staffing?: Json | null
+          event_type?: string | null
+          has_crm_integration?: boolean | null
+          has_erp_integration?: boolean | null
+          has_maintenance?: boolean | null
+          has_payment_integration?: boolean | null
+          id?: string
+          includes_brand_guidelines?: boolean | null
+          maintenance_months?: number | null
+          number_of_concepts?: number | null
+          number_of_modules?: number | null
+          number_of_pages?: number | null
+          number_of_revisions?: number | null
+          post_production_hours?: number | null
+          proposal_id?: string
+          service_type?: string
+          service_value?: number
+          updated_at?: string
+          web_project_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_services_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_versions: {
         Row: {
           change_summary: string | null
