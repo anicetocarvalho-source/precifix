@@ -12,6 +12,7 @@ import {
   Methodology,
   SERVICE_CATEGORIES,
   ServiceCategory,
+  DurationUnit,
 } from '@/types/proposal';
 import {
   ArrowLeft,
@@ -48,7 +49,7 @@ interface QuestionOption {
 
 interface Question {
   id: keyof ProposalFormData | 'intro' | 'sectorSpecific';
-  type: 'intro' | 'select' | 'multi-select' | 'text' | 'number' | 'locations' | 'service-selector' | 'sector-specific';
+  type: 'intro' | 'select' | 'multi-select' | 'text' | 'number' | 'locations' | 'service-selector' | 'sector-specific' | 'duration';
   title: string;
   subtitle?: string;
   options?: QuestionOption[];
@@ -56,6 +57,13 @@ interface Question {
   suffix?: string;
   condition?: (data: Partial<ProposalFormData>) => boolean;
 }
+
+// Duration unit labels
+const DURATION_UNIT_LABELS: Record<DurationUnit, { singular: string; plural: string }> = {
+  days: { singular: 'dia', plural: 'dias' },
+  weeks: { singular: 'semana', plural: 'semanas' },
+  months: { singular: 'mês', plural: 'meses' },
+};
 
 // Get questions dynamically based on service category
 const getQuestions = (formData: Partial<ProposalFormData>): Question[] => {
@@ -126,53 +134,47 @@ const getQuestions = (formData: Partial<ProposalFormData>): Question[] => {
     });
   }
 
-  // Duration question varies by category
+  // Duration question varies by category - now with unit selection
   if (serviceCategory === 'consulting') {
     questions.push({
       id: 'estimatedDuration',
-      type: 'number',
+      type: 'duration',
       title: 'Qual a duração estimada do projecto?',
-      subtitle: 'Duração total do projecto de consultoria',
+      subtitle: 'Escolha a unidade e indique a duração total',
       placeholder: '6',
-      suffix: 'meses',
     });
   } else if (serviceCategory === 'technology') {
     questions.push({
       id: 'estimatedDuration',
-      type: 'number',
+      type: 'duration',
       title: 'Qual o prazo estimado de desenvolvimento?',
       subtitle: 'Tempo necessário para entregar o projecto',
       placeholder: '3',
-      suffix: 'meses',
     });
   } else if (serviceCategory === 'creative') {
     questions.push({
       id: 'estimatedDuration',
-      type: 'number',
+      type: 'duration',
       title: 'Qual o prazo estimado de entrega?',
       subtitle: 'Tempo para conclusão dos materiais criativos',
-      placeholder: '1',
-      suffix: 'meses',
+      placeholder: '2',
     });
   } else if (serviceCategory === 'events') {
-    // Events already have event-specific duration in sector-specific fields
     questions.push({
       id: 'estimatedDuration',
-      type: 'number',
-      title: 'Quantos meses até o evento?',
+      type: 'duration',
+      title: 'Quantas semanas/meses até o evento?',
       subtitle: 'Tempo de preparação e planeamento',
       placeholder: '2',
-      suffix: 'meses',
     });
   } else {
     // Default for services not yet selected
     questions.push({
       id: 'estimatedDuration',
-      type: 'number',
+      type: 'duration',
       title: 'Qual a duração estimada?',
-      subtitle: 'Em meses',
+      subtitle: 'Escolha a unidade e indique a duração',
       placeholder: '6',
-      suffix: 'meses',
     });
   }
 
@@ -630,6 +632,7 @@ export default function NewProposal() {
         sector: formData.sector || '',
         serviceType: (formData.serviceType as ServiceType) || 'pmo',
         estimatedDuration: formData.estimatedDuration || 6,
+        durationUnit: formData.durationUnit || 'months',
         locations: locations.filter(Boolean),
         complexity: (formData.complexity as Complexity) || 'medium',
         clientMaturity: (formData.clientMaturity as 'low' | 'medium' | 'high') || 'medium',
@@ -733,6 +736,10 @@ export default function NewProposal() {
     if (currentQuestion.type === 'number') {
       const value = formData[currentQuestion.id as keyof ProposalFormData];
       return typeof value === 'number' && value > 0;
+    }
+    if (currentQuestion.type === 'duration') {
+      const duration = formData.estimatedDuration;
+      return typeof duration === 'number' && duration > 0;
     }
     if (currentQuestion.type === 'locations') {
       return locations.some((l) => l.trim().length > 0);
@@ -1040,6 +1047,66 @@ export default function NewProposal() {
                     <span className="text-lg text-muted-foreground">{currentQuestion.suffix}</span>
                   )}
                 </div>
+                {currentError && (
+                  <div className="flex items-center justify-center gap-2 text-destructive">
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="text-sm">{currentError}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Duration Input with Unit Selection */}
+            {currentQuestion.type === 'duration' && (
+              <div className="space-y-6">
+                {/* Unit Selection */}
+                <div className="flex justify-center gap-2">
+                  {(['days', 'weeks', 'months'] as DurationUnit[]).map((unit) => {
+                    const isSelected = (formData.durationUnit || 'months') === unit;
+                    return (
+                      <button
+                        key={unit}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, durationUnit: unit })}
+                        className={cn(
+                          'px-4 py-2 rounded-lg border-2 transition-all duration-200 font-medium text-sm',
+                          isSelected
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border hover:border-primary/50 text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        {DURATION_UNIT_LABELS[unit].plural.charAt(0).toUpperCase() + DURATION_UNIT_LABELS[unit].plural.slice(1)}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Duration Value Input */}
+                <div className="flex items-center justify-center gap-4">
+                  <input
+                    type="number"
+                    min="1"
+                    max={formData.durationUnit === 'days' ? 365 : formData.durationUnit === 'weeks' ? 52 : 60}
+                    value={formData.estimatedDuration || ''}
+                    onChange={(e) => setFormData({ ...formData, estimatedDuration: parseInt(e.target.value) || 0 })}
+                    onBlur={markFieldTouched}
+                    placeholder={currentQuestion.placeholder}
+                    className={cn(
+                      "w-32 px-4 py-4 text-2xl font-bold text-center rounded-xl border-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/20",
+                      currentError
+                        ? 'border-destructive focus:border-destructive'
+                        : 'border-border focus:border-primary'
+                    )}
+                    autoFocus
+                  />
+                  <span className="text-lg text-muted-foreground">
+                    {formData.estimatedDuration === 1 
+                      ? DURATION_UNIT_LABELS[formData.durationUnit || 'months'].singular
+                      : DURATION_UNIT_LABELS[formData.durationUnit || 'months'].plural
+                    }
+                  </span>
+                </div>
+
                 {currentError && (
                   <div className="flex items-center justify-center gap-2 text-destructive">
                     <AlertCircle className="w-4 h-4" />

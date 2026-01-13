@@ -131,6 +131,7 @@ export function useProposals() {
           sector: row.sector,
           serviceType: row.service_type as ServiceType,
           estimatedDuration: row.duration_months,
+          durationUnit: 'months', // Default to months for backwards compatibility
           locations: row.locations,
           complexity: row.complexity as Complexity,
           clientMaturity: row.maturity_level as 'low' | 'medium' | 'high',

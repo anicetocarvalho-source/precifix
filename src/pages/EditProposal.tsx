@@ -10,6 +10,7 @@ import {
   ServiceType,
   Methodology,
   SERVICE_CATEGORIES,
+  DurationUnit,
 } from '@/types/proposal';
 import {
   ArrowLeft,
@@ -46,7 +47,7 @@ interface QuestionOption {
 
 interface Question {
   id: keyof ProposalFormData | 'sectorSpecific';
-  type: 'select' | 'multi-select' | 'text' | 'number' | 'locations' | 'service-selector' | 'sector-specific';
+  type: 'select' | 'multi-select' | 'text' | 'number' | 'locations' | 'service-selector' | 'sector-specific' | 'duration';
   title: string;
   subtitle?: string;
   options?: QuestionOption[];
@@ -54,6 +55,13 @@ interface Question {
   suffix?: string;
   condition?: (data: Partial<ProposalFormData>) => boolean;
 }
+
+// Duration unit labels
+const DURATION_UNIT_LABELS: Record<DurationUnit, { singular: string; plural: string }> = {
+  days: { singular: 'dia', plural: 'dias' },
+  weeks: { singular: 'semana', plural: 'semanas' },
+  months: { singular: 'mês', plural: 'meses' },
+};
 
 const baseQuestions: Question[] = [
   {
@@ -115,11 +123,10 @@ const baseQuestions: Question[] = [
   },
   {
     id: 'estimatedDuration',
-    type: 'number',
+    type: 'duration',
     title: 'Qual a duração estimada do projecto?',
-    subtitle: 'Em meses',
+    subtitle: 'Escolha a unidade e indique a duração total',
     placeholder: '6',
-    suffix: 'meses',
   },
   {
     id: 'locations',
@@ -256,6 +263,7 @@ export default function EditProposal() {
         sector: formData.sector || '',
         serviceType: (formData.serviceType as ServiceType) || 'pmo',
         estimatedDuration: formData.estimatedDuration || 6,
+        durationUnit: formData.durationUnit || 'months',
         locations: locations.filter(Boolean),
         complexity: (formData.complexity as Complexity) || 'medium',
         clientMaturity: (formData.clientMaturity as 'low' | 'medium' | 'high') || 'medium',
@@ -357,6 +365,10 @@ export default function EditProposal() {
     if (currentQuestion.type === 'number') {
       const value = formData[currentQuestion.id as keyof ProposalFormData];
       return typeof value === 'number' && value > 0;
+    }
+    if (currentQuestion.type === 'duration') {
+      const duration = formData.estimatedDuration;
+      return typeof duration === 'number' && duration > 0;
     }
     if (currentQuestion.type === 'locations') {
       return locations.some((l) => l.trim().length > 0);
@@ -623,6 +635,53 @@ export default function EditProposal() {
                 {currentQuestion.suffix && (
                   <span className="text-lg text-muted-foreground">{currentQuestion.suffix}</span>
                 )}
+              </div>
+            )}
+
+            {/* Duration input with unit selection */}
+            {currentQuestion.type === 'duration' && (
+              <div className="space-y-6">
+                {/* Unit Selection */}
+                <div className="flex justify-center gap-2">
+                  {(['days', 'weeks', 'months'] as DurationUnit[]).map((unit) => {
+                    const isSelected = (formData.durationUnit || 'months') === unit;
+                    return (
+                      <button
+                        key={unit}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, durationUnit: unit })}
+                        className={cn(
+                          'px-4 py-2 rounded-lg border-2 transition-all duration-200 font-medium text-sm',
+                          isSelected
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border hover:border-primary/50 text-muted-foreground hover:text-foreground'
+                        )}
+                      >
+                        {DURATION_UNIT_LABELS[unit].plural.charAt(0).toUpperCase() + DURATION_UNIT_LABELS[unit].plural.slice(1)}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Duration Value Input */}
+                <div className="flex items-center justify-center gap-4">
+                  <input
+                    type="number"
+                    min="1"
+                    max={formData.durationUnit === 'days' ? 365 : formData.durationUnit === 'weeks' ? 52 : 60}
+                    value={formData.estimatedDuration || ''}
+                    onChange={(e) => setFormData({ ...formData, estimatedDuration: parseInt(e.target.value) || 0 })}
+                    placeholder={currentQuestion.placeholder}
+                    className="w-32 px-4 py-4 text-2xl font-bold text-center rounded-xl border-2 border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    autoFocus
+                  />
+                  <span className="text-lg text-muted-foreground">
+                    {formData.estimatedDuration === 1 
+                      ? DURATION_UNIT_LABELS[formData.durationUnit || 'months'].singular
+                      : DURATION_UNIT_LABELS[formData.durationUnit || 'months'].plural
+                    }
+                  </span>
+                </div>
               </div>
             )}
 

@@ -37,6 +37,7 @@ export function PricingPreview({ formData }: PricingPreviewProps) {
       sector: formData.sector || '',
       serviceType: formData.serviceType as ServiceType,
       estimatedDuration: formData.estimatedDuration || 1,
+      durationUnit: formData.durationUnit || 'months',
       locations: formData.locations?.filter(Boolean) || ['Luanda'],
       complexity: (formData.complexity as Complexity) || 'medium',
       clientMaturity: formData.clientMaturity || 'medium',
