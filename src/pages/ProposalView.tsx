@@ -15,7 +15,18 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { SectorDetailsView } from '@/components/proposal/SectorDetailsView';
-import { SERVICE_LABELS, SERVICE_CATEGORIES } from '@/types/proposal';
+import { SERVICE_LABELS, SERVICE_CATEGORIES, DurationUnit } from '@/types/proposal';
+
+// Helper function to format duration in a friendly way
+const formatDuration = (duration: number, unit: DurationUnit = 'months'): string => {
+  const labels: Record<DurationUnit, { singular: string; plural: string }> = {
+    days: { singular: 'dia', plural: 'dias' },
+    weeks: { singular: 'semana', plural: 'semanas' },
+    months: { singular: 'mês', plural: 'meses' },
+  };
+  const label = duration === 1 ? labels[unit].singular : labels[unit].plural;
+  return `${duration} ${label}`;
+};
 import {
   ArrowLeft,
   Download,
@@ -210,7 +221,7 @@ export default function ProposalView() {
                 )}
               </div>
               <p className="text-muted-foreground">
-                {serviceLabels[formData.serviceType]} • {formData.estimatedDuration} meses
+                {serviceLabels[formData.serviceType]} • {formatDuration(formData.estimatedDuration, formData.durationUnit)}
               </p>
             </div>
           </div>
@@ -316,7 +327,7 @@ export default function ProposalView() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Duração</p>
-                <p className="font-semibold text-foreground">{formData.estimatedDuration} meses</p>
+                <p className="font-semibold text-foreground">{formatDuration(formData.estimatedDuration, formData.durationUnit)}</p>
               </div>
             </div>
           </div>
@@ -407,7 +418,7 @@ export default function ProposalView() {
                   </h3>
                   <ul className="space-y-2">
                     {[
-                      `Implementar ${serviceLabels[formData.serviceType]} ao longo de ${formData.estimatedDuration} meses`,
+                      `Implementar ${serviceLabels[formData.serviceType]} ao longo de ${formatDuration(formData.estimatedDuration, formData.durationUnit)}`,
                       `Garantir entregáveis de alta qualidade: ${formData.deliverables.join(', ')}`,
                       `Utilizar metodologia ${methodologyLabels[formData.methodology]}`,
                       formData.hasExistingTeam ? 'Trabalhar em colaboração com a equipa existente do cliente' : 'Fornecer equipa completa de consultoria',
@@ -464,7 +475,7 @@ export default function ProposalView() {
                   <h3 className="text-lg font-semibold text-foreground mb-4">Escopo Detalhado</h3>
                   <p className="text-foreground bg-muted/50 rounded-lg p-4">
                     {serviceLabels[formData.serviceType]} para {formData.clientName}, abrangendo {formData.locations.join(', ')}, 
-                    com duração de {formData.estimatedDuration} meses e metodologia {methodologyLabels[formData.methodology].toLowerCase()}.
+                    com duração de {formatDuration(formData.estimatedDuration, formData.durationUnit)} e metodologia {methodologyLabels[formData.methodology].toLowerCase()}.
                   </p>
                 </section>
 
