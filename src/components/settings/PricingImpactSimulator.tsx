@@ -1,13 +1,12 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { useProposals } from '@/hooks/useProposals';
-import { usePricingParameters } from '@/hooks/usePricingParameters';
-import { calculatePricing, formatCurrency, PricingParams } from '@/lib/pricing';
+import { usePricingParameters, toPricingParams, DEFAULT_PRICING_PARAMETERS } from '@/hooks/usePricingParameters';
+import { calculatePricing, formatCurrency } from '@/lib/pricing';
 import { TrendingUp, TrendingDown, Minus, Calculator, RotateCcw, ArrowRight, Save, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
@@ -25,7 +24,7 @@ export function PricingImpactSimulator() {
   const { parameters, isLoading, saveParameters } = usePricingParameters();
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
-  // Simulated parameters (editable)
+  // Simulated parameters (editable) - only consulting rates for now
   const [simulatedParams, setSimulatedParams] = useState<{
     rateSeniorManager: number;
     rateConsultant: number;
@@ -57,6 +56,7 @@ export function PricingImpactSimulator() {
     if (!simulatedParams) return;
     
     await saveParameters.mutateAsync({
+      ...DEFAULT_PRICING_PARAMETERS,
       rateSeniorManager: simulatedParams.rateSeniorManager,
       rateConsultant: simulatedParams.rateConsultant,
       rateAnalyst: simulatedParams.rateAnalyst,
@@ -81,39 +81,21 @@ export function PricingImpactSimulator() {
     const proposalsWithoutSavedParams = proposals.filter(p => !p.pricingParams);
     const proposalsWithSavedParams = proposals.filter(p => !!p.pricingParams);
 
-    const currentPricingParams: PricingParams = {
-      hourlyRates: {
-        seniorManager: parameters.rateSeniorManager,
-        consultant: parameters.rateConsultant,
-        analyst: parameters.rateAnalyst,
-        coordinator: parameters.rateCoordinator,
-        trainer: parameters.rateTrainer,
-      },
-      complexityMultipliers: {
-        low: parameters.multiplierLow,
-        medium: parameters.multiplierMedium,
-        high: parameters.multiplierHigh,
-      },
-      overheadPercentage: parameters.overheadPercentage,
-      marginPercentage: parameters.marginPercentage,
-    };
+    const currentPricingParams = toPricingParams(parameters);
 
-    const simulatedPricingParams: PricingParams = {
-      hourlyRates: {
-        seniorManager: activeSimulatedParams.rateSeniorManager,
-        consultant: activeSimulatedParams.rateConsultant,
-        analyst: activeSimulatedParams.rateAnalyst,
-        coordinator: activeSimulatedParams.rateCoordinator,
-        trainer: activeSimulatedParams.rateTrainer,
-      },
-      complexityMultipliers: {
-        low: activeSimulatedParams.multiplierLow,
-        medium: activeSimulatedParams.multiplierMedium,
-        high: activeSimulatedParams.multiplierHigh,
-      },
+    const simulatedPricingParams = toPricingParams({
+      ...parameters,
+      rateSeniorManager: activeSimulatedParams.rateSeniorManager,
+      rateConsultant: activeSimulatedParams.rateConsultant,
+      rateAnalyst: activeSimulatedParams.rateAnalyst,
+      rateCoordinator: activeSimulatedParams.rateCoordinator,
+      rateTrainer: activeSimulatedParams.rateTrainer,
+      multiplierLow: activeSimulatedParams.multiplierLow,
+      multiplierMedium: activeSimulatedParams.multiplierMedium,
+      multiplierHigh: activeSimulatedParams.multiplierHigh,
       overheadPercentage: activeSimulatedParams.overheadPercentage,
       marginPercentage: activeSimulatedParams.marginPercentage,
-    };
+    });
 
     // Calculate impact for proposals WITHOUT saved params (will be affected by changes)
     const affectedProposalImpacts = proposalsWithoutSavedParams.map(proposal => {
@@ -244,7 +226,7 @@ export function PricingImpactSimulator() {
             {/* Hourly Rates */}
             <div className="space-y-4">
               <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
-                Taxas Horárias
+                Taxas Horárias (Consultoria)
               </h4>
               
               <div className="space-y-3">
@@ -435,64 +417,41 @@ export function PricingImpactSimulator() {
               </div>
             </div>
 
-            {/* Per-Proposal Impact */}
+            {/* Individual Proposals */}
             <div className="space-y-3">
-              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
-                Detalhe por Proposta
-              </h4>
-              <div className="divide-y divide-border rounded-lg border border-border overflow-hidden">
-                {impactAnalysis.proposalImpacts.map((impact) => (
-                  <div key={impact.id} className="flex items-center justify-between p-4 bg-card hover:bg-muted/50 transition-colors">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">{impact.clientName}</p>
-                        {impact.hasSavedParams && (
-                          <Badge variant="secondary" className="text-xs">Params guardados</Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{formatCurrency(impact.currentValue)}</span>
-                        <ArrowRight className="w-3 h-3" />
-                        <span>{formatCurrency(impact.simulatedValue)}</span>
-                      </div>
+              <h4 className="font-medium text-sm">Detalhe por Proposta</h4>
+              <div className="space-y-2">
+                {impactAnalysis.proposalImpacts.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{p.clientName}</span>
+                      {p.hasSavedParams && (
+                        <Badge variant="outline" className="text-xs">Parâmetros guardados</Badge>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 ml-4">
-                      {getDifferenceIcon(impact.difference)}
-                      <span className={`font-medium ${getDifferenceColor(impact.difference)}`}>
-                        {impact.difference >= 0 ? '+' : ''}{formatCurrency(impact.difference)}
-                      </span>
-                      <Badge 
-                        variant={impact.difference >= 0 ? 'outline' : 'destructive'} 
-                        className="ml-1"
-                      >
-                        {impact.percentChange >= 0 ? '+' : ''}{impact.percentChange.toFixed(1)}%
-                      </Badge>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-muted-foreground">{formatCurrency(p.currentValue)}</span>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                      <span className="font-medium">{formatCurrency(p.simulatedValue)}</span>
+                      <div className="flex items-center gap-1">
+                        {getDifferenceIcon(p.difference)}
+                        <span className={getDifferenceColor(p.difference)}>
+                          {p.percentChange >= 0 ? '+' : ''}{p.percentChange.toFixed(1)}%
+                        </span>
+                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-
-            {hasChanges && (
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
-                <p className="text-sm text-amber-700 dark:text-amber-400">
-                  <strong>Nota:</strong> Esta é apenas uma simulação. Para aplicar estas alterações, 
-                  guarde os novos parâmetros na aba "Parâmetros de Precificação".
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
       )}
 
-      {/* No proposals message */}
-      {/* No proposals message */}
-      {(!impactAnalysis || proposals.length === 0) && (
+      {(!impactAnalysis || impactAnalysis.proposalImpacts.length === 0) && (
         <Card>
-          <CardContent className="p-8 text-center">
-            <p className="text-muted-foreground">
-              Não existem propostas para simular o impacto. Crie uma proposta primeiro.
-            </p>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            Nenhuma proposta disponível para simulação
           </CardContent>
         </Card>
       )}
@@ -501,27 +460,16 @@ export function PricingImpactSimulator() {
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Aplicar Parâmetros Simulados?</AlertDialogTitle>
+            <AlertDialogTitle>Aplicar Novos Parâmetros?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acção irá guardar os parâmetros simulados como os novos parâmetros de precificação globais.
-              {impactAnalysis && impactAnalysis.affectedCount > 0 && (
-                <span className="block mt-2">
-                  <strong>{impactAnalysis.affectedCount}</strong> proposta(s) sem parâmetros guardados terão os valores recalculados.
-                </span>
-              )}
+              Esta acção irá actualizar os parâmetros de precificação globais. Novas propostas usarão estes valores.
+              Propostas existentes sem parâmetros guardados serão recalculadas.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleApplyParameters} disabled={saveParameters.isPending}>
-              {saveParameters.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  A guardar...
-                </>
-              ) : (
-                'Aplicar Parâmetros'
-              )}
+            <AlertDialogAction onClick={handleApplyParameters}>
+              Confirmar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

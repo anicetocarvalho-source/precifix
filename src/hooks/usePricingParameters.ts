@@ -2,20 +2,43 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  HOURLY_RATES, 
+  CREATIVE_HOURLY_RATES, 
+  EXTRAS_PRICING,
+  COMPLEXITY_MULTIPLIERS,
+  OVERHEAD_PERCENTAGE,
+  MARGIN_PERCENTAGE 
+} from '@/types/proposal';
 
 export interface PricingParameters {
   id: string;
   userId: string;
-  // Hourly rates
+  // Consulting hourly rates
   rateSeniorManager: number;
   rateConsultant: number;
   rateAnalyst: number;
   rateCoordinator: number;
   rateTrainer: number;
+  // Creative hourly rates
+  rateVideographer: number;
+  ratePhotographer: number;
+  rateVideoEditor: number;
+  rateGraphicDesigner: number;
+  rateWebDeveloper: number;
+  rateSoundTechnician: number;
+  rateLightingTechnician: number;
   // Complexity multipliers
   multiplierLow: number;
   multiplierMedium: number;
   multiplierHigh: number;
+  // Extras pricing
+  extrasDrone: number;
+  extrasMulticamStreaming: number;
+  extrasAdvancedLedLighting: number;
+  extrasSlider: number;
+  extrasCrane: number;
+  extrasAerialCrane: number;
   // Percentages
   overheadPercentage: number;
   marginPercentage: number;
@@ -23,16 +46,34 @@ export interface PricingParameters {
 
 // Default values matching the original constants
 export const DEFAULT_PRICING_PARAMETERS: Omit<PricingParameters, 'id' | 'userId'> = {
-  rateSeniorManager: 100000,
-  rateConsultant: 75000,
-  rateAnalyst: 45000,
-  rateCoordinator: 60000,
-  rateTrainer: 50000,
-  multiplierLow: 1,
-  multiplierMedium: 1.2,
-  multiplierHigh: 1.5,
-  overheadPercentage: 0.15,
-  marginPercentage: 0.25,
+  // Consulting rates
+  rateSeniorManager: HOURLY_RATES.seniorManager,
+  rateConsultant: HOURLY_RATES.consultant,
+  rateAnalyst: HOURLY_RATES.analyst,
+  rateCoordinator: HOURLY_RATES.coordinator,
+  rateTrainer: HOURLY_RATES.trainer,
+  // Creative rates
+  rateVideographer: CREATIVE_HOURLY_RATES.videographer,
+  ratePhotographer: CREATIVE_HOURLY_RATES.photographer,
+  rateVideoEditor: CREATIVE_HOURLY_RATES.videoEditor,
+  rateGraphicDesigner: CREATIVE_HOURLY_RATES.graphicDesigner,
+  rateWebDeveloper: CREATIVE_HOURLY_RATES.webDeveloper,
+  rateSoundTechnician: CREATIVE_HOURLY_RATES.soundTechnician,
+  rateLightingTechnician: CREATIVE_HOURLY_RATES.lightingTechnician,
+  // Complexity multipliers
+  multiplierLow: COMPLEXITY_MULTIPLIERS.low,
+  multiplierMedium: COMPLEXITY_MULTIPLIERS.medium,
+  multiplierHigh: COMPLEXITY_MULTIPLIERS.high,
+  // Extras
+  extrasDrone: EXTRAS_PRICING.drone,
+  extrasMulticamStreaming: EXTRAS_PRICING.multicamStreaming,
+  extrasAdvancedLedLighting: EXTRAS_PRICING.advancedLedLighting,
+  extrasSlider: EXTRAS_PRICING.slider,
+  extrasCrane: EXTRAS_PRICING.crane,
+  extrasAerialCrane: EXTRAS_PRICING.aerialCrane,
+  // Percentages
+  overheadPercentage: OVERHEAD_PERCENTAGE,
+  marginPercentage: MARGIN_PERCENTAGE,
 };
 
 export function usePricingParameters() {
@@ -62,6 +103,7 @@ export function usePricingParameters() {
         } as PricingParameters;
       }
 
+      // Map database values to interface - use defaults for new fields not in DB
       return {
         id: data.id,
         userId: data.user_id,
@@ -70,9 +112,26 @@ export function usePricingParameters() {
         rateAnalyst: Number(data.rate_analyst),
         rateCoordinator: Number(data.rate_coordinator),
         rateTrainer: Number(data.rate_trainer),
+        // Creative rates - use defaults since not in DB yet
+        rateVideographer: DEFAULT_PRICING_PARAMETERS.rateVideographer,
+        ratePhotographer: DEFAULT_PRICING_PARAMETERS.ratePhotographer,
+        rateVideoEditor: DEFAULT_PRICING_PARAMETERS.rateVideoEditor,
+        rateGraphicDesigner: DEFAULT_PRICING_PARAMETERS.rateGraphicDesigner,
+        rateWebDeveloper: DEFAULT_PRICING_PARAMETERS.rateWebDeveloper,
+        rateSoundTechnician: DEFAULT_PRICING_PARAMETERS.rateSoundTechnician,
+        rateLightingTechnician: DEFAULT_PRICING_PARAMETERS.rateLightingTechnician,
+        // Multipliers
         multiplierLow: Number(data.multiplier_low),
         multiplierMedium: Number(data.multiplier_medium),
         multiplierHigh: Number(data.multiplier_high),
+        // Extras - use defaults since not in DB yet
+        extrasDrone: DEFAULT_PRICING_PARAMETERS.extrasDrone,
+        extrasMulticamStreaming: DEFAULT_PRICING_PARAMETERS.extrasMulticamStreaming,
+        extrasAdvancedLedLighting: DEFAULT_PRICING_PARAMETERS.extrasAdvancedLedLighting,
+        extrasSlider: DEFAULT_PRICING_PARAMETERS.extrasSlider,
+        extrasCrane: DEFAULT_PRICING_PARAMETERS.extrasCrane,
+        extrasAerialCrane: DEFAULT_PRICING_PARAMETERS.extrasAerialCrane,
+        // Percentages
         overheadPercentage: Number(data.overhead_percentage),
         marginPercentage: Number(data.margin_percentage),
       } as PricingParameters;
@@ -84,6 +143,7 @@ export function usePricingParameters() {
     mutationFn: async (params: Omit<PricingParameters, 'id' | 'userId'>) => {
       if (!user?.id) throw new Error('User not authenticated');
 
+      // Only save fields that exist in the database
       const dbParams = {
         user_id: user.id,
         rate_senior_manager: params.rateSeniorManager,
@@ -167,5 +227,40 @@ export function usePricingParameters() {
     isLoading,
     saveParameters,
     resetToDefaults,
+  };
+}
+
+// Helper function to convert PricingParameters to PricingParams for calculations
+export function toPricingParams(params: PricingParameters) {
+  return {
+    hourlyRates: {
+      seniorManager: params.rateSeniorManager,
+      consultant: params.rateConsultant,
+      analyst: params.rateAnalyst,
+      coordinator: params.rateCoordinator,
+      trainer: params.rateTrainer,
+      videographer: params.rateVideographer,
+      photographer: params.ratePhotographer,
+      videoEditor: params.rateVideoEditor,
+      graphicDesigner: params.rateGraphicDesigner,
+      webDeveloper: params.rateWebDeveloper,
+      soundTechnician: params.rateSoundTechnician,
+      lightingTechnician: params.rateLightingTechnician,
+    },
+    complexityMultipliers: {
+      low: params.multiplierLow,
+      medium: params.multiplierMedium,
+      high: params.multiplierHigh,
+    },
+    extrasPricing: {
+      drone: params.extrasDrone,
+      multicamStreaming: params.extrasMulticamStreaming,
+      advancedLedLighting: params.extrasAdvancedLedLighting,
+      slider: params.extrasSlider,
+      crane: params.extrasCrane,
+      aerialCrane: params.extrasAerialCrane,
+    },
+    overheadPercentage: params.overheadPercentage,
+    marginPercentage: params.marginPercentage,
   };
 }
