@@ -1,5 +1,6 @@
 export type ClientType = 'public' | 'private' | 'ngo' | 'startup';
 export type Complexity = 'low' | 'medium' | 'high';
+export type DurationUnit = 'days' | 'weeks' | 'months';
 
 // Expanded service types to include creative and technical sectors
 export type ServiceType = 
@@ -92,7 +93,8 @@ export interface ProposalFormData {
   
   // Service details
   serviceType: ServiceType;
-  estimatedDuration: number; // months for consulting, days/hours for events
+  estimatedDuration: number; // duration value
+  durationUnit: DurationUnit; // days, weeks, or months
   locations: string[];
   complexity: Complexity;
   clientMaturity: 'low' | 'medium' | 'high';
