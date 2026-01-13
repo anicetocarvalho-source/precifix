@@ -26,6 +26,7 @@ import {
   Rocket,
   AlertCircle,
   CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -915,10 +916,13 @@ export default function NewProposal() {
               <Button
                 onClick={handleNext}
                 disabled={!canProceed() || isSubmitting}
-                className="gap-2"
+                className="gap-2 min-w-[140px]"
               >
                 {isSubmitting ? (
-                  'A criar...'
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    A criar...
+                  </>
                 ) : currentStep === questions.length - 1 ? (
                   <>
                     Criar Proposta
