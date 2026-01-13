@@ -527,6 +527,33 @@ export default function NewProposal() {
     clearDraft();
   }, [clearDraft]);
 
+  // Check if form has meaningful data
+  const hasFormData = useCallback(() => {
+    return !!(
+      formData.clientName?.trim() ||
+      formData.clientEmail?.trim() ||
+      formData.sector?.trim() ||
+      formData.serviceType ||
+      (formData.deliverables && formData.deliverables.length > 0) ||
+      locations.some(loc => loc.trim())
+    );
+  }, [formData, locations]);
+
+  // Warn user before leaving page with unsaved data
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasFormData() && !isSubmitting) {
+        e.preventDefault();
+        // Modern browsers require returnValue to be set
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [hasFormData, isSubmitting]);
+
   // Get questions dynamically based on service type
   const questions = getQuestions(formData);
   
