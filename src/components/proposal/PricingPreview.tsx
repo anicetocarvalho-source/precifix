@@ -104,9 +104,9 @@ export function PricingPreview({ formData }: PricingPreviewProps) {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -20, scale: 0.95 }}
         transition={{ duration: 0.3 }}
-        className="fixed bottom-6 right-6 z-50 w-80"
+        className="w-full"
       >
-        <div className="bg-card border border-border rounded-2xl shadow-lg overflow-hidden">
+        <div className="bg-card border border-border rounded-2xl shadow-lg overflow-hidden sticky top-4">
           {/* Header */}
           <div className="bg-primary/5 border-b border-border px-4 py-3">
             <div className="flex items-center justify-between">
