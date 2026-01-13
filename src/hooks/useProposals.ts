@@ -421,6 +421,28 @@ export function useProposals() {
             status: currentProposal.status,
             change_summary: changeSummary || 'Versão anterior guardada',
             created_by: user.id,
+            // Event-specific fields
+            event_type: currentProposal.formData.eventType || null,
+            coverage_duration: currentProposal.formData.coverageDuration || null,
+            event_date: currentProposal.formData.eventDate || null,
+            event_days: currentProposal.formData.eventDays || null,
+            event_staffing: currentProposal.formData.eventStaffing ? JSON.parse(JSON.stringify(currentProposal.formData.eventStaffing)) : null,
+            event_extras: currentProposal.formData.eventExtras ? JSON.parse(JSON.stringify(currentProposal.formData.eventExtras)) : null,
+            post_production_hours: currentProposal.formData.includesPostProduction ? 8 : 0,
+            // Web/Systems-specific fields
+            web_project_type: currentProposal.formData.webSystemsData?.projectType || null,
+            number_of_pages: currentProposal.formData.webSystemsData?.numberOfPages || null,
+            number_of_modules: currentProposal.formData.webSystemsData?.numberOfModules || null,
+            has_payment_integration: currentProposal.formData.webSystemsData?.hasPaymentIntegration || false,
+            has_crm_integration: currentProposal.formData.webSystemsData?.hasCrmIntegration || false,
+            has_erp_integration: currentProposal.formData.webSystemsData?.hasErpIntegration || false,
+            has_maintenance: currentProposal.formData.webSystemsData?.hasMaintenanceSupport || false,
+            maintenance_months: currentProposal.formData.webSystemsData?.maintenanceMonths || null,
+            // Design-specific fields
+            number_of_concepts: currentProposal.formData.designData?.numberOfConcepts || null,
+            number_of_revisions: currentProposal.formData.designData?.numberOfRevisions || null,
+            deliverable_formats: currentProposal.formData.designData?.deliverableFormats || [],
+            includes_brand_guidelines: currentProposal.formData.designData?.includesBrandGuidelines || false,
           });
       }
 
@@ -453,6 +475,28 @@ export function useProposals() {
           methodology: formData.methodology,
           total_value: pricing.finalPrice,
           pricing_params: pricingParamsToJson(pricingParamsSnapshot),
+          // Event-specific fields
+          event_type: formData.eventType || null,
+          coverage_duration: formData.coverageDuration || null,
+          event_date: formData.eventDate || null,
+          event_days: formData.eventDays || null,
+          event_staffing: formData.eventStaffing ? JSON.parse(JSON.stringify(formData.eventStaffing)) : null,
+          event_extras: formData.eventExtras ? JSON.parse(JSON.stringify(formData.eventExtras)) : null,
+          post_production_hours: formData.includesPostProduction ? 8 : 0,
+          // Web/Systems-specific fields
+          web_project_type: formData.webSystemsData?.projectType || null,
+          number_of_pages: formData.webSystemsData?.numberOfPages || null,
+          number_of_modules: formData.webSystemsData?.numberOfModules || null,
+          has_payment_integration: formData.webSystemsData?.hasPaymentIntegration || false,
+          has_crm_integration: formData.webSystemsData?.hasCrmIntegration || false,
+          has_erp_integration: formData.webSystemsData?.hasErpIntegration || false,
+          has_maintenance: formData.webSystemsData?.hasMaintenanceSupport || false,
+          maintenance_months: formData.webSystemsData?.maintenanceMonths || null,
+          // Design-specific fields
+          number_of_concepts: formData.designData?.numberOfConcepts || null,
+          number_of_revisions: formData.designData?.numberOfRevisions || null,
+          deliverable_formats: formData.designData?.deliverableFormats || [],
+          includes_brand_guidelines: formData.designData?.includesBrandGuidelines || false,
         })
         .eq('id', id);
 

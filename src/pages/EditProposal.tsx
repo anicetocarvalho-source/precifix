@@ -9,6 +9,7 @@ import {
   Complexity,
   ServiceType,
   Methodology,
+  SERVICE_CATEGORIES,
 } from '@/types/proposal';
 import {
   ArrowLeft,
@@ -16,8 +17,6 @@ import {
   Building,
   Briefcase,
   MapPin,
-  Clock,
-  Users,
   FileText,
   CheckCircle,
   Building2,
@@ -27,9 +26,16 @@ import {
   Loader2,
   Plus,
   X,
+  AlertCircle,
+  CheckCircle2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ServiceSelector } from '@/components/proposal/ServiceSelector';
+import { EventFields } from '@/components/proposal/EventFields';
+import { WebSystemsFields } from '@/components/proposal/WebSystemsFields';
+import { DesignFields } from '@/components/proposal/DesignFields';
+import { PricingPreview } from '@/components/proposal/PricingPreview';
 
 interface QuestionOption {
   value: string;
@@ -39,22 +45,37 @@ interface QuestionOption {
 }
 
 interface Question {
-  id: keyof ProposalFormData;
-  type: 'select' | 'multi-select' | 'text' | 'number' | 'locations';
+  id: keyof ProposalFormData | 'sectorSpecific';
+  type: 'select' | 'multi-select' | 'text' | 'number' | 'locations' | 'service-selector' | 'sector-specific';
   title: string;
   subtitle?: string;
   options?: QuestionOption[];
   placeholder?: string;
   suffix?: string;
+  condition?: (data: Partial<ProposalFormData>) => boolean;
 }
 
-const questions: Question[] = [
+const baseQuestions: Question[] = [
   {
     id: 'clientName',
     type: 'text',
     title: 'Qual é o nome do cliente?',
     subtitle: 'Insira o nome da organização ou empresa',
     placeholder: 'Ex: Ministério da Saúde',
+  },
+  {
+    id: 'clientEmail',
+    type: 'text',
+    title: 'Qual é o email do cliente?',
+    subtitle: 'Para envio da proposta (opcional)',
+    placeholder: 'Ex: cliente@empresa.com',
+  },
+  {
+    id: 'clientPhone',
+    type: 'text',
+    title: 'Qual é o telefone do cliente?',
+    subtitle: 'Formato angolano: 9 dígitos começando com 9 (opcional)',
+    placeholder: 'Ex: 923456789',
   },
   {
     id: 'clientType',
@@ -77,17 +98,20 @@ const questions: Question[] = [
   },
   {
     id: 'serviceType',
-    type: 'select',
+    type: 'service-selector',
     title: 'Qual tipo de serviço será prestado?',
-    subtitle: 'Escolha o serviço principal da consultoria',
-    options: [
-      { value: 'pmo', label: 'PMO', description: 'Gestão de Portfólio de Projectos' },
-      { value: 'restructuring', label: 'Reestruturação', description: 'Reorganização de processos e equipas' },
-      { value: 'monitoring', label: 'Acompanhamento', description: 'Monitorização e suporte contínuo' },
-      { value: 'training', label: 'Formação', description: 'Capacitação e desenvolvimento de competências' },
-      { value: 'audit', label: 'Auditoria', description: 'Avaliação e diagnóstico de processos' },
-      { value: 'strategy', label: 'Estratégia', description: 'Planeamento estratégico e roadmaps' },
-    ],
+    subtitle: 'Escolha o serviço principal',
+  },
+  {
+    id: 'sectorSpecific',
+    type: 'sector-specific',
+    title: 'Detalhes do Serviço',
+    subtitle: 'Configure os detalhes específicos do serviço selecionado',
+    condition: (data) => {
+      if (!data.serviceType) return false;
+      const category = SERVICE_CATEGORIES[data.serviceType];
+      return category === 'events' || category === 'technology' || category === 'creative';
+    },
   },
   {
     id: 'estimatedDuration',
@@ -138,6 +162,10 @@ const questions: Question[] = [
       { value: 'schedules', label: 'Cronogramas' },
       { value: 'training', label: 'Materiais de Formação' },
       { value: 'documentation', label: 'Documentação de Processos' },
+      { value: 'photos', label: 'Fotografias' },
+      { value: 'videos', label: 'Vídeos' },
+      { value: 'designs', label: 'Artes Gráficas' },
+      { value: 'website', label: 'Website/App' },
     ],
   },
   {
@@ -163,6 +191,19 @@ const questions: Question[] = [
   },
 ];
 
+const isValidEmail = (email: string): boolean => {
+  if (!email) return true;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+const isValidAngolanPhone = (phone: string): boolean => {
+  if (!phone) return true;
+  const cleaned = phone.replace(/\s/g, '');
+  const phoneRegex = /^9[0-9]{8}$/;
+  return phoneRegex.test(cleaned);
+};
+
 export default function EditProposal() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -175,6 +216,8 @@ export default function EditProposal() {
   });
   const [locations, setLocations] = useState<string[]>(['']);
   const [initialized, setInitialized] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [phoneTouched, setPhoneTouched] = useState(false);
 
   const proposal = id ? getProposal(id) : undefined;
 
@@ -186,18 +229,30 @@ export default function EditProposal() {
     }
   }, [proposal, initialized]);
 
+  // Filter questions based on conditions
+  const questions = baseQuestions.filter((q) => !q.condition || q.condition(formData));
+
   const currentQuestion = questions[currentStep];
   const progress = ((currentStep + 1) / questions.length) * 100;
+
+  const emailValue = (formData.clientEmail as string) || '';
+  const emailIsValid = isValidEmail(emailValue);
+  const showEmailError = emailTouched && emailValue && !emailIsValid;
+
+  const phoneValue = (formData.clientPhone as string) || '';
+  const phoneIsValid = isValidAngolanPhone(phoneValue);
+  const showPhoneError = phoneTouched && phoneValue && !phoneIsValid;
 
   const handleNext = async () => {
     if (currentStep < questions.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Submit form
       setIsSubmitting(true);
       const finalData: ProposalFormData = {
         clientType: (formData.clientType as ClientType) || 'private',
         clientName: formData.clientName || '',
+        clientEmail: formData.clientEmail || undefined,
+        clientPhone: formData.clientPhone || undefined,
         sector: formData.sector || '',
         serviceType: (formData.serviceType as ServiceType) || 'pmo',
         estimatedDuration: formData.estimatedDuration || 6,
@@ -207,6 +262,15 @@ export default function EditProposal() {
         deliverables: formData.deliverables || [],
         hasExistingTeam: formData.hasExistingTeam === true,
         methodology: (formData.methodology as Methodology) || 'hybrid',
+        eventType: formData.eventType,
+        coverageDuration: formData.coverageDuration,
+        eventDays: formData.eventDays,
+        eventExtras: formData.eventExtras,
+        eventStaffing: formData.eventStaffing,
+        includesPostProduction: formData.includesPostProduction,
+        eventDate: formData.eventDate,
+        webSystemsData: formData.webSystemsData,
+        designData: formData.designData,
       };
 
       try {
@@ -233,7 +297,15 @@ export default function EditProposal() {
     } else {
       setFormData({ ...formData, [questionId]: value });
     }
-    // Auto-advance after selection
+    setTimeout(() => {
+      if (currentStep < questions.length - 1) {
+        setCurrentStep(currentStep + 1);
+      }
+    }, 300);
+  };
+
+  const handleServiceSelect = (value: ServiceType) => {
+    setFormData({ ...formData, serviceType: value });
     setTimeout(() => {
       if (currentStep < questions.length - 1) {
         setCurrentStep(currentStep + 1);
@@ -274,7 +346,11 @@ export default function EditProposal() {
   };
 
   const canProceed = () => {
+    if (currentQuestion.type === 'sector-specific') return true;
+    if (currentQuestion.type === 'service-selector') return !!formData.serviceType;
     if (currentQuestion.type === 'text') {
+      if (currentQuestion.id === 'clientEmail') return emailIsValid;
+      if (currentQuestion.id === 'clientPhone') return phoneIsValid;
       const value = formData[currentQuestion.id as keyof ProposalFormData];
       return typeof value === 'string' && value.trim().length > 0;
     }
@@ -289,6 +365,11 @@ export default function EditProposal() {
       return (formData.deliverables?.length || 0) > 0;
     }
     return formData[currentQuestion.id as keyof ProposalFormData] !== undefined;
+  };
+
+  const getServiceCategory = () => {
+    if (!formData.serviceType) return null;
+    return SERVICE_CATEGORIES[formData.serviceType];
   };
 
   if (isLoadingProposals || !initialized) {
@@ -314,6 +395,9 @@ export default function EditProposal() {
 
   return (
     <MainLayout>
+      {/* Pricing Preview - Fixed position */}
+      <PricingPreview formData={formData} />
+
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4 mb-6">
@@ -361,6 +445,38 @@ export default function EditProposal() {
                 <p className="text-muted-foreground">{currentQuestion.subtitle}</p>
               )}
             </div>
+
+            {/* Service Selector */}
+            {currentQuestion.type === 'service-selector' && (
+              <ServiceSelector
+                value={formData.serviceType}
+                onChange={handleServiceSelect}
+              />
+            )}
+
+            {/* Sector-Specific Fields */}
+            {currentQuestion.type === 'sector-specific' && (
+              <div className="max-h-[60vh] overflow-y-auto pr-2">
+                {getServiceCategory() === 'events' && (
+                  <EventFields
+                    formData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                  />
+                )}
+                {getServiceCategory() === 'technology' && (
+                  <WebSystemsFields
+                    formData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                  />
+                )}
+                {getServiceCategory() === 'creative' && (
+                  <DesignFields
+                    formData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                  />
+                )}
+              </div>
+            )}
 
             {/* Select */}
             {currentQuestion.type === 'select' && (
@@ -446,14 +562,50 @@ export default function EditProposal() {
 
             {/* Text input */}
             {currentQuestion.type === 'text' && (
-              <input
-                type="text"
-                value={(formData[currentQuestion.id as keyof ProposalFormData] as string) || ''}
-                onChange={(e) => handleTextInput(e.target.value)}
-                placeholder={currentQuestion.placeholder}
-                className="w-full text-xl p-4 rounded-xl border-2 border-border bg-background focus:outline-none focus:border-primary transition-colors"
-                autoFocus
-              />
+              <div className="space-y-2">
+                <input
+                  type={currentQuestion.id === 'clientEmail' ? 'email' : 'text'}
+                  value={(formData[currentQuestion.id as keyof ProposalFormData] as string) || ''}
+                  onChange={(e) => handleTextInput(e.target.value)}
+                  onBlur={() => {
+                    if (currentQuestion.id === 'clientEmail') setEmailTouched(true);
+                    if (currentQuestion.id === 'clientPhone') setPhoneTouched(true);
+                  }}
+                  placeholder={currentQuestion.placeholder}
+                  className={cn(
+                    'w-full text-xl p-4 rounded-xl border-2 bg-background focus:outline-none transition-colors',
+                    (currentQuestion.id === 'clientEmail' && showEmailError) ||
+                    (currentQuestion.id === 'clientPhone' && showPhoneError)
+                      ? 'border-destructive focus:border-destructive'
+                      : 'border-border focus:border-primary'
+                  )}
+                  autoFocus
+                />
+                {currentQuestion.id === 'clientEmail' && showEmailError && (
+                  <div className="flex items-center gap-2 text-destructive text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Por favor insira um email válido</span>
+                  </div>
+                )}
+                {currentQuestion.id === 'clientEmail' && emailValue && emailIsValid && (
+                  <div className="flex items-center gap-2 text-green-600 text-sm">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Email válido</span>
+                  </div>
+                )}
+                {currentQuestion.id === 'clientPhone' && showPhoneError && (
+                  <div className="flex items-center gap-2 text-destructive text-sm">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Formato inválido. Use 9 dígitos começando com 9</span>
+                  </div>
+                )}
+                {currentQuestion.id === 'clientPhone' && phoneValue && phoneIsValid && (
+                  <div className="flex items-center gap-2 text-green-600 text-sm">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Telefone válido</span>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Number input */}
