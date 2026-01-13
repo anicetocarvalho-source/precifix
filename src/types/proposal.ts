@@ -146,7 +146,9 @@ export interface PricingResult {
   extrasTotal?: number;
 }
 
+// SavedPricingParams with index signature for JSON compatibility
 export interface SavedPricingParams {
+  [key: string]: unknown;
   hourlyRates: {
     seniorManager: number;
     consultant: number;
@@ -293,4 +295,12 @@ export const SERVICE_ICONS: Record<ServiceType, string> = {
   branding: 'Sparkles',
   financial_consulting: 'Calculator',
   other: 'MoreHorizontal',
+};
+
+// Service category labels
+export const SERVICE_CATEGORY_LABELS: Record<ServiceCategory, string> = {
+  consulting: 'Consultoria',
+  creative: 'Serviços Criativos',
+  technology: 'Tecnologia',
+  events: 'Eventos e Produção',
 };

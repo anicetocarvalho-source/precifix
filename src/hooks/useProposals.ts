@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ProposalFormData, Proposal, ProposalStatus, ClientType, ServiceType, Complexity, Methodology, SavedPricingParams } from '@/types/proposal';
 import { calculatePricing, DEFAULT_PRICING_PARAMS, PricingParams } from '@/lib/pricing';
 import { toast } from 'sonner';
+import { Json } from '@/integrations/supabase/types';
 
 // Interface for proposal with author info
 export interface ProposalWithAuthor extends Proposal {
@@ -75,6 +76,17 @@ function savedParamsToFull(saved: SavedPricingParams): PricingParams {
     overheadPercentage: saved.overheadPercentage,
     marginPercentage: saved.marginPercentage,
   };
+}
+
+// Helper to convert SavedPricingParams to Json type
+function pricingParamsToJson(params: SavedPricingParams): Json {
+  return {
+    hourlyRates: params.hourlyRates,
+    complexityMultipliers: params.complexityMultipliers,
+    extrasPricing: params.extrasPricing,
+    overheadPercentage: params.overheadPercentage,
+    marginPercentage: params.marginPercentage,
+  } as Json;
 }
 
 export function useProposals() {
@@ -167,7 +179,7 @@ export function useProposals() {
 
       const { data, error } = await supabase
         .from('proposals')
-        .insert({
+        .insert([{
           user_id: user.id,
           client_name: formData.clientName,
           client_email: formData.clientEmail || null,
@@ -184,8 +196,8 @@ export function useProposals() {
           methodology: formData.methodology,
           total_value: pricing.finalPrice,
           status: 'draft',
-          pricing_params: pricingParamsSnapshot,
-        })
+          pricing_params: pricingParamsToJson(pricingParamsSnapshot),
+        }])
         .select()
         .single();
 
@@ -261,7 +273,7 @@ export function useProposals() {
 
       const { data, error } = await supabase
         .from('proposals')
-        .insert({
+        .insert([{
           user_id: user.id,
           client_name: `${formData.clientName} (Cópia)`,
           client_email: formData.clientEmail || null,
@@ -278,8 +290,8 @@ export function useProposals() {
           methodology: formData.methodology,
           total_value: pricing.finalPrice,
           status: 'draft',
-          pricing_params: pricingParamsSnapshot,
-        })
+          pricing_params: pricingParamsToJson(pricingParamsSnapshot),
+        }])
         .select()
         .single();
 
@@ -370,7 +382,7 @@ export function useProposals() {
           has_existing_team: formData.hasExistingTeam,
           methodology: formData.methodology,
           total_value: pricing.finalPrice,
-          pricing_params: pricingParamsSnapshot,
+          pricing_params: pricingParamsToJson(pricingParamsSnapshot),
         })
         .eq('id', id);
 
