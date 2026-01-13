@@ -32,6 +32,7 @@ import { ServiceSelector } from '@/components/proposal/ServiceSelector';
 import { EventFields } from '@/components/proposal/EventFields';
 import { WebSystemsFields } from '@/components/proposal/WebSystemsFields';
 import { DesignFields } from '@/components/proposal/DesignFields';
+import { PricingPreview } from '@/components/proposal/PricingPreview';
 
 interface QuestionOption {
   value: string;
@@ -357,6 +358,9 @@ export default function NewProposal() {
 
   return (
     <MainLayout>
+      {/* Pricing Preview - Fixed position */}
+      <PricingPreview formData={formData} />
+      
       <div className="max-w-3xl mx-auto">
         {/* Progress bar */}
         <div className="mb-8">
