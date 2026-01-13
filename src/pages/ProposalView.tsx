@@ -8,10 +8,12 @@ import { useProposals } from '@/hooks/useProposals';
 import { ProposalVersionHistory } from '@/components/ProposalVersionHistory';
 import { useProposalVersions, ProposalVersion } from '@/hooks/useProposalVersions';
 import { usePricingParameters } from '@/hooks/usePricingParameters';
+import { useUserRole } from '@/hooks/useUserRole';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
 import { exportProposalToPDF, exportSingleDocument } from '@/lib/pdfExport';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { Badge } from '@/components/ui/badge';
 import {
   ArrowLeft,
   Download,
@@ -31,6 +33,7 @@ import {
   Pencil,
   Mail,
   Phone,
+  User,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -68,6 +71,7 @@ export default function ProposalView() {
   const { getProposal, updateProposalStatus, duplicateProposal, isLoading } = useProposals();
   const { restoreVersion } = useProposalVersions(id);
   const { parameters: currentPricingParams } = usePricingParameters();
+  const { canViewAllProposals, canEditAllProposals } = useUserRole();
   const [activeTab, setActiveTab] = useState<DocumentTab>('diagnostic');
   const [versionToRestore, setVersionToRestore] = useState<ProposalVersion | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
@@ -190,9 +194,24 @@ export default function ProposalView() {
               Voltar
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
-                {formData.clientName || 'Proposta'}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold text-foreground">
+                  {formData.clientName || 'Proposta'}
+                </h1>
+                {/* Author Badge - only visible to admins/gestores and for proposals not owned by current user */}
+                {canViewAllProposals && !proposal.isOwner && (
+                  <Badge variant="outline" className="flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    {proposal.authorName}
+                  </Badge>
+                )}
+                {proposal.isOwner && canViewAllProposals && (
+                  <Badge variant="secondary" className="flex items-center gap-1">
+                    <User className="w-3 h-3" />
+                    Você
+                  </Badge>
+                )}
+              </div>
               <p className="text-muted-foreground">
                 {serviceLabels[formData.serviceType]} • {formData.estimatedDuration} meses
               </p>
