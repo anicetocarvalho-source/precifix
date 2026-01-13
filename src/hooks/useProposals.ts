@@ -192,15 +192,24 @@ export function useProposals() {
     mutationFn: async (formData: ProposalFormData) => {
       if (!user) throw new Error('User not authenticated');
 
-      const pricing = calculatePricing(formData, pricingParams);
+      // Ensure pricingParams is fully initialized with defaults
+      const safeParams: PricingParams = {
+        hourlyRates: pricingParams?.hourlyRates ?? DEFAULT_PRICING_PARAMS.hourlyRates,
+        complexityMultipliers: pricingParams?.complexityMultipliers ?? DEFAULT_PRICING_PARAMS.complexityMultipliers,
+        extrasPricing: pricingParams?.extrasPricing ?? DEFAULT_PRICING_PARAMS.extrasPricing,
+        overheadPercentage: pricingParams?.overheadPercentage ?? DEFAULT_PRICING_PARAMS.overheadPercentage,
+        marginPercentage: pricingParams?.marginPercentage ?? DEFAULT_PRICING_PARAMS.marginPercentage,
+      };
+
+      const pricing = calculatePricing(formData, safeParams);
 
       // Create pricing params snapshot to store with proposal
       const pricingParamsSnapshot: SavedPricingParams = {
-        hourlyRates: pricingParams.hourlyRates,
-        complexityMultipliers: pricingParams.complexityMultipliers,
-        extrasPricing: pricingParams.extrasPricing,
-        overheadPercentage: pricingParams.overheadPercentage,
-        marginPercentage: pricingParams.marginPercentage,
+        hourlyRates: safeParams.hourlyRates,
+        complexityMultipliers: safeParams.complexityMultipliers,
+        extrasPricing: safeParams.extrasPricing,
+        overheadPercentage: safeParams.overheadPercentage,
+        marginPercentage: safeParams.marginPercentage,
       };
 
       const { data, error } = await supabase
