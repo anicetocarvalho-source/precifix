@@ -294,6 +294,46 @@ export default function Auth() {
                 </button>
               </p>
             </div>
+
+            {/* Test Users Quick Access */}
+            {isLogin && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="mt-6 pt-6 border-t border-border"
+              >
+                <p className="text-xs text-muted-foreground text-center mb-3">
+                  Acesso rápido para testes
+                </p>
+                <div className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData({
+                        ...formData,
+                        email: 'aniceto@precifix.pt',
+                        password: '',
+                      });
+                    }}
+                    className="w-full p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border text-left transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-foreground">Aniceto de Carvalho</p>
+                        <p className="text-xs text-muted-foreground">aniceto@precifix.pt</p>
+                      </div>
+                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
+                        Admin
+                      </span>
+                    </div>
+                  </button>
+                </div>
+                <p className="text-xs text-muted-foreground text-center mt-3">
+                  Clique para preencher o email • Insira a palavra-passe
+                </p>
+              </motion.div>
+            )}
           </div>
         </motion.div>
       </div>
