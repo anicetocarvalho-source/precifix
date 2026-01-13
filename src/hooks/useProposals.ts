@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProposalFormData, Proposal, ProposalStatus, ClientType, ServiceType, Complexity, Methodology, SavedPricingParams } from '@/types/proposal';
-import { calculatePricing, PricingParams, DEFAULT_PRICING_PARAMS } from '@/lib/pricing';
+import { calculatePricing, DEFAULT_PRICING_PARAMS, PricingParams } from '@/lib/pricing';
 import { toast } from 'sonner';
 
 // Interface for proposal with author info
@@ -31,6 +31,7 @@ function usePricingParams(userId: string | undefined) {
         return DEFAULT_PRICING_PARAMS;
       }
 
+      // Map database values, using defaults for creative fields not yet in DB
       return {
         hourlyRates: {
           seniorManager: Number(data.rate_senior_manager),
@@ -38,12 +39,21 @@ function usePricingParams(userId: string | undefined) {
           analyst: Number(data.rate_analyst),
           coordinator: Number(data.rate_coordinator),
           trainer: Number(data.rate_trainer),
+          // Creative rates - use defaults since not in DB yet
+          videographer: DEFAULT_PRICING_PARAMS.hourlyRates.videographer,
+          photographer: DEFAULT_PRICING_PARAMS.hourlyRates.photographer,
+          videoEditor: DEFAULT_PRICING_PARAMS.hourlyRates.videoEditor,
+          graphicDesigner: DEFAULT_PRICING_PARAMS.hourlyRates.graphicDesigner,
+          webDeveloper: DEFAULT_PRICING_PARAMS.hourlyRates.webDeveloper,
+          soundTechnician: DEFAULT_PRICING_PARAMS.hourlyRates.soundTechnician,
+          lightingTechnician: DEFAULT_PRICING_PARAMS.hourlyRates.lightingTechnician,
         },
         complexityMultipliers: {
           low: Number(data.multiplier_low),
           medium: Number(data.multiplier_medium),
           high: Number(data.multiplier_high),
         },
+        extrasPricing: DEFAULT_PRICING_PARAMS.extrasPricing,
         overheadPercentage: Number(data.overhead_percentage),
         marginPercentage: Number(data.margin_percentage),
       };
@@ -51,6 +61,20 @@ function usePricingParams(userId: string | undefined) {
     enabled: !!userId,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
+}
+
+// Helper to convert saved pricing params to full PricingParams
+function savedParamsToFull(saved: SavedPricingParams): PricingParams {
+  return {
+    hourlyRates: {
+      ...DEFAULT_PRICING_PARAMS.hourlyRates,
+      ...saved.hourlyRates,
+    },
+    complexityMultipliers: saved.complexityMultipliers,
+    extrasPricing: saved.extrasPricing || DEFAULT_PRICING_PARAMS.extrasPricing,
+    overheadPercentage: saved.overheadPercentage,
+    marginPercentage: saved.marginPercentage,
+  };
 }
 
 export function useProposals() {
@@ -105,12 +129,9 @@ export function useProposals() {
 
         // Use saved pricing params if available, otherwise use current params
         const savedPricingParams = row.pricing_params as unknown as SavedPricingParams | null;
-        const paramsToUse = savedPricingParams ? {
-          hourlyRates: savedPricingParams.hourlyRates,
-          complexityMultipliers: savedPricingParams.complexityMultipliers,
-          overheadPercentage: savedPricingParams.overheadPercentage,
-          marginPercentage: savedPricingParams.marginPercentage,
-        } : pricingParams;
+        const paramsToUse = savedPricingParams 
+          ? savedParamsToFull(savedPricingParams)
+          : pricingParams;
 
         return {
           id: row.id,
@@ -136,9 +157,10 @@ export function useProposals() {
       const pricing = calculatePricing(formData, pricingParams);
 
       // Create pricing params snapshot to store with proposal
-      const pricingParamsSnapshot = {
+      const pricingParamsSnapshot: SavedPricingParams = {
         hourlyRates: pricingParams.hourlyRates,
         complexityMultipliers: pricingParams.complexityMultipliers,
+        extrasPricing: pricingParams.extrasPricing,
         overheadPercentage: pricingParams.overheadPercentage,
         marginPercentage: pricingParams.marginPercentage,
       };
@@ -229,9 +251,10 @@ export function useProposals() {
       const pricing = calculatePricing(formData, pricingParams);
 
       // Create pricing params snapshot for the duplicate
-      const pricingParamsSnapshot = {
+      const pricingParamsSnapshot: SavedPricingParams = {
         hourlyRates: pricingParams.hourlyRates,
         complexityMultipliers: pricingParams.complexityMultipliers,
+        extrasPricing: pricingParams.extrasPricing,
         overheadPercentage: pricingParams.overheadPercentage,
         marginPercentage: pricingParams.marginPercentage,
       };
@@ -322,9 +345,10 @@ export function useProposals() {
       const pricing = calculatePricing(formData, pricingParams);
 
       // Create pricing params snapshot for the update
-      const pricingParamsSnapshot = {
+      const pricingParamsSnapshot: SavedPricingParams = {
         hourlyRates: pricingParams.hourlyRates,
         complexityMultipliers: pricingParams.complexityMultipliers,
+        extrasPricing: pricingParams.extrasPricing,
         overheadPercentage: pricingParams.overheadPercentage,
         marginPercentage: pricingParams.marginPercentage,
       };
