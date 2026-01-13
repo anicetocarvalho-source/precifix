@@ -103,15 +103,33 @@ export type Database = {
           client_phone: string | null
           client_type: string
           complexity: string
+          coverage_duration: string | null
           created_at: string
           created_by: string
+          deliverable_formats: string[] | null
           deliverables: string[]
           duration_months: number
+          event_date: string | null
+          event_days: number | null
+          event_extras: Json | null
+          event_staffing: Json | null
+          event_type: string | null
+          has_crm_integration: boolean | null
+          has_erp_integration: boolean | null
           has_existing_team: boolean
+          has_maintenance: boolean | null
+          has_payment_integration: boolean | null
           id: string
+          includes_brand_guidelines: boolean | null
           locations: string[]
+          maintenance_months: number | null
           maturity_level: string
           methodology: string
+          number_of_concepts: number | null
+          number_of_modules: number | null
+          number_of_pages: number | null
+          number_of_revisions: number | null
+          post_production_hours: number | null
           pricing_params: Json | null
           proposal_id: string
           sector: string
@@ -119,6 +137,7 @@ export type Database = {
           status: string
           total_value: number
           version_number: number
+          web_project_type: string | null
         }
         Insert: {
           change_summary?: string | null
@@ -127,15 +146,33 @@ export type Database = {
           client_phone?: string | null
           client_type: string
           complexity: string
+          coverage_duration?: string | null
           created_at?: string
           created_by: string
+          deliverable_formats?: string[] | null
           deliverables?: string[]
           duration_months: number
+          event_date?: string | null
+          event_days?: number | null
+          event_extras?: Json | null
+          event_staffing?: Json | null
+          event_type?: string | null
+          has_crm_integration?: boolean | null
+          has_erp_integration?: boolean | null
           has_existing_team?: boolean
+          has_maintenance?: boolean | null
+          has_payment_integration?: boolean | null
           id?: string
+          includes_brand_guidelines?: boolean | null
           locations?: string[]
+          maintenance_months?: number | null
           maturity_level: string
           methodology: string
+          number_of_concepts?: number | null
+          number_of_modules?: number | null
+          number_of_pages?: number | null
+          number_of_revisions?: number | null
+          post_production_hours?: number | null
           pricing_params?: Json | null
           proposal_id: string
           sector: string
@@ -143,6 +180,7 @@ export type Database = {
           status: string
           total_value: number
           version_number: number
+          web_project_type?: string | null
         }
         Update: {
           change_summary?: string | null
@@ -151,15 +189,33 @@ export type Database = {
           client_phone?: string | null
           client_type?: string
           complexity?: string
+          coverage_duration?: string | null
           created_at?: string
           created_by?: string
+          deliverable_formats?: string[] | null
           deliverables?: string[]
           duration_months?: number
+          event_date?: string | null
+          event_days?: number | null
+          event_extras?: Json | null
+          event_staffing?: Json | null
+          event_type?: string | null
+          has_crm_integration?: boolean | null
+          has_erp_integration?: boolean | null
           has_existing_team?: boolean
+          has_maintenance?: boolean | null
+          has_payment_integration?: boolean | null
           id?: string
+          includes_brand_guidelines?: boolean | null
           locations?: string[]
+          maintenance_months?: number | null
           maturity_level?: string
           methodology?: string
+          number_of_concepts?: number | null
+          number_of_modules?: number | null
+          number_of_pages?: number | null
+          number_of_revisions?: number | null
+          post_production_hours?: number | null
           pricing_params?: Json | null
           proposal_id?: string
           sector?: string
@@ -167,6 +223,7 @@ export type Database = {
           status?: string
           total_value?: number
           version_number?: number
+          web_project_type?: string | null
         }
         Relationships: [
           {
@@ -186,15 +243,33 @@ export type Database = {
           client_phone: string | null
           client_type: string
           complexity: string
+          coverage_duration: string | null
           created_at: string
+          deliverable_formats: string[] | null
           deliverables: string[]
           duration_months: number
+          event_date: string | null
+          event_days: number | null
+          event_extras: Json | null
+          event_staffing: Json | null
+          event_type: string | null
+          has_crm_integration: boolean | null
+          has_erp_integration: boolean | null
           has_existing_team: boolean
+          has_maintenance: boolean | null
+          has_payment_integration: boolean | null
           id: string
+          includes_brand_guidelines: boolean | null
           locations: string[]
+          maintenance_months: number | null
           maturity_level: string
           methodology: string
+          number_of_concepts: number | null
+          number_of_modules: number | null
+          number_of_pages: number | null
+          number_of_revisions: number | null
           objectives: string | null
+          post_production_hours: number | null
           pricing_params: Json | null
           sector: string
           service_type: string
@@ -202,6 +277,7 @@ export type Database = {
           total_value: number
           updated_at: string
           user_id: string
+          web_project_type: string | null
         }
         Insert: {
           challenges?: string | null
@@ -210,15 +286,33 @@ export type Database = {
           client_phone?: string | null
           client_type: string
           complexity?: string
+          coverage_duration?: string | null
           created_at?: string
+          deliverable_formats?: string[] | null
           deliverables?: string[]
           duration_months: number
+          event_date?: string | null
+          event_days?: number | null
+          event_extras?: Json | null
+          event_staffing?: Json | null
+          event_type?: string | null
+          has_crm_integration?: boolean | null
+          has_erp_integration?: boolean | null
           has_existing_team?: boolean
+          has_maintenance?: boolean | null
+          has_payment_integration?: boolean | null
           id?: string
+          includes_brand_guidelines?: boolean | null
           locations?: string[]
+          maintenance_months?: number | null
           maturity_level?: string
           methodology?: string
+          number_of_concepts?: number | null
+          number_of_modules?: number | null
+          number_of_pages?: number | null
+          number_of_revisions?: number | null
           objectives?: string | null
+          post_production_hours?: number | null
           pricing_params?: Json | null
           sector: string
           service_type: string
@@ -226,6 +320,7 @@ export type Database = {
           total_value: number
           updated_at?: string
           user_id: string
+          web_project_type?: string | null
         }
         Update: {
           challenges?: string | null
@@ -234,15 +329,33 @@ export type Database = {
           client_phone?: string | null
           client_type?: string
           complexity?: string
+          coverage_duration?: string | null
           created_at?: string
+          deliverable_formats?: string[] | null
           deliverables?: string[]
           duration_months?: number
+          event_date?: string | null
+          event_days?: number | null
+          event_extras?: Json | null
+          event_staffing?: Json | null
+          event_type?: string | null
+          has_crm_integration?: boolean | null
+          has_erp_integration?: boolean | null
           has_existing_team?: boolean
+          has_maintenance?: boolean | null
+          has_payment_integration?: boolean | null
           id?: string
+          includes_brand_guidelines?: boolean | null
           locations?: string[]
+          maintenance_months?: number | null
           maturity_level?: string
           methodology?: string
+          number_of_concepts?: number | null
+          number_of_modules?: number | null
+          number_of_pages?: number | null
+          number_of_revisions?: number | null
           objectives?: string | null
+          post_production_hours?: number | null
           pricing_params?: Json | null
           sector?: string
           service_type?: string
@@ -250,6 +363,7 @@ export type Database = {
           total_value?: number
           updated_at?: string
           user_id?: string
+          web_project_type?: string | null
         }
         Relationships: []
       }

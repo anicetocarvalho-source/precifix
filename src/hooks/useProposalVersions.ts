@@ -25,6 +25,28 @@ export interface ProposalVersion {
   change_summary: string | null;
   created_at: string;
   created_by: string;
+  // Event-specific fields
+  event_type: string | null;
+  coverage_duration: string | null;
+  event_date: string | null;
+  event_days: number | null;
+  event_staffing: Record<string, number> | null;
+  event_extras: Record<string, boolean> | null;
+  post_production_hours: number | null;
+  // Web/Systems-specific fields
+  web_project_type: string | null;
+  number_of_pages: number | null;
+  number_of_modules: number | null;
+  has_payment_integration: boolean;
+  has_crm_integration: boolean;
+  has_erp_integration: boolean;
+  has_maintenance: boolean;
+  maintenance_months: number | null;
+  // Design-specific fields
+  number_of_concepts: number | null;
+  number_of_revisions: number | null;
+  deliverable_formats: string[];
+  includes_brand_guidelines: boolean;
 }
 
 export function useProposalVersions(proposalId?: string) {
@@ -100,6 +122,28 @@ export function useProposalVersions(proposalId?: string) {
           status,
           change_summary: changeSummary || null,
           created_by: user.id,
+          // Event-specific fields
+          event_type: formData.eventType || null,
+          coverage_duration: formData.coverageDuration || null,
+          event_date: formData.eventDate || null,
+          event_days: formData.eventDays || null,
+          event_staffing: formData.eventStaffing ? JSON.parse(JSON.stringify(formData.eventStaffing)) : null,
+          event_extras: formData.eventExtras ? JSON.parse(JSON.stringify(formData.eventExtras)) : null,
+          post_production_hours: formData.includesPostProduction ? 8 : 0,
+          // Web/Systems-specific fields
+          web_project_type: formData.webSystemsData?.projectType || null,
+          number_of_pages: formData.webSystemsData?.numberOfPages || null,
+          number_of_modules: formData.webSystemsData?.numberOfModules || null,
+          has_payment_integration: formData.webSystemsData?.hasPaymentIntegration || false,
+          has_crm_integration: formData.webSystemsData?.hasCrmIntegration || false,
+          has_erp_integration: formData.webSystemsData?.hasErpIntegration || false,
+          has_maintenance: formData.webSystemsData?.hasMaintenanceSupport || false,
+          maintenance_months: formData.webSystemsData?.maintenanceMonths || null,
+          // Design-specific fields
+          number_of_concepts: formData.designData?.numberOfConcepts || null,
+          number_of_revisions: formData.designData?.numberOfRevisions || null,
+          deliverable_formats: formData.designData?.deliverableFormats || [],
+          includes_brand_guidelines: formData.designData?.includesBrandGuidelines || false,
         })
         .select()
         .single();
@@ -170,6 +214,28 @@ export function useProposalVersions(proposalId?: string) {
           status: version.status,
           change_summary: `Restaurado para versão ${version.version_number}`,
           created_by: user.id,
+          // Event-specific fields
+          event_type: version.event_type || null,
+          coverage_duration: version.coverage_duration || null,
+          event_date: version.event_date || null,
+          event_days: version.event_days || null,
+          event_staffing: version.event_staffing || null,
+          event_extras: version.event_extras || null,
+          post_production_hours: version.post_production_hours || 0,
+          // Web/Systems-specific fields
+          web_project_type: version.web_project_type || null,
+          number_of_pages: version.number_of_pages || null,
+          number_of_modules: version.number_of_modules || null,
+          has_payment_integration: version.has_payment_integration || false,
+          has_crm_integration: version.has_crm_integration || false,
+          has_erp_integration: version.has_erp_integration || false,
+          has_maintenance: version.has_maintenance || false,
+          maintenance_months: version.maintenance_months || null,
+          // Design-specific fields
+          number_of_concepts: version.number_of_concepts || null,
+          number_of_revisions: version.number_of_revisions || null,
+          deliverable_formats: version.deliverable_formats || [],
+          includes_brand_guidelines: version.includes_brand_guidelines || false,
         });
 
       return version;

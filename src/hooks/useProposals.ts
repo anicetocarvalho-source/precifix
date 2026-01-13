@@ -137,6 +137,32 @@ export function useProposals() {
           deliverables: row.deliverables,
           hasExistingTeam: row.has_existing_team,
           methodology: row.methodology as Methodology,
+          // Event-specific fields
+          eventType: row.event_type as ProposalFormData['eventType'],
+          coverageDuration: row.coverage_duration as ProposalFormData['coverageDuration'],
+          eventDate: row.event_date || undefined,
+          eventDays: row.event_days || undefined,
+          eventStaffing: row.event_staffing as ProposalFormData['eventStaffing'],
+          eventExtras: row.event_extras as ProposalFormData['eventExtras'],
+          includesPostProduction: (row.post_production_hours || 0) > 0,
+          // Web/Systems-specific fields
+          webSystemsData: row.web_project_type ? {
+            projectType: row.web_project_type as ProposalFormData['webSystemsData'] extends { projectType?: infer T } ? T : never,
+            numberOfPages: row.number_of_pages || 5,
+            numberOfModules: row.number_of_modules || 3,
+            hasPaymentIntegration: row.has_payment_integration || false,
+            hasCrmIntegration: row.has_crm_integration || false,
+            hasErpIntegration: row.has_erp_integration || false,
+            hasMaintenanceSupport: row.has_maintenance || false,
+            maintenanceMonths: row.maintenance_months || 6,
+          } as ProposalFormData['webSystemsData'] : undefined,
+          // Design-specific fields
+          designData: row.number_of_concepts ? {
+            numberOfConcepts: row.number_of_concepts,
+            numberOfRevisions: row.number_of_revisions || 2,
+            deliverableFormats: row.deliverable_formats || [],
+            includesBrandGuidelines: row.includes_brand_guidelines || false,
+          } : undefined,
         };
 
         // Use saved pricing params if available, otherwise use current params
@@ -197,6 +223,28 @@ export function useProposals() {
           total_value: pricing.finalPrice,
           status: 'draft',
           pricing_params: pricingParamsToJson(pricingParamsSnapshot),
+          // Event-specific fields
+          event_type: formData.eventType || null,
+          coverage_duration: formData.coverageDuration || null,
+          event_date: formData.eventDate || null,
+          event_days: formData.eventDays || null,
+          event_staffing: formData.eventStaffing ? JSON.parse(JSON.stringify(formData.eventStaffing)) : null,
+          event_extras: formData.eventExtras ? JSON.parse(JSON.stringify(formData.eventExtras)) : null,
+          post_production_hours: formData.includesPostProduction ? 8 : 0,
+          // Web/Systems-specific fields
+          web_project_type: formData.webSystemsData?.projectType || null,
+          number_of_pages: formData.webSystemsData?.numberOfPages || null,
+          number_of_modules: formData.webSystemsData?.numberOfModules || null,
+          has_payment_integration: formData.webSystemsData?.hasPaymentIntegration || false,
+          has_crm_integration: formData.webSystemsData?.hasCrmIntegration || false,
+          has_erp_integration: formData.webSystemsData?.hasErpIntegration || false,
+          has_maintenance: formData.webSystemsData?.hasMaintenanceSupport || false,
+          maintenance_months: formData.webSystemsData?.maintenanceMonths || null,
+          // Design-specific fields
+          number_of_concepts: formData.designData?.numberOfConcepts || null,
+          number_of_revisions: formData.designData?.numberOfRevisions || null,
+          deliverable_formats: formData.designData?.deliverableFormats || [],
+          includes_brand_guidelines: formData.designData?.includesBrandGuidelines || false,
         }])
         .select()
         .single();
@@ -291,6 +339,28 @@ export function useProposals() {
           total_value: pricing.finalPrice,
           status: 'draft',
           pricing_params: pricingParamsToJson(pricingParamsSnapshot),
+          // Event-specific fields
+          event_type: formData.eventType || null,
+          coverage_duration: formData.coverageDuration || null,
+          event_date: formData.eventDate || null,
+          event_days: formData.eventDays || null,
+          event_staffing: formData.eventStaffing ? JSON.parse(JSON.stringify(formData.eventStaffing)) : null,
+          event_extras: formData.eventExtras ? JSON.parse(JSON.stringify(formData.eventExtras)) : null,
+          post_production_hours: formData.includesPostProduction ? 8 : 0,
+          // Web/Systems-specific fields
+          web_project_type: formData.webSystemsData?.projectType || null,
+          number_of_pages: formData.webSystemsData?.numberOfPages || null,
+          number_of_modules: formData.webSystemsData?.numberOfModules || null,
+          has_payment_integration: formData.webSystemsData?.hasPaymentIntegration || false,
+          has_crm_integration: formData.webSystemsData?.hasCrmIntegration || false,
+          has_erp_integration: formData.webSystemsData?.hasErpIntegration || false,
+          has_maintenance: formData.webSystemsData?.hasMaintenanceSupport || false,
+          maintenance_months: formData.webSystemsData?.maintenanceMonths || null,
+          // Design-specific fields
+          number_of_concepts: formData.designData?.numberOfConcepts || null,
+          number_of_revisions: formData.designData?.numberOfRevisions || null,
+          deliverable_formats: formData.designData?.deliverableFormats || [],
+          includes_brand_guidelines: formData.designData?.includesBrandGuidelines || false,
         }])
         .select()
         .single();
