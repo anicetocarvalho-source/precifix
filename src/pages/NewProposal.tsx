@@ -358,10 +358,9 @@ export default function NewProposal() {
 
   return (
     <MainLayout>
-      {/* Pricing Preview - Fixed position */}
-      <PricingPreview formData={formData} />
-      
-      <div className="max-w-3xl mx-auto">
+      <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        {/* Main Form */}
+        <div className="flex-1 max-w-3xl mx-auto lg:mx-0">
         {/* Progress bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
@@ -663,6 +662,17 @@ export default function NewProposal() {
             </div>
           </motion.div>
         </AnimatePresence>
+        </div>
+
+        {/* Pricing Preview Sidebar */}
+        <div className="hidden lg:block lg:w-80 lg:flex-shrink-0">
+          <PricingPreview formData={formData} />
+        </div>
+
+        {/* Mobile Pricing Preview */}
+        <div className="lg:hidden">
+          <PricingPreview formData={formData} />
+        </div>
       </div>
     </MainLayout>
   );
