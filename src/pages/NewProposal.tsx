@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { useProposals } from '@/hooks/useProposals';
+import { useProposalStore } from '@/stores/proposalStore';
 import {
   ProposalFormData,
   ClientType,
@@ -447,18 +448,84 @@ const validateField = (
 };
 
 
+const DRAFT_STORAGE_KEY = 'precifix-proposal-draft';
+
+interface DraftState {
+  formData: Partial<ProposalFormData>;
+  locations: string[];
+  currentStep: number;
+  savedAt: number;
+}
+
 export default function NewProposal() {
   const navigate = useNavigate();
   const { createProposal } = useProposals();
-  const [currentStep, setCurrentStep] = useState(0);
+  const { setDraft, currentDraft, clearDraft } = useProposalStore();
+  
+  // Load saved draft from localStorage on mount
+  const loadSavedDraft = useCallback((): DraftState | null => {
+    try {
+      const saved = localStorage.getItem(DRAFT_STORAGE_KEY);
+      if (saved) {
+        const draft = JSON.parse(saved) as DraftState;
+        // Only restore if saved within the last 24 hours
+        const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+        if (draft.savedAt > oneDayAgo) {
+          return draft;
+        }
+        // Clear expired draft
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+      }
+    } catch (e) {
+      console.error('Error loading draft:', e);
+    }
+    return null;
+  }, []);
+
+  const savedDraft = loadSavedDraft();
+  
+  const [currentStep, setCurrentStep] = useState(savedDraft?.currentStep || 0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState<Partial<ProposalFormData>>({
-    locations: [''],
-    deliverables: [],
-  });
-  const [locations, setLocations] = useState<string[]>(['']);
+  const [formData, setFormData] = useState<Partial<ProposalFormData>>(
+    savedDraft?.formData || {
+      locations: [''],
+      deliverables: [],
+    }
+  );
+  const [locations, setLocations] = useState<string[]>(
+    savedDraft?.locations || ['']
+  );
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [showDraftRestored, setShowDraftRestored] = useState(!!savedDraft);
+
+  // Auto-save draft to localStorage whenever form data changes
+  useEffect(() => {
+    const draftState: DraftState = {
+      formData,
+      locations,
+      currentStep,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftState));
+    
+    // Also save to store for potential cross-tab sync
+    setDraft(formData as Partial<ProposalFormData>);
+  }, [formData, locations, currentStep, setDraft]);
+
+  // Clear draft notification after 3 seconds
+  useEffect(() => {
+    if (showDraftRestored) {
+      const timer = setTimeout(() => setShowDraftRestored(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showDraftRestored]);
+
+  // Clear draft when form is successfully submitted
+  const clearSavedDraft = useCallback(() => {
+    localStorage.removeItem(DRAFT_STORAGE_KEY);
+    clearDraft();
+  }, [clearDraft]);
 
   // Get questions dynamically based on service type
   const questions = getQuestions(formData);
@@ -525,6 +592,7 @@ export default function NewProposal() {
       
       try {
         const result = await createProposal.mutateAsync(finalData);
+        clearSavedDraft(); // Clear draft on successful submission
         navigate(`/proposta/${result.id}`);
       } catch (error) {
         console.error('Error creating proposal:', error);
@@ -628,6 +696,40 @@ export default function NewProposal() {
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
         {/* Main Form */}
         <div className="flex-1 max-w-3xl mx-auto lg:mx-0">
+        
+        {/* Draft Restored Notification */}
+        <AnimatePresence>
+          {showDraftRestored && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="mb-4 p-3 bg-primary/10 border border-primary/20 rounded-lg flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-primary" />
+                <span className="text-sm text-primary">
+                  Rascunho restaurado automaticamente
+                </span>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  clearSavedDraft();
+                  setFormData({ locations: [''], deliverables: [] });
+                  setLocations(['']);
+                  setCurrentStep(0);
+                  setShowDraftRestored(false);
+                }}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Limpar e começar de novo
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+        
         {/* Progress bar */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
