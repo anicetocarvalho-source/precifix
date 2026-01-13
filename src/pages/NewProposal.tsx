@@ -9,6 +9,7 @@ import {
   Complexity,
   ServiceType,
   Methodology,
+  SERVICE_CATEGORIES,
 } from '@/types/proposal';
 import {
   ArrowLeft,
@@ -16,8 +17,6 @@ import {
   Building,
   Briefcase,
   MapPin,
-  Clock,
-  Users,
   FileText,
   CheckCircle,
   Building2,
@@ -29,6 +28,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ServiceSelector } from '@/components/proposal/ServiceSelector';
+import { EventFields } from '@/components/proposal/EventFields';
+import { WebSystemsFields } from '@/components/proposal/WebSystemsFields';
+import { DesignFields } from '@/components/proposal/DesignFields';
 
 interface QuestionOption {
   value: string;
@@ -38,16 +41,17 @@ interface QuestionOption {
 }
 
 interface Question {
-  id: keyof ProposalFormData | 'intro';
-  type: 'intro' | 'select' | 'multi-select' | 'text' | 'number' | 'locations';
+  id: keyof ProposalFormData | 'intro' | 'sectorSpecific';
+  type: 'intro' | 'select' | 'multi-select' | 'text' | 'number' | 'locations' | 'service-selector' | 'sector-specific';
   title: string;
   subtitle?: string;
   options?: QuestionOption[];
   placeholder?: string;
   suffix?: string;
+  condition?: (data: Partial<ProposalFormData>) => boolean;
 }
 
-const questions: Question[] = [
+const baseQuestions: Question[] = [
   {
     id: 'intro',
     type: 'intro',
@@ -96,17 +100,20 @@ const questions: Question[] = [
   },
   {
     id: 'serviceType',
-    type: 'select',
+    type: 'service-selector',
     title: 'Qual tipo de serviço será prestado?',
-    subtitle: 'Escolha o serviço principal da consultoria',
-    options: [
-      { value: 'pmo', label: 'PMO', description: 'Gestão de Portfólio de Projectos' },
-      { value: 'restructuring', label: 'Reestruturação', description: 'Reorganização de processos e equipas' },
-      { value: 'monitoring', label: 'Acompanhamento', description: 'Monitorização e suporte contínuo' },
-      { value: 'training', label: 'Formação', description: 'Capacitação e desenvolvimento de competências' },
-      { value: 'audit', label: 'Auditoria', description: 'Avaliação e diagnóstico de processos' },
-      { value: 'strategy', label: 'Estratégia', description: 'Planeamento estratégico e roadmaps' },
-    ],
+    subtitle: 'Escolha o serviço principal',
+  },
+  {
+    id: 'sectorSpecific',
+    type: 'sector-specific',
+    title: 'Detalhes do Serviço',
+    subtitle: 'Configure os detalhes específicos do serviço selecionado',
+    condition: (data) => {
+      if (!data.serviceType) return false;
+      const category = SERVICE_CATEGORIES[data.serviceType];
+      return category === 'events' || category === 'technology' || category === 'creative';
+    },
   },
   {
     id: 'estimatedDuration',
@@ -157,6 +164,10 @@ const questions: Question[] = [
       { value: 'schedules', label: 'Cronogramas' },
       { value: 'training', label: 'Materiais de Formação' },
       { value: 'documentation', label: 'Documentação de Processos' },
+      { value: 'photos', label: 'Fotografias' },
+      { value: 'videos', label: 'Vídeos' },
+      { value: 'designs', label: 'Artes Gráficas' },
+      { value: 'website', label: 'Website/App' },
     ],
   },
   {
@@ -182,16 +193,14 @@ const questions: Question[] = [
   },
 ];
 
-// Email validation helper
 const isValidEmail = (email: string): boolean => {
-  if (!email) return true; // Empty is valid (field is optional)
+  if (!email) return true;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
-// Angolan phone validation helper (9 digits starting with 9)
 const isValidAngolanPhone = (phone: string): boolean => {
-  if (!phone) return true; // Empty is valid (field is optional)
+  if (!phone) return true;
   const cleaned = phone.replace(/\s/g, '');
   const phoneRegex = /^9[0-9]{8}$/;
   return phoneRegex.test(cleaned);
@@ -210,15 +219,16 @@ export default function NewProposal() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
 
+  // Filter questions based on conditions
+  const questions = baseQuestions.filter((q) => !q.condition || q.condition(formData));
+  
   const currentQuestion = questions[currentStep];
   const progress = ((currentStep) / (questions.length - 1)) * 100;
   
-  // Email validation state
   const emailValue = (formData.clientEmail as string) || '';
   const emailIsValid = isValidEmail(emailValue);
   const showEmailError = emailTouched && emailValue && !emailIsValid;
   
-  // Phone validation state
   const phoneValue = (formData.clientPhone as string) || '';
   const phoneIsValid = isValidAngolanPhone(phoneValue);
   const showPhoneError = phoneTouched && phoneValue && !phoneIsValid;
@@ -227,7 +237,6 @@ export default function NewProposal() {
     if (currentStep < questions.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Submit form
       setIsSubmitting(true);
       const finalData: ProposalFormData = {
         clientType: (formData.clientType as ClientType) || 'private',
@@ -243,6 +252,15 @@ export default function NewProposal() {
         deliverables: formData.deliverables || [],
         hasExistingTeam: formData.hasExistingTeam === true,
         methodology: (formData.methodology as Methodology) || 'hybrid',
+        eventType: formData.eventType,
+        coverageDuration: formData.coverageDuration,
+        eventDays: formData.eventDays,
+        eventExtras: formData.eventExtras,
+        eventStaffing: formData.eventStaffing,
+        includesPostProduction: formData.includesPostProduction,
+        eventDate: formData.eventDate,
+        webSystemsData: formData.webSystemsData,
+        designData: formData.designData,
       };
       
       try {
@@ -269,7 +287,11 @@ export default function NewProposal() {
     } else {
       setFormData({ ...formData, [questionId]: value });
     }
-    // Auto-advance after selection
+    setTimeout(() => handleNext(), 300);
+  };
+
+  const handleServiceSelect = (value: ServiceType) => {
+    setFormData({ ...formData, serviceType: value });
     setTimeout(() => handleNext(), 300);
   };
 
@@ -307,15 +329,11 @@ export default function NewProposal() {
 
   const canProceed = () => {
     if (currentQuestion.type === 'intro') return true;
+    if (currentQuestion.type === 'sector-specific') return true;
+    if (currentQuestion.type === 'service-selector') return !!formData.serviceType;
     if (currentQuestion.type === 'text') {
-      // clientEmail is optional but must be valid if provided
-      if (currentQuestion.id === 'clientEmail') {
-        return emailIsValid;
-      }
-      // clientPhone is optional but must be valid if provided
-      if (currentQuestion.id === 'clientPhone') {
-        return phoneIsValid;
-      }
+      if (currentQuestion.id === 'clientEmail') return emailIsValid;
+      if (currentQuestion.id === 'clientPhone') return phoneIsValid;
       const value = formData[currentQuestion.id as keyof ProposalFormData];
       return typeof value === 'string' && value.trim().length > 0;
     }
@@ -330,6 +348,11 @@ export default function NewProposal() {
       return (formData.deliverables?.length || 0) > 0;
     }
     return formData[currentQuestion.id as keyof ProposalFormData] !== undefined;
+  };
+
+  const getServiceCategory = () => {
+    if (!formData.serviceType) return null;
+    return SERVICE_CATEGORIES[formData.serviceType];
   };
 
   return (
@@ -394,6 +417,38 @@ export default function NewProposal() {
                     <p className="text-sm font-medium">Orçamento</p>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Service Selector */}
+            {currentQuestion.type === 'service-selector' && (
+              <ServiceSelector
+                value={formData.serviceType}
+                onChange={handleServiceSelect}
+              />
+            )}
+
+            {/* Sector-Specific Fields */}
+            {currentQuestion.type === 'sector-specific' && (
+              <div className="max-h-[60vh] overflow-y-auto pr-2">
+                {getServiceCategory() === 'events' && (
+                  <EventFields
+                    formData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                  />
+                )}
+                {getServiceCategory() === 'technology' && (
+                  <WebSystemsFields
+                    formData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                  />
+                )}
+                {getServiceCategory() === 'creative' && (
+                  <DesignFields
+                    formData={formData}
+                    onChange={(data) => setFormData({ ...formData, ...data })}
+                  />
+                )}
               </div>
             )}
 
@@ -464,113 +519,69 @@ export default function NewProposal() {
                     >
                       <div
                         className={cn(
-                          'w-5 h-5 rounded border-2 flex items-center justify-center transition-colors',
-                          isSelected
-                            ? 'border-primary bg-primary'
-                            : 'border-muted-foreground'
+                          'w-5 h-5 rounded border-2 flex items-center justify-center',
+                          isSelected ? 'bg-primary border-primary' : 'border-border'
                         )}
                       >
-                        {isSelected && <CheckCircle className="w-3 h-3 text-primary-foreground" />}
+                        {isSelected && <CheckCircle2 className="w-3 h-3 text-primary-foreground" />}
                       </div>
-                      <span className="font-medium text-foreground">{option.label}</span>
+                      <span className={cn('font-medium', isSelected ? 'text-primary' : 'text-foreground')}>
+                        {option.label}
+                      </span>
                     </button>
                   );
                 })}
               </div>
             )}
 
-            {/* Text input */}
+            {/* Text Input */}
             {currentQuestion.type === 'text' && (
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <div className="relative">
                   <input
-                    type={currentQuestion.id === 'clientEmail' ? 'email' : currentQuestion.id === 'clientPhone' ? 'tel' : 'text'}
+                    type={currentQuestion.id === 'clientEmail' ? 'email' : 'text'}
                     value={(formData[currentQuestion.id as keyof ProposalFormData] as string) || ''}
-                    onChange={(e) => {
-                      handleTextInput(e.target.value);
-                      if (currentQuestion.id === 'clientEmail') {
-                        setEmailTouched(true);
-                      }
-                      if (currentQuestion.id === 'clientPhone') {
-                        setPhoneTouched(true);
-                      }
-                    }}
+                    onChange={(e) => handleTextInput(e.target.value)}
                     onBlur={() => {
-                      if (currentQuestion.id === 'clientEmail') {
-                        setEmailTouched(true);
-                      }
-                      if (currentQuestion.id === 'clientPhone') {
-                        setPhoneTouched(true);
-                      }
+                      if (currentQuestion.id === 'clientEmail') setEmailTouched(true);
+                      if (currentQuestion.id === 'clientPhone') setPhoneTouched(true);
                     }}
                     placeholder={currentQuestion.placeholder}
                     className={cn(
-                      "w-full text-xl p-4 pr-12 rounded-xl border-2 bg-background focus:outline-none transition-colors",
-                      (currentQuestion.id === 'clientEmail' && showEmailError) || (currentQuestion.id === 'clientPhone' && showPhoneError)
-                        ? "border-destructive focus:border-destructive"
-                        : (currentQuestion.id === 'clientEmail' && emailValue && emailIsValid) || (currentQuestion.id === 'clientPhone' && phoneValue && phoneIsValid)
-                        ? "border-green-500 focus:border-green-500"
-                        : "border-border focus:border-primary"
+                      "w-full px-4 py-4 text-lg rounded-xl border-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all",
+                      (currentQuestion.id === 'clientEmail' && showEmailError) || 
+                      (currentQuestion.id === 'clientPhone' && showPhoneError)
+                        ? 'border-destructive focus:border-destructive'
+                        : 'border-border focus:border-primary'
                     )}
                     autoFocus
                   />
-                  {currentQuestion.id === 'clientEmail' && emailValue && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      {emailIsValid ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      ) : (
-                        <AlertCircle className="w-5 h-5 text-destructive" />
-                      )}
-                    </div>
-                  )}
-                  {currentQuestion.id === 'clientPhone' && phoneValue && (
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2">
-                      {phoneIsValid ? (
-                        <CheckCircle2 className="w-5 h-5 text-green-500" />
-                      ) : (
-                        <AlertCircle className="w-5 h-5 text-destructive" />
-                      )}
+                  {((currentQuestion.id === 'clientEmail' && showEmailError) || 
+                    (currentQuestion.id === 'clientPhone' && showPhoneError)) && (
+                    <div className="flex items-center gap-2 mt-2 text-destructive">
+                      <AlertCircle className="w-4 h-4" />
+                      <span className="text-sm">
+                        {currentQuestion.id === 'clientEmail' 
+                          ? 'Formato de email inválido' 
+                          : 'Formato: 9XXXXXXXX (9 dígitos)'}
+                      </span>
                     </div>
                   )}
                 </div>
-                {currentQuestion.id === 'clientEmail' && showEmailError && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    Por favor, insira um email válido
-                  </p>
-                )}
-                {currentQuestion.id === 'clientEmail' && emailValue && emailIsValid && (
-                  <p className="text-sm text-green-600 flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Email válido
-                  </p>
-                )}
-                {currentQuestion.id === 'clientPhone' && showPhoneError && (
-                  <p className="text-sm text-destructive flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" />
-                    Formato inválido. Use 9 dígitos começando com 9 (ex: 923456789)
-                  </p>
-                )}
-                {currentQuestion.id === 'clientPhone' && phoneValue && phoneIsValid && (
-                  <p className="text-sm text-green-600 flex items-center gap-1">
-                    <CheckCircle2 className="w-4 h-4" />
-                    Telefone válido
-                  </p>
-                )}
               </div>
             )}
 
-            {/* Number input */}
+            {/* Number Input */}
             {currentQuestion.type === 'number' && (
-              <div className="flex items-center gap-4">
+              <div className="flex items-center justify-center gap-4">
                 <input
                   type="number"
+                  min="1"
                   value={(formData[currentQuestion.id as keyof ProposalFormData] as number) || ''}
                   onChange={(e) => handleNumberInput(e.target.value)}
                   placeholder={currentQuestion.placeholder}
-                  className="flex-1 text-xl p-4 rounded-xl border-2 border-border bg-background focus:outline-none focus:border-primary transition-colors"
+                  className="w-32 px-4 py-4 text-2xl font-bold text-center rounded-xl border-2 border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   autoFocus
-                  min={1}
                 />
                 {currentQuestion.suffix && (
                   <span className="text-lg text-muted-foreground">{currentQuestion.suffix}</span>
@@ -578,28 +589,29 @@ export default function NewProposal() {
               </div>
             )}
 
-            {/* Locations */}
+            {/* Locations Input */}
             {currentQuestion.type === 'locations' && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {locations.map((location, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <MapPin className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                    <input
-                      type="text"
-                      value={location}
-                      onChange={(e) => updateLocation(index, e.target.value)}
-                      placeholder={currentQuestion.placeholder}
-                      className="flex-1 text-lg p-3 rounded-xl border-2 border-border bg-background focus:outline-none focus:border-primary transition-colors"
-                      autoFocus={index === locations.length - 1}
-                    />
+                  <div key={index} className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-1">
+                      <MapPin className="w-5 h-5 text-muted-foreground" />
+                      <input
+                        type="text"
+                        value={location}
+                        onChange={(e) => updateLocation(index, e.target.value)}
+                        placeholder={currentQuestion.placeholder}
+                        className="flex-1 px-4 py-3 rounded-xl border-2 border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    </div>
                     {locations.length > 1 && (
                       <Button
                         variant="ghost"
-                        size="icon"
+                        size="sm"
                         onClick={() => removeLocation(index)}
                         className="text-muted-foreground hover:text-destructive"
                       >
-                        ×
+                        ✕
                       </Button>
                     )}
                   </div>
@@ -607,38 +619,46 @@ export default function NewProposal() {
                 <Button
                   variant="outline"
                   onClick={addLocation}
-                  className="w-full mt-2"
+                  className="w-full"
                 >
-                  + Adicionar localização
+                  + Adicionar Localização
                 </Button>
               </div>
             )}
+
+            {/* Navigation */}
+            <div className="flex justify-between mt-8 pt-6 border-t border-border">
+              <Button
+                variant="ghost"
+                onClick={handleBack}
+                disabled={currentStep === 0}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Voltar
+              </Button>
+              <Button
+                onClick={handleNext}
+                disabled={!canProceed() || isSubmitting}
+                className="gap-2"
+              >
+                {isSubmitting ? (
+                  'A criar...'
+                ) : currentStep === questions.length - 1 ? (
+                  <>
+                    Criar Proposta
+                    <CheckCircle className="w-4 h-4" />
+                  </>
+                ) : (
+                  <>
+                    Continuar
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </Button>
+            </div>
           </motion.div>
         </AnimatePresence>
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between mt-6">
-          <Button
-            variant="ghost"
-            onClick={handleBack}
-            disabled={currentStep === 0}
-            className="gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Voltar
-          </Button>
-
-          {(currentQuestion.type !== 'select' || currentStep === 0) && (
-            <Button
-              onClick={handleNext}
-              disabled={!canProceed()}
-              className="gap-2"
-            >
-              {currentStep === questions.length - 1 ? 'Gerar Proposta' : 'Continuar'}
-              <ArrowRight className="w-4 h-4" />
-            </Button>
-          )}
-        </div>
       </div>
     </MainLayout>
   );
