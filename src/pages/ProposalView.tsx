@@ -14,6 +14,8 @@ import { exportProposalToPDF, exportSingleDocument } from '@/lib/pdfExport';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
+import { SectorDetailsView } from '@/components/proposal/SectorDetailsView';
+import { SERVICE_LABELS, SERVICE_CATEGORIES } from '@/types/proposal';
 import {
   ArrowLeft,
   Download,
@@ -162,14 +164,9 @@ export default function ProposalView() {
     { id: 'budget' as const, label: 'Proposta Orçamental', icon: TrendingUp },
   ];
 
-  const serviceLabels: Record<string, string> = {
-    pmo: 'PMO - Gestão de Portfólio de Projectos',
-    restructuring: 'Reestruturação Organizacional',
-    monitoring: 'Acompanhamento e Monitorização',
-    training: 'Formação e Capacitação',
-    audit: 'Auditoria de Processos',
-    strategy: 'Planeamento Estratégico',
-  };
+  // Use SERVICE_LABELS from types
+  const serviceLabels = SERVICE_LABELS;
+  const category = SERVICE_CATEGORIES[formData.serviceType];
 
   const complexityLabels: Record<string, string> = {
     low: 'Baixa',
@@ -439,6 +436,13 @@ export default function ProposalView() {
                     </div>
                   </div>
                 </section>
+
+                {/* Sector-specific details */}
+                {category !== 'consulting' && (
+                  <section>
+                    <SectorDetailsView formData={formData} />
+                  </section>
+                )}
               </div>
             )}
 
