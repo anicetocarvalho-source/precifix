@@ -317,15 +317,25 @@ export function useProposals() {
       if (!proposal) throw new Error('Proposal not found');
 
       const { formData } = proposal;
-      const pricing = calculatePricing(formData, pricingParams);
+
+      // Ensure pricingParams is fully initialized with defaults
+      const safeParams: PricingParams = {
+        hourlyRates: pricingParams?.hourlyRates ?? DEFAULT_PRICING_PARAMS.hourlyRates,
+        complexityMultipliers: pricingParams?.complexityMultipliers ?? DEFAULT_PRICING_PARAMS.complexityMultipliers,
+        extrasPricing: pricingParams?.extrasPricing ?? DEFAULT_PRICING_PARAMS.extrasPricing,
+        overheadPercentage: pricingParams?.overheadPercentage ?? DEFAULT_PRICING_PARAMS.overheadPercentage,
+        marginPercentage: pricingParams?.marginPercentage ?? DEFAULT_PRICING_PARAMS.marginPercentage,
+      };
+
+      const pricing = calculatePricing(formData, safeParams);
 
       // Create pricing params snapshot for the duplicate
       const pricingParamsSnapshot: SavedPricingParams = {
-        hourlyRates: pricingParams.hourlyRates,
-        complexityMultipliers: pricingParams.complexityMultipliers,
-        extrasPricing: pricingParams.extrasPricing,
-        overheadPercentage: pricingParams.overheadPercentage,
-        marginPercentage: pricingParams.marginPercentage,
+        hourlyRates: safeParams.hourlyRates,
+        complexityMultipliers: safeParams.complexityMultipliers,
+        extrasPricing: safeParams.extrasPricing,
+        overheadPercentage: safeParams.overheadPercentage,
+        marginPercentage: safeParams.marginPercentage,
       };
 
       const { data, error } = await supabase
@@ -408,7 +418,16 @@ export function useProposals() {
           ? (existingVersions[0] as { version_number: number }).version_number + 1
           : 1;
 
-        const currentPricing = calculatePricing(currentProposal.formData, pricingParams);
+        // Ensure pricingParams is fully initialized with defaults for version history
+        const safeParamsForVersion: PricingParams = {
+          hourlyRates: pricingParams?.hourlyRates ?? DEFAULT_PRICING_PARAMS.hourlyRates,
+          complexityMultipliers: pricingParams?.complexityMultipliers ?? DEFAULT_PRICING_PARAMS.complexityMultipliers,
+          extrasPricing: pricingParams?.extrasPricing ?? DEFAULT_PRICING_PARAMS.extrasPricing,
+          overheadPercentage: pricingParams?.overheadPercentage ?? DEFAULT_PRICING_PARAMS.overheadPercentage,
+          marginPercentage: pricingParams?.marginPercentage ?? DEFAULT_PRICING_PARAMS.marginPercentage,
+        };
+
+        const currentPricing = calculatePricing(currentProposal.formData, safeParamsForVersion);
 
         await supabase
           .from('proposal_versions')
@@ -455,15 +474,24 @@ export function useProposals() {
           });
       }
 
-      const pricing = calculatePricing(formData, pricingParams);
+      // Ensure pricingParams is fully initialized with defaults for update
+      const safeParams: PricingParams = {
+        hourlyRates: pricingParams?.hourlyRates ?? DEFAULT_PRICING_PARAMS.hourlyRates,
+        complexityMultipliers: pricingParams?.complexityMultipliers ?? DEFAULT_PRICING_PARAMS.complexityMultipliers,
+        extrasPricing: pricingParams?.extrasPricing ?? DEFAULT_PRICING_PARAMS.extrasPricing,
+        overheadPercentage: pricingParams?.overheadPercentage ?? DEFAULT_PRICING_PARAMS.overheadPercentage,
+        marginPercentage: pricingParams?.marginPercentage ?? DEFAULT_PRICING_PARAMS.marginPercentage,
+      };
+
+      const pricing = calculatePricing(formData, safeParams);
 
       // Create pricing params snapshot for the update
       const pricingParamsSnapshot: SavedPricingParams = {
-        hourlyRates: pricingParams.hourlyRates,
-        complexityMultipliers: pricingParams.complexityMultipliers,
-        extrasPricing: pricingParams.extrasPricing,
-        overheadPercentage: pricingParams.overheadPercentage,
-        marginPercentage: pricingParams.marginPercentage,
+        hourlyRates: safeParams.hourlyRates,
+        complexityMultipliers: safeParams.complexityMultipliers,
+        extrasPricing: safeParams.extrasPricing,
+        overheadPercentage: safeParams.overheadPercentage,
+        marginPercentage: safeParams.marginPercentage,
       };
 
       const { error } = await supabase
