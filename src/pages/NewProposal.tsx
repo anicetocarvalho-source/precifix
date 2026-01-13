@@ -28,6 +28,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Loader2,
+  Cloud,
+  CloudOff,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -498,19 +500,47 @@ export default function NewProposal() {
   const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [showDraftRestored, setShowDraftRestored] = useState(!!savedDraft);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(savedDraft ? new Date(savedDraft.savedAt) : null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Format relative time
+  const formatLastSaved = useCallback((date: Date | null): string => {
+    if (!date) return '';
+    
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffSecs = Math.floor(diffMs / 1000);
+    const diffMins = Math.floor(diffSecs / 60);
+    const diffHours = Math.floor(diffMins / 60);
+    
+    if (diffSecs < 10) return 'agora mesmo';
+    if (diffSecs < 60) return `há ${diffSecs} segundos`;
+    if (diffMins === 1) return 'há 1 minuto';
+    if (diffMins < 60) return `há ${diffMins} minutos`;
+    if (diffHours === 1) return 'há 1 hora';
+    return `há ${diffHours} horas`;
+  }, []);
 
   // Auto-save draft to localStorage whenever form data changes
   useEffect(() => {
-    const draftState: DraftState = {
-      formData,
-      locations,
-      currentStep,
-      savedAt: Date.now(),
-    };
-    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftState));
+    setIsSaving(true);
     
-    // Also save to store for potential cross-tab sync
-    setDraft(formData as Partial<ProposalFormData>);
+    const timeoutId = setTimeout(() => {
+      const draftState: DraftState = {
+        formData,
+        locations,
+        currentStep,
+        savedAt: Date.now(),
+      };
+      localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(draftState));
+      
+      // Also save to store for potential cross-tab sync
+      setDraft(formData as Partial<ProposalFormData>);
+      setLastSavedAt(new Date());
+      setIsSaving(false);
+    }, 500); // Debounce save by 500ms
+    
+    return () => clearTimeout(timeoutId);
   }, [formData, locations, currentStep, setDraft]);
 
   // Clear draft notification after 3 seconds
@@ -763,9 +793,34 @@ export default function NewProposal() {
             <span className="text-sm text-muted-foreground">
               Passo {currentStep + 1} de {questions.length}
             </span>
-            <span className="text-sm font-medium text-primary">
-              {Math.round(progress)}%
-            </span>
+            <div className="flex items-center gap-3">
+              {/* Auto-save indicator */}
+              <motion.div 
+                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />
+                    <span>A guardar...</span>
+                  </>
+                ) : lastSavedAt ? (
+                  <>
+                    <Cloud className="w-3.5 h-3.5 text-green-500" />
+                    <span>Guardado {formatLastSaved(lastSavedAt)}</span>
+                  </>
+                ) : (
+                  <>
+                    <CloudOff className="w-3.5 h-3.5" />
+                    <span>Não guardado</span>
+                  </>
+                )}
+              </motion.div>
+              <span className="text-sm font-medium text-primary">
+                {Math.round(progress)}%
+              </span>
+            </div>
           </div>
           <div className="h-2 bg-muted rounded-full overflow-hidden">
             <motion.div
