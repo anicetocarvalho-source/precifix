@@ -10,6 +10,7 @@ import {
   ServiceType,
   Methodology,
   SERVICE_CATEGORIES,
+  ServiceCategory,
 } from '@/types/proposal';
 import {
   ArrowLeft,
@@ -52,160 +53,398 @@ interface Question {
   condition?: (data: Partial<ProposalFormData>) => boolean;
 }
 
-const baseQuestions: Question[] = [
-  {
-    id: 'intro',
-    type: 'intro',
-    title: 'Vamos criar a sua proposta',
-    subtitle: 'Responda algumas perguntas para gerar uma cotação precisa e documentos profissionais.',
-  },
-  {
-    id: 'clientName',
-    type: 'text',
-    title: 'Qual é o nome do cliente?',
-    subtitle: 'Insira o nome da organização ou empresa',
-    placeholder: 'Ex: Ministério da Saúde',
-  },
-  {
-    id: 'clientEmail',
-    type: 'text',
-    title: 'Qual é o email do cliente?',
-    subtitle: 'Para envio da proposta (opcional)',
-    placeholder: 'Ex: cliente@empresa.com',
-  },
-  {
-    id: 'clientPhone',
-    type: 'text',
-    title: 'Qual é o telefone do cliente?',
-    subtitle: 'Formato angolano: 9 dígitos começando com 9 (opcional)',
-    placeholder: 'Ex: 923456789',
-  },
-  {
-    id: 'clientType',
-    type: 'select',
-    title: 'Qual o tipo de cliente?',
-    subtitle: 'Selecione a categoria que melhor descreve o cliente',
-    options: [
-      { value: 'public', label: 'Instituição Pública', description: 'Ministérios, autarquias, agências governamentais', icon: Landmark },
-      { value: 'private', label: 'Empresa Privada', description: 'Sociedades comerciais, multinacionais', icon: Building2 },
-      { value: 'ngo', label: 'ONG', description: 'Organizações sem fins lucrativos, fundações', icon: Heart },
-      { value: 'startup', label: 'Startup', description: 'Empresas inovadoras em fase de crescimento', icon: Rocket },
-    ],
-  },
-  {
-    id: 'sector',
-    type: 'text',
-    title: 'Qual o sector de atuação?',
-    subtitle: 'Descreva o sector ou indústria do cliente',
-    placeholder: 'Ex: Saúde, Energia, Tecnologia, Construção',
-  },
-  {
-    id: 'serviceType',
-    type: 'service-selector',
-    title: 'Qual tipo de serviço será prestado?',
-    subtitle: 'Escolha o serviço principal',
-  },
-  {
-    id: 'sectorSpecific',
-    type: 'sector-specific',
-    title: 'Detalhes do Serviço',
-    subtitle: 'Configure os detalhes específicos do serviço selecionado',
-    condition: (data) => {
-      if (!data.serviceType) return false;
-      const category = SERVICE_CATEGORIES[data.serviceType];
-      return category === 'events' || category === 'technology' || category === 'creative';
+// Get questions dynamically based on service category
+const getQuestions = (formData: Partial<ProposalFormData>): Question[] => {
+  const serviceCategory = formData.serviceType ? SERVICE_CATEGORIES[formData.serviceType] : null;
+  
+  const questions: Question[] = [
+    {
+      id: 'intro',
+      type: 'intro',
+      title: 'Vamos criar a sua proposta',
+      subtitle: 'Responda algumas perguntas para gerar uma cotação precisa e documentos profissionais.',
     },
-  },
-  {
-    id: 'estimatedDuration',
-    type: 'number',
-    title: 'Qual a duração estimada do projecto?',
-    subtitle: 'Em meses',
-    placeholder: '6',
-    suffix: 'meses',
-  },
-  {
+    {
+      id: 'clientName',
+      type: 'text',
+      title: 'Qual é o nome do cliente?',
+      subtitle: 'Insira o nome da organização ou empresa',
+      placeholder: 'Ex: Ministério da Saúde',
+    },
+    {
+      id: 'clientEmail',
+      type: 'text',
+      title: 'Qual é o email do cliente?',
+      subtitle: 'Para envio da proposta (opcional)',
+      placeholder: 'Ex: cliente@empresa.com',
+    },
+    {
+      id: 'clientPhone',
+      type: 'text',
+      title: 'Qual é o telefone do cliente?',
+      subtitle: 'Formato angolano: 9 dígitos começando com 9 (opcional)',
+      placeholder: 'Ex: 923456789',
+    },
+    {
+      id: 'clientType',
+      type: 'select',
+      title: 'Qual o tipo de cliente?',
+      subtitle: 'Selecione a categoria que melhor descreve o cliente',
+      options: [
+        { value: 'public', label: 'Instituição Pública', description: 'Ministérios, autarquias, agências governamentais', icon: Landmark },
+        { value: 'private', label: 'Empresa Privada', description: 'Sociedades comerciais, multinacionais', icon: Building2 },
+        { value: 'ngo', label: 'ONG', description: 'Organizações sem fins lucrativos, fundações', icon: Heart },
+        { value: 'startup', label: 'Startup', description: 'Empresas inovadoras em fase de crescimento', icon: Rocket },
+      ],
+    },
+    {
+      id: 'sector',
+      type: 'text',
+      title: 'Qual o sector de atuação?',
+      subtitle: 'Descreva o sector ou indústria do cliente',
+      placeholder: 'Ex: Saúde, Energia, Tecnologia, Construção',
+    },
+    {
+      id: 'serviceType',
+      type: 'service-selector',
+      title: 'Qual tipo de serviço será prestado?',
+      subtitle: 'Escolha o serviço principal',
+    },
+  ];
+
+  // Add sector-specific fields only for non-consulting services
+  if (serviceCategory && serviceCategory !== 'consulting') {
+    questions.push({
+      id: 'sectorSpecific',
+      type: 'sector-specific',
+      title: 'Detalhes do Serviço',
+      subtitle: 'Configure os detalhes específicos do serviço selecionado',
+    });
+  }
+
+  // Duration question varies by category
+  if (serviceCategory === 'consulting') {
+    questions.push({
+      id: 'estimatedDuration',
+      type: 'number',
+      title: 'Qual a duração estimada do projecto?',
+      subtitle: 'Duração total do projecto de consultoria',
+      placeholder: '6',
+      suffix: 'meses',
+    });
+  } else if (serviceCategory === 'technology') {
+    questions.push({
+      id: 'estimatedDuration',
+      type: 'number',
+      title: 'Qual o prazo estimado de desenvolvimento?',
+      subtitle: 'Tempo necessário para entregar o projecto',
+      placeholder: '3',
+      suffix: 'meses',
+    });
+  } else if (serviceCategory === 'creative') {
+    questions.push({
+      id: 'estimatedDuration',
+      type: 'number',
+      title: 'Qual o prazo estimado de entrega?',
+      subtitle: 'Tempo para conclusão dos materiais criativos',
+      placeholder: '1',
+      suffix: 'meses',
+    });
+  } else if (serviceCategory === 'events') {
+    // Events already have event-specific duration in sector-specific fields
+    questions.push({
+      id: 'estimatedDuration',
+      type: 'number',
+      title: 'Quantos meses até o evento?',
+      subtitle: 'Tempo de preparação e planeamento',
+      placeholder: '2',
+      suffix: 'meses',
+    });
+  } else {
+    // Default for services not yet selected
+    questions.push({
+      id: 'estimatedDuration',
+      type: 'number',
+      title: 'Qual a duração estimada?',
+      subtitle: 'Em meses',
+      placeholder: '6',
+      suffix: 'meses',
+    });
+  }
+
+  // Location question
+  questions.push({
     id: 'locations',
     type: 'locations',
-    title: 'Quais as localizações envolvidas?',
-    subtitle: 'Adicione todas as cidades ou regiões onde o projecto será executado',
+    title: serviceCategory === 'events' 
+      ? 'Onde será realizado o evento?' 
+      : 'Quais as localizações envolvidas?',
+    subtitle: serviceCategory === 'events'
+      ? 'Adicione as cidades ou locais onde o evento será realizado'
+      : 'Adicione todas as cidades ou regiões onde o projecto será executado',
     placeholder: 'Ex: Luanda',
-  },
-  {
+  });
+
+  // Complexity - adapted per category
+  questions.push({
     id: 'complexity',
     type: 'select',
-    title: 'Qual o nível de complexidade?',
-    subtitle: 'Avalie a complexidade geral do projecto',
+    title: serviceCategory === 'events'
+      ? 'Qual a escala do evento?'
+      : serviceCategory === 'technology'
+      ? 'Qual o nível de complexidade técnica?'
+      : serviceCategory === 'creative'
+      ? 'Qual o nível de exigência criativa?'
+      : 'Qual o nível de complexidade?',
+    subtitle: serviceCategory === 'events'
+      ? 'Tamanho e complexidade do evento'
+      : serviceCategory === 'technology'
+      ? 'Avalie a complexidade técnica do projecto'
+      : serviceCategory === 'creative'
+      ? 'Nível de detalhe e sofisticação esperado'
+      : 'Avalie a complexidade geral do projecto',
     options: [
-      { value: 'low', label: 'Baixa', description: 'Projeto simples, poucos stakeholders, escopo definido' },
-      { value: 'medium', label: 'Média', description: 'Complexidade moderada, múltiplas áreas envolvidas' },
-      { value: 'high', label: 'Alta', description: 'Projeto complexo, alto risco, muitos stakeholders' },
+      { 
+        value: 'low', 
+        label: 'Baixa', 
+        description: serviceCategory === 'events' 
+          ? 'Evento pequeno, até 50 pessoas, local simples'
+          : serviceCategory === 'technology'
+          ? 'Funcionalidades básicas, sem integrações complexas'
+          : serviceCategory === 'creative'
+          ? 'Design simples, poucas variações'
+          : 'Projeto simples, poucos stakeholders, escopo definido'
+      },
+      { 
+        value: 'medium', 
+        label: 'Média', 
+        description: serviceCategory === 'events'
+          ? 'Evento médio, 50-200 pessoas, múltiplas áreas'
+          : serviceCategory === 'technology'
+          ? 'Algumas integrações, funcionalidades customizadas'
+          : serviceCategory === 'creative'
+          ? 'Design detalhado, múltiplas aplicações'
+          : 'Complexidade moderada, múltiplas áreas envolvidas'
+      },
+      { 
+        value: 'high', 
+        label: 'Alta', 
+        description: serviceCategory === 'events'
+          ? 'Evento grande, +200 pessoas, produção elaborada'
+          : serviceCategory === 'technology'
+          ? 'Sistema complexo, múltiplas integrações, alta performance'
+          : serviceCategory === 'creative'
+          ? 'Produção premium, animações, efeitos avançados'
+          : 'Projeto complexo, alto risco, muitos stakeholders'
+      },
     ],
-  },
-  {
-    id: 'clientMaturity',
-    type: 'select',
-    title: 'Qual o nível de maturidade do cliente?',
-    subtitle: 'Em termos de gestão de projectos',
-    options: [
-      { value: 'low', label: 'Baixo', description: 'Sem processos formais, pouca experiência' },
-      { value: 'medium', label: 'Médio', description: 'Alguns processos estabelecidos' },
-      { value: 'high', label: 'Alto', description: 'Processos maduros, equipa experiente' },
-    ],
-  },
-  {
+  });
+
+  // Client maturity - only for consulting and technology
+  if (serviceCategory === 'consulting' || serviceCategory === 'technology') {
+    questions.push({
+      id: 'clientMaturity',
+      type: 'select',
+      title: serviceCategory === 'technology'
+        ? 'Qual o nível de maturidade tecnológica do cliente?'
+        : 'Qual o nível de maturidade do cliente?',
+      subtitle: serviceCategory === 'technology'
+        ? 'Experiência do cliente com soluções tecnológicas'
+        : 'Em termos de gestão de projectos',
+      options: [
+        { 
+          value: 'low', 
+          label: 'Baixo', 
+          description: serviceCategory === 'technology'
+            ? 'Sem sistemas existentes, pouca literacia digital'
+            : 'Sem processos formais, pouca experiência'
+        },
+        { 
+          value: 'medium', 
+          label: 'Médio', 
+          description: serviceCategory === 'technology'
+            ? 'Alguns sistemas básicos, equipa técnica limitada'
+            : 'Alguns processos estabelecidos'
+        },
+        { 
+          value: 'high', 
+          label: 'Alto', 
+          description: serviceCategory === 'technology'
+            ? 'Infraestrutura estabelecida, equipa técnica experiente'
+            : 'Processos maduros, equipa experiente'
+        },
+      ],
+    });
+  }
+
+  // Deliverables - adapted per category
+  const deliverableOptions = getDeliverableOptions(serviceCategory);
+  questions.push({
     id: 'deliverables',
     type: 'multi-select',
     title: 'Quais entregáveis são esperados?',
     subtitle: 'Selecione todos que se aplicam',
-    options: [
-      { value: 'reports', label: 'Relatórios' },
-      { value: 'dashboards', label: 'Dashboards' },
-      { value: 'kpis', label: 'KPIs' },
-      { value: 'schedules', label: 'Cronogramas' },
-      { value: 'training', label: 'Materiais de Formação' },
-      { value: 'documentation', label: 'Documentação de Processos' },
-      { value: 'photos', label: 'Fotografias' },
-      { value: 'videos', label: 'Vídeos' },
-      { value: 'designs', label: 'Artes Gráficas' },
-      { value: 'website', label: 'Website/App' },
-    ],
-  },
-  {
-    id: 'hasExistingTeam',
-    type: 'select',
-    title: 'O cliente tem equipa de projecto existente?',
-    subtitle: 'Isso influencia a composição da nossa equipa',
-    options: [
-      { value: 'true', label: 'Sim', description: 'Existe uma equipa interna para apoiar' },
-      { value: 'false', label: 'Não', description: 'Precisaremos de equipa completa' },
-    ],
-  },
-  {
-    id: 'methodology',
-    type: 'select',
-    title: 'Qual metodologia será utilizada?',
-    subtitle: 'Escolha a abordagem metodológica',
-    options: [
-      { value: 'traditional', label: 'Tradicional', description: 'Waterfall, PMBOK, PRINCE2' },
-      { value: 'agile', label: 'Ágil', description: 'Scrum, Kanban, Lean' },
-      { value: 'hybrid', label: 'Híbrida', description: 'Combinação de métodos tradicionais e ágeis' },
-    ],
-  },
-];
+    options: deliverableOptions,
+  });
 
-const isValidEmail = (email: string): boolean => {
-  if (!email) return true;
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  // Existing team - mainly for consulting and technology
+  if (serviceCategory === 'consulting' || serviceCategory === 'technology') {
+    questions.push({
+      id: 'hasExistingTeam',
+      type: 'select',
+      title: serviceCategory === 'technology'
+        ? 'O cliente tem equipa técnica existente?'
+        : 'O cliente tem equipa de projecto existente?',
+      subtitle: 'Isso influencia a composição da nossa equipa',
+      options: [
+        { value: 'true', label: 'Sim', description: 'Existe uma equipa interna para apoiar' },
+        { value: 'false', label: 'Não', description: 'Precisaremos de equipa completa' },
+      ],
+    });
+  }
+
+  // Methodology - only for consulting and technology
+  if (serviceCategory === 'consulting' || serviceCategory === 'technology') {
+    questions.push({
+      id: 'methodology',
+      type: 'select',
+      title: 'Qual metodologia será utilizada?',
+      subtitle: 'Escolha a abordagem metodológica',
+      options: serviceCategory === 'technology' ? [
+        { value: 'traditional', label: 'Waterfall', description: 'Fases sequenciais, documentação completa' },
+        { value: 'agile', label: 'Ágil', description: 'Scrum, Kanban, entregas incrementais' },
+        { value: 'hybrid', label: 'Híbrida', description: 'Combinação de métodos' },
+      ] : [
+        { value: 'traditional', label: 'Tradicional', description: 'Waterfall, PMBOK, PRINCE2' },
+        { value: 'agile', label: 'Ágil', description: 'Scrum, Kanban, Lean' },
+        { value: 'hybrid', label: 'Híbrida', description: 'Combinação de métodos tradicionais e ágeis' },
+      ],
+    });
+  }
+
+  return questions;
 };
 
-const isValidAngolanPhone = (phone: string): boolean => {
-  if (!phone) return true;
-  const cleaned = phone.replace(/\s/g, '');
-  const phoneRegex = /^9[0-9]{8}$/;
-  return phoneRegex.test(cleaned);
+// Get deliverable options based on service category
+const getDeliverableOptions = (category: ServiceCategory | null): QuestionOption[] => {
+  switch (category) {
+    case 'events':
+      return [
+        { value: 'photos', label: 'Fotografias Editadas' },
+        { value: 'raw_photos', label: 'Fotografias RAW' },
+        { value: 'videos', label: 'Vídeos Editados' },
+        { value: 'raw_footage', label: 'Filmagens Brutas' },
+        { value: 'highlights', label: 'Vídeo Resumo/Highlights' },
+        { value: 'streaming', label: 'Streaming ao Vivo' },
+        { value: 'photo_album', label: 'Álbum Digital' },
+        { value: 'social_media_package', label: 'Pacote para Redes Sociais' },
+      ];
+    case 'creative':
+      return [
+        { value: 'logo', label: 'Logótipo' },
+        { value: 'brand_manual', label: 'Manual de Marca' },
+        { value: 'social_media_kit', label: 'Kit Redes Sociais' },
+        { value: 'business_cards', label: 'Cartões de Visita' },
+        { value: 'promotional_materials', label: 'Materiais Promocionais' },
+        { value: 'video_animation', label: 'Vídeo/Animação' },
+        { value: 'presentations', label: 'Apresentações' },
+        { value: 'packaging', label: 'Embalagens' },
+      ];
+    case 'technology':
+      return [
+        { value: 'source_code', label: 'Código Fonte' },
+        { value: 'technical_docs', label: 'Documentação Técnica' },
+        { value: 'user_manual', label: 'Manual do Utilizador' },
+        { value: 'api_docs', label: 'Documentação API' },
+        { value: 'database', label: 'Base de Dados' },
+        { value: 'hosting_setup', label: 'Configuração de Hosting' },
+        { value: 'training_videos', label: 'Vídeos de Formação' },
+        { value: 'maintenance_support', label: 'Suporte/Manutenção' },
+      ];
+    case 'consulting':
+    default:
+      return [
+        { value: 'reports', label: 'Relatórios' },
+        { value: 'dashboards', label: 'Dashboards' },
+        { value: 'kpis', label: 'KPIs' },
+        { value: 'schedules', label: 'Cronogramas' },
+        { value: 'training', label: 'Materiais de Formação' },
+        { value: 'documentation', label: 'Documentação de Processos' },
+        { value: 'presentations', label: 'Apresentações Executivas' },
+        { value: 'action_plans', label: 'Planos de Acção' },
+      ];
+  }
 };
+
+// Validation rules with clear error messages
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+const validateField = (
+  questionId: string, 
+  value: unknown, 
+  formData: Partial<ProposalFormData>
+): ValidationError | null => {
+  switch (questionId) {
+    case 'clientName':
+      if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+        return { field: questionId, message: 'O nome do cliente é obrigatório' };
+      }
+      if (typeof value === 'string' && value.trim().length < 2) {
+        return { field: questionId, message: 'O nome deve ter pelo menos 2 caracteres' };
+      }
+      if (typeof value === 'string' && value.trim().length > 100) {
+        return { field: questionId, message: 'O nome não pode exceder 100 caracteres' };
+      }
+      break;
+    case 'clientEmail':
+      if (value && typeof value === 'string' && value.trim().length > 0) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+          return { field: questionId, message: 'Formato de email inválido' };
+        }
+      }
+      break;
+    case 'clientPhone':
+      if (value && typeof value === 'string' && value.trim().length > 0) {
+        const cleaned = value.replace(/\s/g, '');
+        const phoneRegex = /^9[0-9]{8}$/;
+        if (!phoneRegex.test(cleaned)) {
+          return { field: questionId, message: 'Formato: 9XXXXXXXX (9 dígitos começando com 9)' };
+        }
+      }
+      break;
+    case 'sector':
+      if (!value || (typeof value === 'string' && value.trim().length === 0)) {
+        return { field: questionId, message: 'O sector é obrigatório' };
+      }
+      break;
+    case 'estimatedDuration':
+      if (!value || (typeof value === 'number' && value <= 0)) {
+        return { field: questionId, message: 'A duração deve ser maior que 0' };
+      }
+      if (typeof value === 'number' && value > 60) {
+        return { field: questionId, message: 'A duração não pode exceder 60 meses' };
+      }
+      break;
+    case 'locations':
+      const locations = value as string[];
+      if (!locations || !locations.some(l => l && l.trim().length > 0)) {
+        return { field: questionId, message: 'Adicione pelo menos uma localização' };
+      }
+      break;
+    case 'deliverables':
+      const deliverables = value as string[];
+      if (!deliverables || deliverables.length === 0) {
+        return { field: questionId, message: 'Selecione pelo menos um entregável' };
+      }
+      break;
+  }
+  return null;
+};
+
 
 export default function NewProposal() {
   const navigate = useNavigate();
@@ -217,22 +456,41 @@ export default function NewProposal() {
     deliverables: [],
   });
   const [locations, setLocations] = useState<string[]>(['']);
-  const [emailTouched, setEmailTouched] = useState(false);
-  const [phoneTouched, setPhoneTouched] = useState(false);
+  const [touchedFields, setTouchedFields] = useState<Set<string>>(new Set());
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  // Filter questions based on conditions
-  const questions = baseQuestions.filter((q) => !q.condition || q.condition(formData));
+  // Get questions dynamically based on service type
+  const questions = getQuestions(formData);
   
   const currentQuestion = questions[currentStep];
   const progress = ((currentStep) / (questions.length - 1)) * 100;
   
-  const emailValue = (formData.clientEmail as string) || '';
-  const emailIsValid = isValidEmail(emailValue);
-  const showEmailError = emailTouched && emailValue && !emailIsValid;
-  
-  const phoneValue = (formData.clientPhone as string) || '';
-  const phoneIsValid = isValidAngolanPhone(phoneValue);
-  const showPhoneError = phoneTouched && phoneValue && !phoneIsValid;
+  // Get current field value and error
+  const getCurrentValue = () => {
+    if (currentQuestion.id === 'locations') {
+      return locations;
+    }
+    return formData[currentQuestion.id as keyof ProposalFormData];
+  };
+
+  const getCurrentError = (): string | null => {
+    const questionId = currentQuestion.id as string;
+    if (!touchedFields.has(questionId)) return null;
+    
+    const value = getCurrentValue();
+    const error = validateField(questionId, value, formData);
+    return error?.message || null;
+  };
+
+  const currentError = getCurrentError();
+
+  // Mark field as touched when user interacts
+  const markFieldTouched = () => {
+    const questionId = currentQuestion.id as string;
+    if (!touchedFields.has(questionId)) {
+      setTouchedFields(prev => new Set(prev).add(questionId));
+    }
+  };
 
   const handleNext = async () => {
     if (currentStep < questions.length - 1) {
@@ -333,10 +591,18 @@ export default function NewProposal() {
     if (currentQuestion.type === 'sector-specific') return true;
     if (currentQuestion.type === 'service-selector') return !!formData.serviceType;
     if (currentQuestion.type === 'text') {
-      if (currentQuestion.id === 'clientEmail') return emailIsValid;
-      if (currentQuestion.id === 'clientPhone') return phoneIsValid;
-      const value = formData[currentQuestion.id as keyof ProposalFormData];
-      return typeof value === 'string' && value.trim().length > 0;
+      const questionId = currentQuestion.id as string;
+      const value = formData[currentQuestion.id as keyof ProposalFormData] as string || '';
+      
+      // Optional fields (email and phone) - just need to be valid if filled
+      if (questionId === 'clientEmail' || questionId === 'clientPhone') {
+        const error = validateField(questionId, value, formData);
+        return error === null;
+      }
+      
+      // Required text fields
+      const error = validateField(questionId, value, formData);
+      return error === null;
     }
     if (currentQuestion.type === 'number') {
       const value = formData[currentQuestion.id as keyof ProposalFormData];
@@ -545,29 +811,20 @@ export default function NewProposal() {
                     type={currentQuestion.id === 'clientEmail' ? 'email' : 'text'}
                     value={(formData[currentQuestion.id as keyof ProposalFormData] as string) || ''}
                     onChange={(e) => handleTextInput(e.target.value)}
-                    onBlur={() => {
-                      if (currentQuestion.id === 'clientEmail') setEmailTouched(true);
-                      if (currentQuestion.id === 'clientPhone') setPhoneTouched(true);
-                    }}
+                    onBlur={markFieldTouched}
                     placeholder={currentQuestion.placeholder}
                     className={cn(
                       "w-full px-4 py-4 text-lg rounded-xl border-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all",
-                      (currentQuestion.id === 'clientEmail' && showEmailError) || 
-                      (currentQuestion.id === 'clientPhone' && showPhoneError)
+                      currentError
                         ? 'border-destructive focus:border-destructive'
                         : 'border-border focus:border-primary'
                     )}
                     autoFocus
                   />
-                  {((currentQuestion.id === 'clientEmail' && showEmailError) || 
-                    (currentQuestion.id === 'clientPhone' && showPhoneError)) && (
+                  {currentError && (
                     <div className="flex items-center gap-2 mt-2 text-destructive">
                       <AlertCircle className="w-4 h-4" />
-                      <span className="text-sm">
-                        {currentQuestion.id === 'clientEmail' 
-                          ? 'Formato de email inválido' 
-                          : 'Formato: 9XXXXXXXX (9 dígitos)'}
-                      </span>
+                      <span className="text-sm">{currentError}</span>
                     </div>
                   )}
                 </div>
@@ -576,18 +833,33 @@ export default function NewProposal() {
 
             {/* Number Input */}
             {currentQuestion.type === 'number' && (
-              <div className="flex items-center justify-center gap-4">
-                <input
-                  type="number"
-                  min="1"
-                  value={(formData[currentQuestion.id as keyof ProposalFormData] as number) || ''}
-                  onChange={(e) => handleNumberInput(e.target.value)}
-                  placeholder={currentQuestion.placeholder}
-                  className="w-32 px-4 py-4 text-2xl font-bold text-center rounded-xl border-2 border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                  autoFocus
-                />
-                {currentQuestion.suffix && (
-                  <span className="text-lg text-muted-foreground">{currentQuestion.suffix}</span>
+              <div className="space-y-4">
+                <div className="flex items-center justify-center gap-4">
+                  <input
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={(formData[currentQuestion.id as keyof ProposalFormData] as number) || ''}
+                    onChange={(e) => handleNumberInput(e.target.value)}
+                    onBlur={markFieldTouched}
+                    placeholder={currentQuestion.placeholder}
+                    className={cn(
+                      "w-32 px-4 py-4 text-2xl font-bold text-center rounded-xl border-2 bg-background focus:outline-none focus:ring-2 focus:ring-primary/20",
+                      currentError
+                        ? 'border-destructive focus:border-destructive'
+                        : 'border-border focus:border-primary'
+                    )}
+                    autoFocus
+                  />
+                  {currentQuestion.suffix && (
+                    <span className="text-lg text-muted-foreground">{currentQuestion.suffix}</span>
+                  )}
+                </div>
+                {currentError && (
+                  <div className="flex items-center justify-center gap-2 text-destructive">
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="text-sm">{currentError}</span>
+                  </div>
                 )}
               </div>
             )}
