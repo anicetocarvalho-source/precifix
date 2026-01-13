@@ -296,44 +296,120 @@ export default function Auth() {
             </div>
 
             {/* Test Users Quick Access */}
-            {isLogin && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.3 }}
-                className="mt-6 pt-6 border-t border-border"
-              >
-                <p className="text-xs text-muted-foreground text-center mb-3">
-                  Acesso rápido para testes
-                </p>
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={() => {
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="mt-6 pt-6 border-t border-border"
+            >
+              <p className="text-xs text-muted-foreground text-center mb-3">
+                {isLogin ? 'Acesso rápido para testes' : 'Criar utilizadores de teste'}
+              </p>
+              <div className="space-y-2">
+                {/* Existing Admin User */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (isLogin) {
                       setFormData({
                         ...formData,
                         email: 'aniceto@precifix.pt',
                         password: '',
                       });
-                    }}
-                    className="w-full p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border text-left transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-foreground">Aniceto de Carvalho</p>
-                        <p className="text-xs text-muted-foreground">aniceto@precifix.pt</p>
-                      </div>
+                    }
+                  }}
+                  disabled={!isLogin}
+                  className="w-full p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border text-left transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Aniceto de Carvalho</p>
+                      <p className="text-xs text-muted-foreground">aniceto@precifix.pt</p>
+                    </div>
+                    <div className="flex items-center gap-2">
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
                         Admin
                       </span>
+                      <span className="text-xs text-green-600">✓ Registado</span>
                     </div>
-                  </button>
-                </div>
-                <p className="text-xs text-muted-foreground text-center mt-3">
-                  Clique para preencher o email • Insira a palavra-passe
+                  </div>
+                </button>
+
+                {/* Test Gestor */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isLogin) {
+                      setFormData({
+                        fullName: 'Maria Santos',
+                        email: 'maria.gestor@precifix.pt',
+                        password: 'teste123',
+                        confirmPassword: 'teste123',
+                      });
+                    } else {
+                      setFormData({
+                        ...formData,
+                        email: 'maria.gestor@precifix.pt',
+                        password: '',
+                      });
+                    }
+                  }}
+                  className="w-full p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border text-left transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Maria Santos</p>
+                      <p className="text-xs text-muted-foreground">maria.gestor@precifix.pt</p>
+                    </div>
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-500/10 text-blue-600">
+                      Gestor
+                    </span>
+                  </div>
+                </button>
+
+                {/* Test Comercial */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (!isLogin) {
+                      setFormData({
+                        fullName: 'João Comercial',
+                        email: 'joao.comercial@precifix.pt',
+                        password: 'teste123',
+                        confirmPassword: 'teste123',
+                      });
+                    } else {
+                      setFormData({
+                        ...formData,
+                        email: 'joao.comercial@precifix.pt',
+                        password: '',
+                      });
+                    }
+                  }}
+                  className="w-full p-3 rounded-lg bg-muted/50 hover:bg-muted border border-border text-left transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">João Comercial</p>
+                      <p className="text-xs text-muted-foreground">joao.comercial@precifix.pt</p>
+                    </div>
+                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-orange-500/10 text-orange-600">
+                      Comercial
+                    </span>
+                  </div>
+                </button>
+              </div>
+              <p className="text-xs text-muted-foreground text-center mt-3">
+                {isLogin 
+                  ? 'Clique para preencher • Palavra-passe de teste: teste123'
+                  : 'Clique para pré-preencher • Depois clique "Criar conta"'}
+              </p>
+              {!isLogin && (
+                <p className="text-xs text-amber-600 text-center mt-2">
+                  ⚠️ Após criar, atribua o papel em Configurações → Utilizadores
                 </p>
-              </motion.div>
-            )}
+              )}
+            </motion.div>
           </div>
         </motion.div>
       </div>
