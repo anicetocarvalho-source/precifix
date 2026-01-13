@@ -5,6 +5,13 @@ import { ProposalFormData, Proposal, ProposalStatus, ClientType, ServiceType, Co
 import { calculatePricing, PricingParams, DEFAULT_PRICING_PARAMS } from '@/lib/pricing';
 import { toast } from 'sonner';
 
+// Interface for proposal with author info
+export interface ProposalWithAuthor extends Proposal {
+  authorName?: string;
+  authorId: string;
+  isOwner: boolean;
+}
+
 // Hook to fetch pricing parameters
 function usePricingParams(userId: string | undefined) {
   return useQuery({
@@ -53,10 +60,11 @@ export function useProposals() {
 
   const { data: proposals = [], isLoading } = useQuery({
     queryKey: ['proposals', user?.id, pricingParams],
-    queryFn: async () => {
+    queryFn: async (): Promise<ProposalWithAuthor[]> => {
       if (!user) return [];
       
-      const { data, error } = await supabase
+      // Fetch proposals
+      const { data: proposalsData, error } = await supabase
         .from('proposals')
         .select('*')
         .order('created_at', { ascending: false });
@@ -66,8 +74,19 @@ export function useProposals() {
         throw error;
       }
 
-      // Transform database rows to Proposal objects
-      return data.map((row): Proposal => {
+      // Get unique user IDs from proposals
+      const userIds = [...new Set(proposalsData.map(p => p.user_id))];
+      
+      // Fetch profiles for all authors
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name')
+        .in('user_id', userIds);
+
+      const profilesMap = new Map(profiles?.map(p => [p.user_id, p.full_name]) || []);
+
+      // Transform database rows to Proposal objects with author info
+      return proposalsData.map((row): ProposalWithAuthor => {
         const formData: ProposalFormData = {
           clientType: row.client_type as ClientType,
           clientName: row.client_name,
@@ -101,6 +120,9 @@ export function useProposals() {
           status: row.status as ProposalStatus,
           createdAt: new Date(row.created_at),
           updatedAt: new Date(row.updated_at),
+          authorName: profilesMap.get(row.user_id) || 'Utilizador desconhecido',
+          authorId: row.user_id,
+          isOwner: row.user_id === user.id,
         };
       });
     },
