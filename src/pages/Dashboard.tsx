@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useProposals } from '@/hooks/useProposals';
+import { useUserRole } from '@/hooks/useUserRole';
 import { formatCurrency } from '@/lib/pricing';
 import {
   Plus,
@@ -17,6 +18,7 @@ import {
   ArrowUpRight,
   Loader2,
   BarChart3,
+  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
@@ -33,6 +35,7 @@ const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
 
 export default function Dashboard() {
   const { proposals, isLoading } = useProposals();
+  const { canViewAllProposals } = useUserRole();
   const [showCharts, setShowCharts] = useState(true);
 
   const stats = [
@@ -204,6 +207,15 @@ export default function Dashboard() {
                         {' • '}
                         {proposal.formData.estimatedDuration} meses
                       </p>
+                      {/* Author indicator for admins/gestores */}
+                      {canViewAllProposals && !proposal.isOwner && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <User className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">
+                            por {proposal.authorName}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-6">

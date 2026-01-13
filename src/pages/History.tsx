@@ -1,5 +1,6 @@
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useProposals } from '@/hooks/useProposals';
+import { useUserRole } from '@/hooks/useUserRole';
 import { formatCurrency } from '@/lib/pricing';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,7 @@ import {
   Loader2,
   Copy,
   Pencil,
+  User,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
@@ -31,6 +33,7 @@ const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
 export default function History() {
   const navigate = useNavigate();
   const { proposals, isLoading, deleteProposal, duplicateProposal } = useProposals();
+  const { canViewAllProposals, canEditAllProposals } = useUserRole();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProposalStatus | 'all'>('all');
 
@@ -126,6 +129,9 @@ export default function History() {
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
                     <th className="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Cliente</th>
+                    {canViewAllProposals && (
+                      <th className="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Autor</th>
+                    )}
                     <th className="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Serviço</th>
                     <th className="text-center py-4 px-6 text-sm font-medium text-muted-foreground">Duração</th>
                     <th className="text-right py-4 px-6 text-sm font-medium text-muted-foreground">Valor</th>
@@ -150,6 +156,21 @@ export default function History() {
                           </div>
                         </div>
                       </td>
+                      {canViewAllProposals && (
+                        <td className="py-4 px-6">
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-muted-foreground" />
+                            <div>
+                              <p className={cn(
+                                "text-sm",
+                                proposal.isOwner ? "text-primary font-medium" : "text-foreground"
+                              )}>
+                                {proposal.isOwner ? 'Você' : proposal.authorName}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                      )}
                       <td className="py-4 px-6 text-foreground capitalize">
                         {proposal.formData.serviceType === 'pmo' && 'PMO'}
                         {proposal.formData.serviceType === 'restructuring' && 'Reestruturação'}
@@ -190,33 +211,37 @@ export default function History() {
                               <ArrowUpRight className="w-3 h-3" />
                             </Button>
                           </Link>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => navigate(`/proposta/${proposal.id}/editar`)}
-                            className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Editar proposta"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => duplicateProposal.mutate(proposal.id)}
-                            className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Duplicar proposta"
-                          >
-                            <Copy className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => deleteProposal.mutate(proposal.id)}
-                            className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Eliminar proposta"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          {(proposal.isOwner || canEditAllProposals) && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => navigate(`/proposta/${proposal.id}/editar`)}
+                                className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Editar proposta"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => duplicateProposal.mutate(proposal.id)}
+                                className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Duplicar proposta"
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => deleteProposal.mutate(proposal.id)}
+                                className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                title="Eliminar proposta"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
