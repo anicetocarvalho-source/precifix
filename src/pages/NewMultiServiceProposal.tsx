@@ -81,7 +81,7 @@ interface DraftState {
 
 export default function NewMultiServiceProposal() {
   const navigate = useNavigate();
-  const { createProposal } = useProposals();
+  const { createMultiServiceProposal } = useProposals();
   const { parameters } = usePricingParameters();
 
   // Load saved draft
@@ -242,55 +242,22 @@ export default function NewMultiServiceProposal() {
     if (nextIndex < STEPS.length) {
       setCurrentStep(STEPS[nextIndex]);
     } else {
-      // Submit - create proposal for the first service (for backwards compatibility)
-      // In future, this would create a proposal with multiple services
+      // Submit - create proposal with all services
       setIsSubmitting(true);
       
       try {
-        // Use the first service as the main proposal (for now)
-        const mainService = servicesWithPricing[0];
-        
-        const finalData: ProposalFormData = {
-          clientType: clientData.clientType,
-          clientName: clientData.clientName,
-          clientEmail: clientData.clientEmail || undefined,
-          clientPhone: clientData.clientPhone || undefined,
-          sector: clientData.sector,
-          serviceType: mainService.serviceType,
-          estimatedDuration: mainService.estimatedDuration,
-          durationUnit: mainService.durationUnit,
+        const result = await createMultiServiceProposal.mutateAsync({
+          clientData: {
+            clientName: clientData.clientName,
+            clientEmail: clientData.clientEmail || undefined,
+            clientPhone: clientData.clientPhone || undefined,
+            clientType: clientData.clientType,
+            sector: clientData.sector,
+          },
+          services: servicesWithPricing,
           locations: locations.filter(Boolean),
-          complexity: mainService.complexity,
-          clientMaturity: 'medium',
-          deliverables: mainService.deliverables,
-          hasExistingTeam: false,
-          methodology: 'hybrid',
-          eventType: mainService.eventType,
-          coverageDuration: mainService.coverageDuration,
-          eventDays: mainService.eventDays,
-          eventExtras: mainService.eventExtras,
-          eventStaffing: mainService.eventStaffing,
-          includesPostProduction: !!mainService.postProductionHours,
-          eventDate: mainService.eventDate,
-          webSystemsData: mainService.webProjectType ? {
-            projectType: mainService.webProjectType,
-            numberOfPages: mainService.numberOfPages,
-            numberOfModules: mainService.numberOfModules,
-            hasPaymentIntegration: mainService.hasPaymentIntegration,
-            hasCrmIntegration: mainService.hasCrmIntegration,
-            hasErpIntegration: mainService.hasErpIntegration,
-            hasMaintenanceSupport: mainService.hasMaintenance,
-            maintenanceMonths: mainService.maintenanceMonths,
-          } : undefined,
-          designData: mainService.numberOfConcepts ? {
-            numberOfConcepts: mainService.numberOfConcepts,
-            numberOfRevisions: mainService.numberOfRevisions,
-            includesBrandGuidelines: mainService.includesBrandGuidelines,
-            deliverableFormats: mainService.deliverableFormats,
-          } : undefined,
-        };
-
-        const result = await createProposal.mutateAsync(finalData);
+        });
+        
         clearSavedDraft();
         navigate(`/proposta/${result.id}`);
       } catch (error) {

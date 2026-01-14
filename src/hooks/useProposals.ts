@@ -2,7 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProposalFormData, Proposal, ProposalStatus, ClientType, ServiceType, Complexity, Methodology, SavedPricingParams } from '@/types/proposal';
+import { ProposalService } from '@/types/proposalService';
 import { calculatePricing, DEFAULT_PRICING_PARAMS, PricingParams } from '@/lib/pricing';
+import { calculateMultiServicePricing, updateServicesWithPricing } from '@/lib/pricingMultiService';
 import { toast } from 'sonner';
 import { Json } from '@/integrations/supabase/types';
 
@@ -555,10 +557,158 @@ export function useProposals() {
     return proposals.find((p) => p.id === id);
   };
 
+  // Create proposal with multiple services
+  const createMultiServiceProposal = useMutation({
+    mutationFn: async ({
+      clientData,
+      services,
+      locations,
+    }: {
+      clientData: {
+        clientName: string;
+        clientEmail?: string;
+        clientPhone?: string;
+        clientType: ClientType;
+        sector: string;
+      };
+      services: ProposalService[];
+      locations: string[];
+    }) => {
+      if (!user) throw new Error('User not authenticated');
+      if (services.length === 0) throw new Error('At least one service is required');
+
+      // Ensure pricingParams is fully initialized with defaults
+      const safeParams: PricingParams = {
+        hourlyRates: pricingParams?.hourlyRates ?? DEFAULT_PRICING_PARAMS.hourlyRates,
+        complexityMultipliers: pricingParams?.complexityMultipliers ?? DEFAULT_PRICING_PARAMS.complexityMultipliers,
+        extrasPricing: pricingParams?.extrasPricing ?? DEFAULT_PRICING_PARAMS.extrasPricing,
+        overheadPercentage: pricingParams?.overheadPercentage ?? DEFAULT_PRICING_PARAMS.overheadPercentage,
+        marginPercentage: pricingParams?.marginPercentage ?? DEFAULT_PRICING_PARAMS.marginPercentage,
+      };
+
+      // Calculate pricing for all services
+      const servicesWithPricing = updateServicesWithPricing(services, safeParams);
+      const totalPricing = calculateMultiServicePricing(services, safeParams);
+
+      // Use first service for main proposal fields (for backward compatibility)
+      const mainService = servicesWithPricing[0];
+
+      // Create pricing params snapshot to store with proposal
+      const pricingParamsSnapshot: SavedPricingParams = {
+        hourlyRates: safeParams.hourlyRates,
+        complexityMultipliers: safeParams.complexityMultipliers,
+        extrasPricing: safeParams.extrasPricing,
+        overheadPercentage: safeParams.overheadPercentage,
+        marginPercentage: safeParams.marginPercentage,
+      };
+
+      // Create the main proposal first
+      const { data: proposalData, error: proposalError } = await supabase
+        .from('proposals')
+        .insert([{
+          user_id: user.id,
+          client_name: clientData.clientName,
+          client_email: clientData.clientEmail || null,
+          client_phone: clientData.clientPhone || null,
+          client_type: clientData.clientType,
+          sector: clientData.sector,
+          service_type: mainService.serviceType,
+          duration_months: mainService.estimatedDuration,
+          locations: locations,
+          complexity: mainService.complexity,
+          maturity_level: 'medium',
+          deliverables: mainService.deliverables,
+          has_existing_team: false,
+          methodology: 'hybrid',
+          total_value: totalPricing.totalFinalPrice,
+          status: 'draft',
+          pricing_params: pricingParamsToJson(pricingParamsSnapshot),
+          // Event-specific fields from main service
+          event_type: mainService.eventType || null,
+          coverage_duration: mainService.coverageDuration || null,
+          event_date: mainService.eventDate || null,
+          event_days: mainService.eventDays || null,
+          event_staffing: mainService.eventStaffing ? JSON.parse(JSON.stringify(mainService.eventStaffing)) : null,
+          event_extras: mainService.eventExtras ? JSON.parse(JSON.stringify(mainService.eventExtras)) : null,
+          post_production_hours: mainService.postProductionHours || 0,
+          // Web/Systems-specific fields
+          web_project_type: mainService.webProjectType || null,
+          number_of_pages: mainService.numberOfPages || null,
+          number_of_modules: mainService.numberOfModules || null,
+          has_payment_integration: mainService.hasPaymentIntegration || false,
+          has_crm_integration: mainService.hasCrmIntegration || false,
+          has_erp_integration: mainService.hasErpIntegration || false,
+          has_maintenance: mainService.hasMaintenance || false,
+          maintenance_months: mainService.maintenanceMonths || null,
+          // Design-specific fields
+          number_of_concepts: mainService.numberOfConcepts || null,
+          number_of_revisions: mainService.numberOfRevisions || null,
+          deliverable_formats: mainService.deliverableFormats || [],
+          includes_brand_guidelines: mainService.includesBrandGuidelines || false,
+        }])
+        .select()
+        .single();
+
+      if (proposalError) throw proposalError;
+
+      // Insert all services into proposal_services table
+      const serviceRows = servicesWithPricing.map((service, index) => ({
+        proposal_id: proposalData.id,
+        service_type: service.serviceType,
+        complexity: service.complexity,
+        estimated_duration: service.estimatedDuration,
+        duration_unit: service.durationUnit,
+        deliverables: service.deliverables,
+        event_type: service.eventType || null,
+        event_date: service.eventDate || null,
+        event_days: service.eventDays || null,
+        event_staffing: service.eventStaffing ? JSON.parse(JSON.stringify(service.eventStaffing)) : null,
+        event_extras: service.eventExtras ? JSON.parse(JSON.stringify(service.eventExtras)) : null,
+        coverage_duration: service.coverageDuration || null,
+        post_production_hours: service.postProductionHours || null,
+        web_project_type: service.webProjectType || null,
+        number_of_pages: service.numberOfPages || null,
+        number_of_modules: service.numberOfModules || null,
+        has_payment_integration: service.hasPaymentIntegration || false,
+        has_crm_integration: service.hasCrmIntegration || false,
+        has_erp_integration: service.hasErpIntegration || false,
+        has_maintenance: service.hasMaintenance || false,
+        maintenance_months: service.maintenanceMonths || null,
+        number_of_concepts: service.numberOfConcepts || null,
+        number_of_revisions: service.numberOfRevisions || null,
+        includes_brand_guidelines: service.includesBrandGuidelines || false,
+        deliverable_formats: service.deliverableFormats || [],
+        service_value: service.serviceValue || 0,
+        display_order: index,
+      }));
+
+      const { error: servicesError } = await supabase
+        .from('proposal_services')
+        .insert(serviceRows);
+
+      if (servicesError) {
+        // If services insertion fails, delete the proposal to maintain consistency
+        await supabase.from('proposals').delete().eq('id', proposalData.id);
+        throw servicesError;
+      }
+
+      return proposalData;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['proposals'] });
+      toast.success('Proposta multi-serviços criada com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Error creating multi-service proposal:', error);
+      toast.error('Erro ao criar proposta multi-serviços');
+    },
+  });
+
   return {
     proposals,
     isLoading,
     createProposal,
+    createMultiServiceProposal,
     updateProposal,
     updateProposalStatus,
     deleteProposal,
