@@ -197,6 +197,18 @@ export default function NewMultiServiceProposal() {
     setServices(services.filter(s => s.id !== id));
   };
 
+  const handleDuplicateService = (id: string) => {
+    const serviceToDuplicate = services.find(s => s.id === id);
+    if (serviceToDuplicate) {
+      const duplicatedService: ProposalService = {
+        ...serviceToDuplicate,
+        id: crypto.randomUUID(),
+        displayOrder: services.length,
+      };
+      setServices([...services, duplicatedService]);
+    }
+  };
+
   const handleReorderServices = (reorderedServices: ProposalService[]) => {
     // Update display order for each service
     const updatedServices = reorderedServices.map((service, index) => ({
@@ -550,6 +562,7 @@ export default function NewMultiServiceProposal() {
                     onAddService={handleAddService}
                     onRemoveService={handleRemoveService}
                     onEditService={handleEditService}
+                    onDuplicateService={handleDuplicateService}
                     onReorderServices={handleReorderServices}
                     totalValue={totalPricing?.totalFinalPrice}
                   />

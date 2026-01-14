@@ -30,6 +30,7 @@ import {
   Target,
   RefreshCw,
   Clock,
+  Copy,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -40,6 +41,7 @@ interface SortableServiceCardProps {
   onToggleExpand: () => void;
   onRemove: () => void;
   onEdit: () => void;
+  onDuplicate: () => void;
   canRemove: boolean;
 }
 
@@ -90,6 +92,7 @@ export function SortableServiceCard({
   onToggleExpand,
   onRemove,
   onEdit,
+  onDuplicate,
   canRemove,
 }: SortableServiceCardProps) {
   const {
@@ -208,9 +211,22 @@ export function SortableServiceCard({
             
             {/* Actions */}
             <div className="flex items-center justify-between pt-2 border-t border-border">
-              <Button variant="outline" size="sm" onClick={onEdit}>
-                Editar Detalhes
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={onEdit}>
+                  Editar Detalhes
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDuplicate();
+                  }}
+                >
+                  <Copy className="w-4 h-4 mr-1" />
+                  Duplicar
+                </Button>
+              </div>
               {canRemove && (
                 <Button 
                   variant="ghost" 
