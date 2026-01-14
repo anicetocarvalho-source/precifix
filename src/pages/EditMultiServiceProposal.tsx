@@ -10,6 +10,9 @@ import { ProposalService, createDefaultService } from '@/types/proposalService';
 import { ServicesList } from '@/components/proposal/ServicesList';
 import { ServiceFormModal } from '@/components/proposal/ServiceFormModal';
 import { MultiServicePricingPreview } from '@/components/proposal/MultiServicePricingPreview';
+import { SaveAsTemplateDialog } from '@/components/proposal/SaveAsTemplateDialog';
+import { TemplatePickerDialog } from '@/components/proposal/TemplatePickerDialog';
+import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import { calculateMultiServicePricing, updateServicesWithPricing } from '@/lib/pricingMultiService';
 import { usePricingParameters, toPricingParams } from '@/hooks/usePricingParameters';
 import { DEFAULT_PRICING_PARAMS } from '@/lib/pricing';
@@ -65,11 +68,15 @@ export default function EditMultiServiceProposal() {
   const { getProposal, updateMultiServiceProposal, isLoading: isLoadingProposals } = useProposals();
   const { data: existingServices, isLoading: isLoadingServices } = useProposalServices(id);
   const { parameters } = usePricingParameters();
+  const { createTemplate, isCreating: isCreatingTemplate } = useServiceTemplates();
 
   const [currentStep, setCurrentStep] = useState<Step>('client');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showServiceModal, setShowServiceModal] = useState(false);
   const [editingService, setEditingService] = useState<ProposalService | null>(null);
+  const [showTemplateDialog, setShowTemplateDialog] = useState(false);
+  const [showSaveTemplateDialog, setShowSaveTemplateDialog] = useState(false);
+  const [serviceForTemplate, setServiceForTemplate] = useState<ProposalService | null>(null);
   const [initialized, setInitialized] = useState(false);
   
   const [clientData, setClientData] = useState<ClientFormData>({
@@ -161,6 +168,28 @@ export default function EditMultiServiceProposal() {
     }
     setShowServiceModal(false);
     setEditingService(null);
+  };
+
+
+  const handleAddFromTemplate = () => {
+    setShowTemplateDialog(true);
+  };
+
+  const handleSelectTemplate = (service: ProposalService) => {
+    setServices([...services, { ...service, displayOrder: services.length }]);
+  };
+
+  const handleSaveAsTemplate = (service: ProposalService) => {
+    setServiceForTemplate(service);
+    setShowSaveTemplateDialog(true);
+  };
+
+  const handleConfirmSaveTemplate = (name: string, description: string) => {
+    if (serviceForTemplate) {
+      createTemplate({ service: serviceForTemplate, name, description });
+      setShowSaveTemplateDialog(false);
+      setServiceForTemplate(null);
+    }
   };
 
   const addLocation = () => setLocations([...locations, '']);
@@ -430,9 +459,11 @@ export default function EditMultiServiceProposal() {
                   <ServicesList
                     services={servicesWithPricing}
                     onAddService={handleAddService}
+                    onAddFromTemplate={handleAddFromTemplate}
                     onRemoveService={handleRemoveService}
                     onEditService={handleEditService}
                     onDuplicateService={handleDuplicateService}
+                    onSaveAsTemplate={handleSaveAsTemplate}
                     onReorderServices={handleReorderServices}
                     totalValue={totalPricing?.totalFinalPrice}
                   />
@@ -621,6 +652,23 @@ export default function EditMultiServiceProposal() {
         onSave={handleSaveService}
         service={editingService || undefined}
         mode={editingService ? 'edit' : 'create'}
+      />
+
+      <TemplatePickerDialog
+        isOpen={showTemplateDialog}
+        onClose={() => setShowTemplateDialog(false)}
+        onSelect={handleSelectTemplate}
+      />
+
+      <SaveAsTemplateDialog
+        isOpen={showSaveTemplateDialog}
+        onClose={() => {
+          setShowSaveTemplateDialog(false);
+          setServiceForTemplate(null);
+        }}
+        onSave={handleConfirmSaveTemplate}
+        service={serviceForTemplate}
+        isSaving={isCreatingTemplate}
       />
     </MainLayout>
   );

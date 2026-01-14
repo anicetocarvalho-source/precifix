@@ -474,6 +474,105 @@ export type Database = {
         }
         Relationships: []
       }
+      service_templates: {
+        Row: {
+          complexity: string
+          coverage_duration: string | null
+          created_at: string
+          deliverable_formats: string[] | null
+          deliverables: string[]
+          description: string | null
+          duration_unit: string
+          estimated_duration: number
+          event_days: number | null
+          event_extras: Json | null
+          event_staffing: Json | null
+          event_type: string | null
+          has_crm_integration: boolean | null
+          has_erp_integration: boolean | null
+          has_maintenance: boolean | null
+          has_payment_integration: boolean | null
+          id: string
+          includes_brand_guidelines: boolean | null
+          is_system_template: boolean
+          maintenance_months: number | null
+          name: string
+          number_of_concepts: number | null
+          number_of_modules: number | null
+          number_of_pages: number | null
+          number_of_revisions: number | null
+          post_production_hours: number | null
+          service_type: string
+          updated_at: string
+          user_id: string | null
+          web_project_type: string | null
+        }
+        Insert: {
+          complexity?: string
+          coverage_duration?: string | null
+          created_at?: string
+          deliverable_formats?: string[] | null
+          deliverables?: string[]
+          description?: string | null
+          duration_unit?: string
+          estimated_duration?: number
+          event_days?: number | null
+          event_extras?: Json | null
+          event_staffing?: Json | null
+          event_type?: string | null
+          has_crm_integration?: boolean | null
+          has_erp_integration?: boolean | null
+          has_maintenance?: boolean | null
+          has_payment_integration?: boolean | null
+          id?: string
+          includes_brand_guidelines?: boolean | null
+          is_system_template?: boolean
+          maintenance_months?: number | null
+          name: string
+          number_of_concepts?: number | null
+          number_of_modules?: number | null
+          number_of_pages?: number | null
+          number_of_revisions?: number | null
+          post_production_hours?: number | null
+          service_type: string
+          updated_at?: string
+          user_id?: string | null
+          web_project_type?: string | null
+        }
+        Update: {
+          complexity?: string
+          coverage_duration?: string | null
+          created_at?: string
+          deliverable_formats?: string[] | null
+          deliverables?: string[]
+          description?: string | null
+          duration_unit?: string
+          estimated_duration?: number
+          event_days?: number | null
+          event_extras?: Json | null
+          event_staffing?: Json | null
+          event_type?: string | null
+          has_crm_integration?: boolean | null
+          has_erp_integration?: boolean | null
+          has_maintenance?: boolean | null
+          has_payment_integration?: boolean | null
+          id?: string
+          includes_brand_guidelines?: boolean | null
+          is_system_template?: boolean
+          maintenance_months?: number | null
+          name?: string
+          number_of_concepts?: number | null
+          number_of_modules?: number | null
+          number_of_pages?: number | null
+          number_of_revisions?: number | null
+          post_production_hours?: number | null
+          service_type?: string
+          updated_at?: string
+          user_id?: string | null
+          web_project_type?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
