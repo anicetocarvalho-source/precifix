@@ -132,6 +132,15 @@ export default function EditMultiServiceProposal() {
     setServices(services.filter(s => s.id !== serviceId));
   };
 
+  const handleReorderServices = (reorderedServices: ProposalService[]) => {
+    // Update display order for each service
+    const updatedServices = reorderedServices.map((service, index) => ({
+      ...service,
+      displayOrder: index,
+    }));
+    setServices(updatedServices);
+  };
+
   const handleSaveService = (service: ProposalService) => {
     if (editingService) {
       setServices(services.map(s => s.id === service.id ? service : s));
@@ -411,6 +420,7 @@ export default function EditMultiServiceProposal() {
                     onAddService={handleAddService}
                     onRemoveService={handleRemoveService}
                     onEditService={handleEditService}
+                    onReorderServices={handleReorderServices}
                     totalValue={totalPricing?.totalFinalPrice}
                   />
                 </div>
