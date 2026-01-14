@@ -237,12 +237,16 @@ export default function ProposalView() {
             <Button 
               variant="outline" 
               className="gap-2"
-              onClick={() => navigate(`/proposta/${proposal.id}/editar`)}
+              onClick={() => navigate(
+                hasMultipleServices 
+                  ? `/proposta/${proposal.id}/editar-multi`
+                  : `/proposta/${proposal.id}/editar`
+              )}
             >
               <Pencil className="w-4 h-4" />
               Editar
             </Button>
-            <Button 
+            <Button
               variant="outline" 
               className="gap-2"
               onClick={() => duplicateProposal.mutate(proposal.id)}

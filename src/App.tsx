@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import NewProposal from "./pages/NewProposal";
 import NewMultiServiceProposal from "./pages/NewMultiServiceProposal";
 import EditProposal from "./pages/EditProposal";
+import EditMultiServiceProposal from "./pages/EditMultiServiceProposal";
 import ProposalView from "./pages/ProposalView";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
@@ -63,6 +64,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <EditProposal />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/proposta/:id/editar-multi"
+              element={
+                <ProtectedRoute>
+                  <EditMultiServiceProposal />
                 </ProtectedRoute>
               }
             />
