@@ -201,7 +201,7 @@ export default function ProposalView() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6 animate-slide-up">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate(-1)} className="gap-2">
+            <Button variant="ghost" onClick={() => navigate('/')} className="gap-2">
               <ArrowLeft className="w-4 h-4" />
               Voltar
             </Button>
