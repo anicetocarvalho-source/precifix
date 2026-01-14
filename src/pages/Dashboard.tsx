@@ -19,6 +19,7 @@ import {
   Loader2,
   BarChart3,
   User,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
@@ -95,9 +96,15 @@ export default function Dashboard() {
               {showCharts ? 'Ocultar Gráficos' : 'Ver Gráficos'}
             </Button>
             <Link to="/nova-proposta">
-              <Button size="lg" className="gap-2">
+              <Button variant="outline" size="lg" className="gap-2">
                 <Plus className="w-5 h-5" />
                 Nova Cotação
+              </Button>
+            </Link>
+            <Link to="/nova-proposta-multi">
+              <Button size="lg" className="gap-2">
+                <Layers className="w-5 h-5" />
+                Proposta Multi-Serviços
               </Button>
             </Link>
           </div>

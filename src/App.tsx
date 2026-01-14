@@ -7,6 +7,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import NewProposal from "./pages/NewProposal";
+import NewMultiServiceProposal from "./pages/NewMultiServiceProposal";
 import EditProposal from "./pages/EditProposal";
 import ProposalView from "./pages/ProposalView";
 import History from "./pages/History";
@@ -38,6 +39,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <NewProposal />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/nova-proposta-multi"
+              element={
+                <ProtectedRoute>
+                  <NewMultiServiceProposal />
                 </ProtectedRoute>
               }
             />
