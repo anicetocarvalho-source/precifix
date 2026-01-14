@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useProposals } from '@/hooks/useProposals';
+import { useProposalServices } from '@/hooks/useProposalServices';
 import { ProposalVersionHistory } from '@/components/ProposalVersionHistory';
 import { useProposalVersions, ProposalVersion } from '@/hooks/useProposalVersions';
 import { usePricingParameters } from '@/hooks/usePricingParameters';
@@ -15,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { SectorDetailsView } from '@/components/proposal/SectorDetailsView';
+import { ProposalServicesView } from '@/components/proposal/ProposalServicesView';
 import { SERVICE_LABELS, SERVICE_CATEGORIES, DurationUnit } from '@/types/proposal';
 
 // Helper function to format duration in a friendly way
@@ -82,6 +84,7 @@ export default function ProposalView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getProposal, updateProposalStatus, duplicateProposal, isLoading } = useProposals();
+  const { data: proposalServices = [], isLoading: isLoadingServices } = useProposalServices(id);
   const { restoreVersion } = useProposalVersions(id);
   const { parameters: currentPricingParams } = usePricingParameters();
   const { canViewAllProposals, canEditAllProposals } = useUserRole();
@@ -92,6 +95,7 @@ export default function ProposalView() {
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const proposal = id ? getProposal(id) : undefined;
+  const hasMultipleServices = proposalServices.length > 1;
   const [clientEmail, setClientEmail] = useState(proposal?.formData?.clientEmail || '');
 
   if (isLoading) {
@@ -448,8 +452,15 @@ export default function ProposalView() {
                   </div>
                 </section>
 
-                {/* Sector-specific details */}
-                {category !== 'consulting' && (
+                {/* Multi-service details */}
+                {hasMultipleServices && (
+                  <section>
+                    <ProposalServicesView services={proposalServices} />
+                  </section>
+                )}
+
+                {/* Sector-specific details (only for single-service proposals) */}
+                {!hasMultipleServices && category !== 'consulting' && (
                   <section>
                     <SectorDetailsView formData={formData} />
                   </section>
