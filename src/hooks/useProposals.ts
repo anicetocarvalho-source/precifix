@@ -13,6 +13,7 @@ export interface ProposalWithAuthor extends Proposal {
   authorName?: string;
   authorId: string;
   isOwner: boolean;
+  servicesCount: number;
 }
 
 // Hook to fetch pricing parameters
@@ -123,6 +124,19 @@ export function useProposals() {
 
       const profilesMap = new Map(profiles?.map(p => [p.user_id, p.full_name]) || []);
 
+      // Fetch services count for all proposals
+      const proposalIds = proposalsData.map(p => p.id);
+      const { data: servicesData } = await supabase
+        .from('proposal_services')
+        .select('proposal_id')
+        .in('proposal_id', proposalIds);
+
+      // Count services per proposal
+      const servicesCountMap = new Map<string, number>();
+      servicesData?.forEach(s => {
+        servicesCountMap.set(s.proposal_id, (servicesCountMap.get(s.proposal_id) || 0) + 1);
+      });
+
       // Transform database rows to Proposal objects with author info
       return proposalsData.map((row): ProposalWithAuthor => {
         const formData: ProposalFormData = {
@@ -185,6 +199,7 @@ export function useProposals() {
           authorName: profilesMap.get(row.user_id) || 'Utilizador desconhecido',
           authorId: row.user_id,
           isOwner: row.user_id === user.id,
+          servicesCount: servicesCountMap.get(row.id) || 0,
         };
       });
     },
