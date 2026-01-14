@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ProposalService } from '@/types/proposalService';
 import { SortableServiceCard } from './SortableServiceCard';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, LayoutTemplate } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { formatCurrency } from '@/lib/pricing';
 import {
@@ -25,9 +25,11 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 interface ServicesListProps {
   services: ProposalService[];
   onAddService: () => void;
+  onAddFromTemplate?: () => void;
   onRemoveService: (id: string) => void;
   onEditService: (id: string) => void;
   onDuplicateService: (id: string) => void;
+  onSaveAsTemplate?: (service: ProposalService) => void;
   onReorderServices?: (services: ProposalService[]) => void;
   totalValue?: number;
 }
@@ -35,9 +37,11 @@ interface ServicesListProps {
 export function ServicesList({
   services,
   onAddService,
+  onAddFromTemplate,
   onRemoveService,
   onEditService,
   onDuplicateService,
+  onSaveAsTemplate,
   onReorderServices,
   totalValue,
 }: ServicesListProps) {
@@ -82,10 +86,18 @@ export function ServicesList({
             </p>
           )}
         </div>
-        <Button onClick={onAddService} className="gap-2">
-          <Plus className="w-4 h-4" />
-          Adicionar Serviço
-        </Button>
+        <div className="flex items-center gap-2">
+          {onAddFromTemplate && (
+            <Button onClick={onAddFromTemplate} variant="outline" className="gap-2">
+              <LayoutTemplate className="w-4 h-4" />
+              Templates
+            </Button>
+          )}
+          <Button onClick={onAddService} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Novo Serviço
+          </Button>
+        </div>
       </div>
       
       {/* Services List with Drag and Drop */}
@@ -111,6 +123,7 @@ export function ServicesList({
                   onRemove={() => onRemoveService(service.id)}
                   onEdit={() => onEditService(service.id)}
                   onDuplicate={() => onDuplicateService(service.id)}
+                  onSaveAsTemplate={onSaveAsTemplate ? () => onSaveAsTemplate(service) : undefined}
                   canRemove={services.length > 1}
                 />
               ))}

@@ -31,6 +31,7 @@ import {
   RefreshCw,
   Clock,
   Copy,
+  Save,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -42,6 +43,7 @@ interface SortableServiceCardProps {
   onRemove: () => void;
   onEdit: () => void;
   onDuplicate: () => void;
+  onSaveAsTemplate?: () => void;
   canRemove: boolean;
 }
 
@@ -93,6 +95,7 @@ export function SortableServiceCard({
   onRemove,
   onEdit,
   onDuplicate,
+  onSaveAsTemplate,
   canRemove,
 }: SortableServiceCardProps) {
   const {
@@ -226,6 +229,19 @@ export function SortableServiceCard({
                   <Copy className="w-4 h-4 mr-1" />
                   Duplicar
                 </Button>
+                {onSaveAsTemplate && (
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSaveAsTemplate();
+                    }}
+                  >
+                    <Save className="w-4 h-4 mr-1" />
+                    Template
+                  </Button>
+                )}
               </div>
               {canRemove && (
                 <Button 
