@@ -27,6 +27,7 @@ interface ServicesListProps {
   onAddService: () => void;
   onRemoveService: (id: string) => void;
   onEditService: (id: string) => void;
+  onDuplicateService: (id: string) => void;
   onReorderServices?: (services: ProposalService[]) => void;
   totalValue?: number;
 }
@@ -36,6 +37,7 @@ export function ServicesList({
   onAddService,
   onRemoveService,
   onEditService,
+  onDuplicateService,
   onReorderServices,
   totalValue,
 }: ServicesListProps) {
@@ -108,6 +110,7 @@ export function ServicesList({
                   onToggleExpand={() => setExpandedId(expandedId === service.id ? null : service.id)}
                   onRemove={() => onRemoveService(service.id)}
                   onEdit={() => onEditService(service.id)}
+                  onDuplicate={() => onDuplicateService(service.id)}
                   canRemove={services.length > 1}
                 />
               ))}
