@@ -270,20 +270,20 @@ export default function ProposalView() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => exportProposalToPDF(proposal, 'all')}>
+                <DropdownMenuItem onClick={() => exportProposalToPDF(proposal, 'all', proposalServices.length > 1 ? proposalServices : undefined)}>
                   <FileText className="w-4 h-4 mr-2" />
                   Exportar Tudo
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => exportSingleDocument(proposal, 'diagnostic')}>
+                <DropdownMenuItem onClick={() => exportSingleDocument(proposal, 'diagnostic', proposalServices.length > 1 ? proposalServices : undefined)}>
                   <Target className="w-4 h-4 mr-2" />
                   Diagnostico
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportSingleDocument(proposal, 'technical')}>
+                <DropdownMenuItem onClick={() => exportSingleDocument(proposal, 'technical', proposalServices.length > 1 ? proposalServices : undefined)}>
                   <FileText className="w-4 h-4 mr-2" />
                   Proposta Tecnica
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => exportSingleDocument(proposal, 'budget')}>
+                <DropdownMenuItem onClick={() => exportSingleDocument(proposal, 'budget', proposalServices.length > 1 ? proposalServices : undefined)}>
                   <TrendingUp className="w-4 h-4 mr-2" />
                   Proposta Orcamental
                 </DropdownMenuItem>
