@@ -24,6 +24,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
 import { DashboardCharts } from '@/components/DashboardCharts';
+import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 
 const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
@@ -196,21 +197,39 @@ export default function Dashboard() {
                   to={`/proposta/${proposal.id}`}
                   className="flex items-center justify-between p-5 hover:bg-muted/50 transition-colors group"
                 >
-                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Building className="w-5 h-5 text-primary" />
+                      {proposal.servicesCount > 1 ? (
+                        <Layers className="w-5 h-5 text-primary" />
+                      ) : (
+                        <Building className="w-5 h-5 text-primary" />
+                      )}
                     </div>
                     <div>
-                      <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">
-                        {proposal.formData.clientName || 'Cliente sem nome'}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-foreground group-hover:text-primary transition-colors">
+                          {proposal.formData.clientName || 'Cliente sem nome'}
+                        </h3>
+                        {proposal.servicesCount > 1 && (
+                          <Badge variant="secondary" className="text-xs gap-1">
+                            <Layers className="w-3 h-3" />
+                            {proposal.servicesCount} serviços
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">
-                        {proposal.formData.serviceType === 'pmo' && 'PMO'}
-                        {proposal.formData.serviceType === 'restructuring' && 'Reestruturação'}
-                        {proposal.formData.serviceType === 'monitoring' && 'Acompanhamento'}
-                        {proposal.formData.serviceType === 'training' && 'Formação'}
-                        {proposal.formData.serviceType === 'audit' && 'Auditoria'}
-                        {proposal.formData.serviceType === 'strategy' && 'Estratégia'}
+                        {proposal.servicesCount > 1 ? (
+                          'Multi-serviços'
+                        ) : (
+                          <>
+                            {proposal.formData.serviceType === 'pmo' && 'PMO'}
+                            {proposal.formData.serviceType === 'restructuring' && 'Reestruturação'}
+                            {proposal.formData.serviceType === 'monitoring' && 'Acompanhamento'}
+                            {proposal.formData.serviceType === 'training' && 'Formação'}
+                            {proposal.formData.serviceType === 'audit' && 'Auditoria'}
+                            {proposal.formData.serviceType === 'strategy' && 'Estratégia'}
+                          </>
+                        )}
                         {' • '}
                         {proposal.formData.estimatedDuration} meses
                       </p>
