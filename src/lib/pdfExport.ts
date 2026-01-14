@@ -8,6 +8,7 @@ import {
   CoverageDuration,
   ProjectType,
 } from '@/types/proposal';
+import { ProposalService } from '@/types/proposalService';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
 
 export type DocumentType = 'diagnostic' | 'technical' | 'budget' | 'all';
@@ -1179,9 +1180,505 @@ function generateBudgetDocument(doc: jsPDF, proposal: Proposal): void {
   doc.setTextColor(0, 0, 0);
 }
 
+// ========== MULTI-SERVICE BUDGET ==========
+
+function generateMultiServiceBudgetDocument(doc: jsPDF, proposal: Proposal, services: ProposalService[]): void {
+  const { formData } = proposal;
+  const colors = getSectorColor(formData.serviceType);
+  
+  addHeader(doc, 'Proposta Orcamental', `${formData.clientName} - Multi-Servicos`, formData.serviceType);
+  
+  let y = 50;
+  
+  // Client Contact Info
+  if (formData.clientEmail || formData.clientPhone) {
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    let contactInfo = 'Contacto: ';
+    if (formData.clientEmail && formData.clientPhone) {
+      contactInfo += `${formData.clientEmail} | Tel: ${formData.clientPhone}`;
+    } else if (formData.clientEmail) {
+      contactInfo += formData.clientEmail;
+    } else if (formData.clientPhone) {
+      contactInfo += `Tel: ${formData.clientPhone}`;
+    }
+    doc.text(contactInfo, 20, y);
+    doc.setTextColor(0, 0, 0);
+    y += 10;
+  }
+  
+  // Services Summary
+  y = addSectionTitle(doc, `Servicos Incluidos (${services.length})`, y, formData.serviceType);
+  
+  // Services table header
+  doc.setFillColor(...colors.primary);
+  doc.rect(20, y, 170, 8, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Servico', 25, y + 5.5);
+  doc.text('Complexidade', 90, y + 5.5);
+  doc.text('Duracao', 125, y + 5.5);
+  doc.text('Valor', 155, y + 5.5);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  y += 8;
+  
+  services.forEach((service, index) => {
+    y = checkPageBreak(doc, y, 10);
+    
+    if (index % 2 === 0) {
+      doc.setFillColor(248, 248, 248);
+      doc.rect(20, y, 170, 7, 'F');
+    }
+    
+    const serviceName = serviceLabels[service.serviceType] || service.serviceType;
+    const complexity = complexityLabels[service.complexity] || service.complexity;
+    const duration = `${service.estimatedDuration} ${service.durationUnit === 'months' ? 'meses' : service.durationUnit === 'weeks' ? 'sem.' : 'dias'}`;
+    
+    doc.setFontSize(9);
+    doc.text(serviceName.substring(0, 35), 25, y + 5);
+    doc.text(complexity, 90, y + 5);
+    doc.text(duration, 125, y + 5);
+    doc.text(formatCurrency(service.serviceValue || 0), 155, y + 5);
+    y += 7;
+  });
+  
+  // Services total
+  const servicesTotal = services.reduce((sum, s) => sum + (s.serviceValue || 0), 0);
+  y += 3;
+  doc.setFont('helvetica', 'bold');
+  doc.text('Subtotal Servicos:', 100, y + 5);
+  doc.text(formatCurrency(servicesTotal), 155, y + 5);
+  doc.setFont('helvetica', 'normal');
+  y += 15;
+  
+  // Individual Service Details
+  services.forEach((service, index) => {
+    y = checkPageBreak(doc, y, 80);
+    
+    const serviceName = serviceLabels[service.serviceType] || service.serviceType;
+    const serviceColors = getSectorColor(service.serviceType);
+    
+    // Service header
+    doc.setFillColor(...serviceColors.secondary);
+    doc.rect(20, y, 170, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${index + 1}. ${serviceName}`, 25, y + 5.5);
+    doc.text(formatCurrency(service.serviceValue || 0), 160, y + 5.5, { align: 'right' });
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    y += 12;
+    
+    // Service details
+    const category = getServiceCategory(service.serviceType);
+    
+    if (category === 'events') {
+      const eventType = service.eventType ? eventTypeLabels[service.eventType] : 'Evento';
+      const coverageDuration = service.coverageDuration ? coverageDurationLabels[service.coverageDuration] : 'A definir';
+      y = addBulletPoint(doc, `Tipo: ${eventType}`, y, service.serviceType);
+      y = addBulletPoint(doc, `Cobertura: ${coverageDuration}`, y, service.serviceType);
+      if (service.eventDays) {
+        y = addBulletPoint(doc, `Dias: ${service.eventDays} dia(s)`, y, service.serviceType);
+      }
+      if (service.eventStaffing) {
+        const staff = service.eventStaffing;
+        const staffList = [];
+        if (staff.photographers) staffList.push(`${staff.photographers} fotografo(s)`);
+        if (staff.videographers) staffList.push(`${staff.videographers} videografo(s)`);
+        if (staffList.length > 0) {
+          y = addBulletPoint(doc, `Equipa: ${staffList.join(', ')}`, y, service.serviceType);
+        }
+      }
+    } else if (category === 'technology') {
+      const projectType = service.webProjectType ? projectTypeLabels[service.webProjectType] : 'Sistema';
+      y = addBulletPoint(doc, `Tipo: ${projectType}`, y, service.serviceType);
+      if (service.numberOfPages) {
+        y = addBulletPoint(doc, `Paginas: ${service.numberOfPages}`, y, service.serviceType);
+      }
+      if (service.numberOfModules) {
+        y = addBulletPoint(doc, `Modulos: ${service.numberOfModules}`, y, service.serviceType);
+      }
+      const integrations = [];
+      if (service.hasPaymentIntegration) integrations.push('Pagamentos');
+      if (service.hasCrmIntegration) integrations.push('CRM');
+      if (service.hasErpIntegration) integrations.push('ERP');
+      if (integrations.length > 0) {
+        y = addBulletPoint(doc, `Integracoes: ${integrations.join(', ')}`, y, service.serviceType);
+      }
+      if (service.hasMaintenance) {
+        y = addBulletPoint(doc, `Manutencao: ${service.maintenanceMonths || 6} meses`, y, service.serviceType);
+      }
+    } else if (category === 'creative') {
+      if (service.numberOfConcepts) {
+        y = addBulletPoint(doc, `Conceitos: ${service.numberOfConcepts}`, y, service.serviceType);
+      }
+      if (service.numberOfRevisions) {
+        y = addBulletPoint(doc, `Revisoes: ${service.numberOfRevisions}`, y, service.serviceType);
+      }
+      if (service.includesBrandGuidelines) {
+        y = addBulletPoint(doc, 'Inclui Manual de Marca', y, service.serviceType);
+      }
+      if (service.deliverableFormats && service.deliverableFormats.length > 0) {
+        y = addBulletPoint(doc, `Formatos: ${service.deliverableFormats.join(', ')}`, y, service.serviceType);
+      }
+    } else {
+      // Consulting
+      y = addBulletPoint(doc, `Complexidade: ${complexityLabels[service.complexity] || service.complexity}`, y, service.serviceType);
+      y = addBulletPoint(doc, `Duracao: ${service.estimatedDuration} ${service.durationUnit === 'months' ? 'meses' : service.durationUnit === 'weeks' ? 'semanas' : 'dias'}`, y, service.serviceType);
+    }
+    
+    // Deliverables
+    if (service.deliverables && service.deliverables.length > 0) {
+      y = checkPageBreak(doc, y, 20);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Entregaveis:', 25, y);
+      doc.setFont('helvetica', 'normal');
+      y += 5;
+      service.deliverables.slice(0, 3).forEach(d => {
+        const label = deliverableLabels[d] || d;
+        y = addBulletPoint(doc, label, y, service.serviceType);
+      });
+      if (service.deliverables.length > 3) {
+        doc.setFontSize(8);
+        doc.setTextColor(100, 100, 100);
+        doc.text(`+ ${service.deliverables.length - 3} mais...`, 28, y);
+        doc.setTextColor(0, 0, 0);
+        y += 5;
+      }
+    }
+    
+    y += 5;
+  });
+  
+  y = checkPageBreak(doc, y, 80);
+  
+  // Financial Summary
+  y = addSectionTitle(doc, 'Resumo Financeiro', y, formData.serviceType);
+  
+  const financialItems = [
+    { label: 'Total dos Servicos', value: formatCurrency(servicesTotal) },
+  ];
+  
+  // Use proposal pricing if available for additional costs
+  if (proposal.pricing) {
+    if (proposal.pricing.overhead > 0) {
+      financialItems.push({ label: 'Overhead Operacional', value: formatCurrency(proposal.pricing.overhead) });
+    }
+    if (proposal.pricing.margin > 0) {
+      financialItems.push({ label: 'Margem', value: formatCurrency(proposal.pricing.margin) });
+    }
+  }
+  
+  financialItems.forEach((item, index) => {
+    if (index % 2 === 0) {
+      doc.setFillColor(248, 248, 248);
+      doc.rect(20, y, 170, 7, 'F');
+    }
+    doc.setFontSize(10);
+    doc.text(item.label, 25, y + 5);
+    doc.text(item.value, 160, y + 5, { align: 'right' });
+    y += 7;
+  });
+  
+  // Total
+  y += 3;
+  doc.setFillColor(...colors.primary);
+  doc.rect(20, y, 170, 12, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('VALOR TOTAL DO PROJECTO', 25, y + 8);
+  const finalTotal = proposal.pricing?.finalPrice || servicesTotal;
+  doc.text(formatCurrency(finalTotal), 160, y + 8, { align: 'right' });
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  
+  y += 25;
+  y = checkPageBreak(doc, y, 60);
+  
+  // Payment Model
+  y = addSectionTitle(doc, 'Modelo de Pagamento', y, formData.serviceType);
+  
+  const payments = [
+    { phase: 'Assinatura do Contrato', percent: 30 },
+    { phase: 'Entrega Parcial (50% dos servicos)', percent: 40 },
+    { phase: 'Entrega Final', percent: 30 },
+  ];
+  
+  payments.forEach((payment, index) => {
+    if (index % 2 === 0) {
+      doc.setFillColor(248, 248, 248);
+      doc.rect(20, y, 170, 7, 'F');
+    }
+    doc.setFontSize(10);
+    doc.text(payment.phase, 25, y + 5);
+    doc.text(`${payment.percent}%`, 120, y + 5);
+    doc.text(formatCurrency(finalTotal * (payment.percent / 100)), 160, y + 5, { align: 'right' });
+    y += 7;
+  });
+  
+  // Validity
+  y += 15;
+  y = checkPageBreak(doc, y, 30);
+  doc.setFontSize(9);
+  doc.setTextColor(100, 100, 100);
+  doc.text('Esta proposta e valida por 30 dias a partir da data de emissao.', 20, y);
+  doc.text('Valores em Kwanzas (Kz). Impostos nao incluidos.', 20, y + 5);
+  doc.setTextColor(0, 0, 0);
+}
+
+// ========== MULTI-SERVICE DIAGNOSTIC ==========
+
+function generateMultiServiceDiagnosticDocument(doc: jsPDF, proposal: Proposal, services: ProposalService[]): void {
+  const { formData } = proposal;
+  
+  addHeader(doc, 'Diagnostico de Necessidades', `${formData.clientName} - Multi-Servicos`, formData.serviceType);
+  
+  let y = 50;
+  
+  // Client Contact Info
+  if (formData.clientEmail || formData.clientPhone) {
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    let contactInfo = 'Contacto: ';
+    if (formData.clientEmail && formData.clientPhone) {
+      contactInfo += `${formData.clientEmail} | Tel: ${formData.clientPhone}`;
+    } else if (formData.clientEmail) {
+      contactInfo += formData.clientEmail;
+    } else if (formData.clientPhone) {
+      contactInfo += `Tel: ${formData.clientPhone}`;
+    }
+    doc.text(contactInfo, 20, y);
+    doc.setTextColor(0, 0, 0);
+    y += 10;
+  }
+  
+  // Section 1: Context
+  y = addSectionTitle(doc, '1. Contexto e Visao Geral', y, formData.serviceType);
+  
+  const contextText = `A ${formData.clientName}, ${clientTypeLabels[formData.clientType] || formData.clientType} do sector de ${formData.sector}, procura um pacote integrado de ${services.length} servicos para atender as suas necessidades de negocio.`;
+  y = addParagraph(doc, contextText, y);
+  
+  // Services Overview
+  y = checkPageBreak(doc, y, 60);
+  y = addSectionTitle(doc, '2. Servicos Identificados', y, formData.serviceType);
+  
+  const serviceCategories = {
+    consulting: services.filter(s => getServiceCategory(s.serviceType) === 'consulting'),
+    events: services.filter(s => getServiceCategory(s.serviceType) === 'events'),
+    creative: services.filter(s => getServiceCategory(s.serviceType) === 'creative'),
+    technology: services.filter(s => getServiceCategory(s.serviceType) === 'technology'),
+  };
+  
+  const categoryNames: Record<string, string> = {
+    consulting: 'Consultoria',
+    events: 'Eventos',
+    creative: 'Criativos',
+    technology: 'Tecnologia',
+  };
+  
+  Object.entries(serviceCategories).forEach(([category, categoryServices]) => {
+    if (categoryServices.length > 0) {
+      y = checkPageBreak(doc, y, 30);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(`${categoryNames[category]} (${categoryServices.length})`, 20, y);
+      doc.setFont('helvetica', 'normal');
+      y += 6;
+      
+      categoryServices.forEach(service => {
+        const serviceName = serviceLabels[service.serviceType] || service.serviceType;
+        y = addBulletPoint(doc, serviceName, y, service.serviceType);
+      });
+      y += 3;
+    }
+  });
+  
+  // Section 3: Individual Service Details
+  y = checkPageBreak(doc, y, 60);
+  y = addSectionTitle(doc, '3. Detalhes por Servico', y, formData.serviceType);
+  
+  services.forEach((service, index) => {
+    y = checkPageBreak(doc, y, 60);
+    
+    const serviceName = serviceLabels[service.serviceType] || service.serviceType;
+    const serviceColors = getSectorColor(service.serviceType);
+    
+    // Service header
+    doc.setFillColor(...serviceColors.secondary);
+    doc.rect(20, y, 170, 8, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${index + 1}. ${serviceName}`, 25, y + 5.5);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    y += 12;
+    
+    // Service info box
+    const infoItems = [
+      { label: 'Complexidade', value: complexityLabels[service.complexity] || service.complexity },
+      { label: 'Duracao', value: `${service.estimatedDuration} ${service.durationUnit === 'months' ? 'meses' : service.durationUnit === 'weeks' ? 'semanas' : 'dias'}` },
+    ];
+    
+    y = addInfoBox(doc, infoItems, y, service.serviceType);
+    
+    // Deliverables
+    if (service.deliverables && service.deliverables.length > 0) {
+      y = checkPageBreak(doc, y, 30);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Entregaveis:', 25, y);
+      doc.setFont('helvetica', 'normal');
+      y += 5;
+      service.deliverables.slice(0, 4).forEach(d => {
+        const label = deliverableLabels[d] || d;
+        y = addBulletPoint(doc, label, y, service.serviceType);
+      });
+    }
+    
+    y += 5;
+  });
+}
+
+// ========== MULTI-SERVICE TECHNICAL ==========
+
+function generateMultiServiceTechnicalDocument(doc: jsPDF, proposal: Proposal, services: ProposalService[]): void {
+  const { formData } = proposal;
+  
+  addHeader(doc, 'Proposta Tecnica', `Referencia: PT-${proposal.id.slice(0, 8).toUpperCase()} (Multi-Servicos)`, formData.serviceType);
+  
+  let y = 50;
+  
+  // Overview
+  y = addSectionTitle(doc, 'Visao Geral do Projecto', y, formData.serviceType);
+  const overviewText = `Este projecto integrado para ${formData.clientName} contempla ${services.length} servicos complementares, abrangendo diferentes areas de actuacao para atender as necessidades identificadas.`;
+  y = addParagraph(doc, overviewText, y);
+  
+  // Services Summary Table
+  y = checkPageBreak(doc, y, 60);
+  y = addSectionTitle(doc, 'Servicos Contratados', y, formData.serviceType);
+  
+  const colors = getSectorColor(formData.serviceType);
+  
+  doc.setFillColor(...colors.primary);
+  doc.rect(20, y, 170, 8, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('#', 25, y + 5.5);
+  doc.text('Servico', 35, y + 5.5);
+  doc.text('Categoria', 110, y + 5.5);
+  doc.text('Duracao', 150, y + 5.5);
+  doc.setTextColor(0, 0, 0);
+  doc.setFont('helvetica', 'normal');
+  y += 8;
+  
+  const categoryNames: Record<string, string> = {
+    consulting: 'Consultoria',
+    events: 'Eventos',
+    creative: 'Criativos',
+    technology: 'Tecnologia',
+  };
+  
+  services.forEach((service, index) => {
+    y = checkPageBreak(doc, y, 10);
+    
+    if (index % 2 === 0) {
+      doc.setFillColor(248, 248, 248);
+      doc.rect(20, y, 170, 7, 'F');
+    }
+    
+    const category = getServiceCategory(service.serviceType);
+    const serviceName = serviceLabels[service.serviceType] || service.serviceType;
+    const duration = `${service.estimatedDuration} ${service.durationUnit === 'months' ? 'meses' : service.durationUnit === 'weeks' ? 'sem.' : 'dias'}`;
+    
+    doc.setFontSize(9);
+    doc.text(`${index + 1}`, 25, y + 5);
+    doc.text(serviceName.substring(0, 35), 35, y + 5);
+    doc.text(categoryNames[category], 110, y + 5);
+    doc.text(duration, 150, y + 5);
+    y += 7;
+  });
+  
+  y += 10;
+  
+  // Detailed sections for each service
+  services.forEach((service, index) => {
+    y = checkPageBreak(doc, y, 80);
+    
+    const serviceName = serviceLabels[service.serviceType] || service.serviceType;
+    const serviceColors = getSectorColor(service.serviceType);
+    const category = getServiceCategory(service.serviceType);
+    
+    // Service header
+    doc.setFillColor(...serviceColors.primary);
+    doc.rect(20, y, 170, 10, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Servico ${index + 1}: ${serviceName}`, 25, y + 7);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'normal');
+    y += 15;
+    
+    // Category-specific details
+    if (category === 'events') {
+      const eventType = service.eventType ? eventTypeLabels[service.eventType] : 'Evento';
+      y = addBulletPoint(doc, `Tipo de Evento: ${eventType}`, y, service.serviceType);
+      if (service.coverageDuration) {
+        y = addBulletPoint(doc, `Cobertura: ${coverageDurationLabels[service.coverageDuration]}`, y, service.serviceType);
+      }
+      if (service.eventDays) {
+        y = addBulletPoint(doc, `Duracao: ${service.eventDays} dia(s)`, y, service.serviceType);
+      }
+      if (service.eventStaffing) {
+        const staff = service.eventStaffing;
+        if (staff.photographers) y = addBulletPoint(doc, `${staff.photographers} Fotografo(s)`, y, service.serviceType);
+        if (staff.videographers) y = addBulletPoint(doc, `${staff.videographers} Videografo(s)`, y, service.serviceType);
+      }
+    } else if (category === 'technology') {
+      const projectType = service.webProjectType ? projectTypeLabels[service.webProjectType] : 'Sistema';
+      y = addBulletPoint(doc, `Tipo de Projecto: ${projectType}`, y, service.serviceType);
+      if (service.numberOfPages) y = addBulletPoint(doc, `${service.numberOfPages} Paginas/Ecras`, y, service.serviceType);
+      if (service.numberOfModules) y = addBulletPoint(doc, `${service.numberOfModules} Modulos`, y, service.serviceType);
+      if (service.hasPaymentIntegration) y = addBulletPoint(doc, 'Integracao de Pagamentos', y, service.serviceType);
+      if (service.hasCrmIntegration) y = addBulletPoint(doc, 'Integracao com CRM', y, service.serviceType);
+      if (service.hasErpIntegration) y = addBulletPoint(doc, 'Integracao com ERP', y, service.serviceType);
+    } else if (category === 'creative') {
+      if (service.numberOfConcepts) y = addBulletPoint(doc, `${service.numberOfConcepts} Conceitos Iniciais`, y, service.serviceType);
+      if (service.numberOfRevisions) y = addBulletPoint(doc, `${service.numberOfRevisions} Rondas de Revisao`, y, service.serviceType);
+      if (service.includesBrandGuidelines) y = addBulletPoint(doc, 'Inclui Manual de Marca', y, service.serviceType);
+    } else {
+      y = addBulletPoint(doc, `Complexidade: ${complexityLabels[service.complexity]}`, y, service.serviceType);
+      y = addBulletPoint(doc, `Metodologia: ${methodologyLabels[formData.methodology] || formData.methodology}`, y, service.serviceType);
+    }
+    
+    // Deliverables
+    if (service.deliverables && service.deliverables.length > 0) {
+      y = checkPageBreak(doc, y, 30);
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Entregaveis:', 25, y);
+      doc.setFont('helvetica', 'normal');
+      y += 6;
+      service.deliverables.forEach(d => {
+        const label = deliverableLabels[d] || d;
+        y = addBulletPoint(doc, label, y, service.serviceType);
+      });
+    }
+    
+    y += 10;
+  });
+}
+
 // ========== EXPORT FUNCTIONS ==========
 
-export function exportProposalToPDF(proposal: Proposal, documentType: DocumentType = 'all'): void {
+export function exportProposalToPDF(proposal: Proposal, documentType: DocumentType = 'all', services?: ProposalService[]): void {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -1189,9 +1686,14 @@ export function exportProposalToPDF(proposal: Proposal, documentType: DocumentTy
   });
   
   const { formData } = proposal;
+  const isMultiService = services && services.length > 1;
   
   if (documentType === 'diagnostic' || documentType === 'all') {
-    generateDiagnosticDocument(doc, proposal);
+    if (isMultiService) {
+      generateMultiServiceDiagnosticDocument(doc, proposal, services);
+    } else {
+      generateDiagnosticDocument(doc, proposal);
+    }
     
     if (documentType === 'all') {
       doc.addPage();
@@ -1199,16 +1701,23 @@ export function exportProposalToPDF(proposal: Proposal, documentType: DocumentTy
   }
   
   if (documentType === 'technical' || documentType === 'all') {
-    if (documentType !== 'all') {
-      generateTechnicalDocument(doc, proposal);
+    if (isMultiService) {
+      generateMultiServiceTechnicalDocument(doc, proposal, services);
     } else {
       generateTechnicalDocument(doc, proposal);
+    }
+    
+    if (documentType === 'all') {
       doc.addPage();
     }
   }
   
   if (documentType === 'budget' || documentType === 'all') {
-    generateBudgetDocument(doc, proposal);
+    if (isMultiService) {
+      generateMultiServiceBudgetDocument(doc, proposal, services);
+    } else {
+      generateBudgetDocument(doc, proposal);
+    }
   }
   
   // Update page numbers
@@ -1218,36 +1727,52 @@ export function exportProposalToPDF(proposal: Proposal, documentType: DocumentTy
     addFooter(doc, i, totalPages);
   }
   
+  const suffix = isMultiService ? '_Multi-Servicos' : '';
   const filename = documentType === 'all' 
-    ? `Proposta_Completa_${formData.clientName.replace(/\s+/g, '_')}.pdf`
-    : `${documentType === 'diagnostic' ? 'Diagnostico' : documentType === 'technical' ? 'Proposta_Tecnica' : 'Proposta_Orcamental'}_${formData.clientName.replace(/\s+/g, '_')}.pdf`;
+    ? `Proposta_Completa${suffix}_${formData.clientName.replace(/\s+/g, '_')}.pdf`
+    : `${documentType === 'diagnostic' ? 'Diagnostico' : documentType === 'technical' ? 'Proposta_Tecnica' : 'Proposta_Orcamental'}${suffix}_${formData.clientName.replace(/\s+/g, '_')}.pdf`;
   
   doc.save(filename);
 }
 
-export function exportSingleDocument(proposal: Proposal, documentType: 'diagnostic' | 'technical' | 'budget'): void {
+export function exportSingleDocument(proposal: Proposal, documentType: 'diagnostic' | 'technical' | 'budget', services?: ProposalService[]): void {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
   });
   
+  const isMultiService = services && services.length > 1;
+  
   if (documentType === 'diagnostic') {
-    generateDiagnosticDocument(doc, proposal);
+    if (isMultiService) {
+      generateMultiServiceDiagnosticDocument(doc, proposal, services);
+    } else {
+      generateDiagnosticDocument(doc, proposal);
+    }
   } else if (documentType === 'technical') {
-    generateTechnicalDocument(doc, proposal);
+    if (isMultiService) {
+      generateMultiServiceTechnicalDocument(doc, proposal, services);
+    } else {
+      generateTechnicalDocument(doc, proposal);
+    }
   } else {
-    generateBudgetDocument(doc, proposal);
+    if (isMultiService) {
+      generateMultiServiceBudgetDocument(doc, proposal, services);
+    } else {
+      generateBudgetDocument(doc, proposal);
+    }
   }
   
   addFooter(doc, 1, 1);
   
   const { formData } = proposal;
+  const suffix = isMultiService ? '_Multi-Servicos' : '';
   const docNames = {
     diagnostic: 'Diagnostico',
     technical: 'Proposta_Tecnica',
     budget: 'Proposta_Orcamental',
   };
   
-  doc.save(`${docNames[documentType]}_${formData.clientName.replace(/\s+/g, '_')}.pdf`);
+  doc.save(`${docNames[documentType]}${suffix}_${formData.clientName.replace(/\s+/g, '_')}.pdf`);
 }
