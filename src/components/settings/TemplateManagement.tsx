@@ -43,6 +43,7 @@ import {
   Package,
   Loader2,
   FileText,
+  Copy,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
@@ -64,7 +65,7 @@ const COMPLEXITY_LABELS: Record<string, { label: string; variant: 'default' | 's
 };
 
 export function TemplateManagement() {
-  const { templates, isLoading, deleteTemplate, isDeleting } = useServiceTemplates();
+  const { templates, isLoading, deleteTemplate, isDeleting, duplicateTemplate, isDuplicating } = useServiceTemplates();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [templateToDelete, setTemplateToDelete] = useState<ServiceTemplate | null>(null);
@@ -241,8 +242,19 @@ export function TemplateManagement() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          onClick={() => duplicateTemplate(template)}
+                          disabled={isDuplicating}
+                          className="h-8 w-8"
+                          title="Duplicar template"
+                        >
+                          <Copy className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => handleEditClick(template)}
                           className="h-8 w-8"
+                          title="Editar template"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
@@ -251,6 +263,7 @@ export function TemplateManagement() {
                           size="icon"
                           onClick={() => setTemplateToDelete(template)}
                           className="h-8 w-8 text-destructive hover:text-destructive"
+                          title="Eliminar template"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
