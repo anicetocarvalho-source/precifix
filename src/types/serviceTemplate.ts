@@ -46,6 +46,7 @@ export interface ServiceTemplate {
   
   // Metadata
   isSystemTemplate: boolean;
+  isFavorite: boolean;
   userId?: string;
   createdAt: string;
   updatedAt: string;
@@ -81,6 +82,7 @@ export function dbRowToTemplate(row: any): ServiceTemplate {
     includesBrandGuidelines: row.includes_brand_guidelines || false,
     deliverableFormats: row.deliverable_formats || [],
     isSystemTemplate: row.is_system_template,
+    isFavorite: row.is_favorite || false,
     userId: row.user_id || undefined,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -152,6 +154,7 @@ export function serviceToTemplateData(
     includesBrandGuidelines: service.includesBrandGuidelines,
     deliverableFormats: service.deliverableFormats,
     isSystemTemplate: false,
+    isFavorite: false,
     userId,
   };
 }

@@ -494,6 +494,7 @@ export type Database = {
           has_payment_integration: boolean | null
           id: string
           includes_brand_guidelines: boolean | null
+          is_favorite: boolean
           is_system_template: boolean
           maintenance_months: number | null
           name: string
@@ -526,6 +527,7 @@ export type Database = {
           has_payment_integration?: boolean | null
           id?: string
           includes_brand_guidelines?: boolean | null
+          is_favorite?: boolean
           is_system_template?: boolean
           maintenance_months?: number | null
           name: string
@@ -558,6 +560,7 @@ export type Database = {
           has_payment_integration?: boolean | null
           id?: string
           includes_brand_guidelines?: boolean | null
+          is_favorite?: boolean
           is_system_template?: boolean
           maintenance_months?: number | null
           name?: string
