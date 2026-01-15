@@ -10,21 +10,24 @@ import {
   Save,
   FlaskConical,
   Shield,
+  LayoutTemplate,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import { PricingParametersForm } from '@/components/settings/PricingParametersForm';
 import { PricingImpactSimulator } from '@/components/settings/PricingImpactSimulator';
 import { UserManagement } from '@/components/settings/UserManagement';
+import { TemplateManagement } from '@/components/settings/TemplateManagement';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Badge } from '@/components/ui/badge';
 
-type SettingsTab = 'profile' | 'company' | 'users' | 'pricing' | 'simulator' | 'appearance' | 'notifications' | 'integrations';
+type SettingsTab = 'profile' | 'company' | 'users' | 'templates' | 'pricing' | 'simulator' | 'appearance' | 'notifications' | 'integrations';
 
 const tabs = [
   { id: 'profile' as const, label: 'Perfil', icon: User },
   { id: 'company' as const, label: 'Empresa', icon: Building },
   { id: 'users' as const, label: 'Utilizadores', icon: Shield, adminOnly: true },
+  { id: 'templates' as const, label: 'Templates', icon: LayoutTemplate },
   { id: 'pricing' as const, label: 'Precificação', icon: Calculator },
   { id: 'simulator' as const, label: 'Simulador', icon: FlaskConical },
   { id: 'appearance' as const, label: 'Aparência', icon: Palette },
@@ -186,6 +189,8 @@ export default function Settings() {
             )}
 
             {activeTab === 'users' && <UserManagement />}
+
+            {activeTab === 'templates' && <TemplateManagement />}
 
             {activeTab === 'pricing' && <PricingParametersForm />}
 
