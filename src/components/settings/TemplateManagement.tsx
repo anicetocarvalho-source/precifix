@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import { ServiceTemplate } from '@/types/serviceTemplate';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import {
@@ -44,12 +51,16 @@ import {
   Loader2,
   FileText,
   Copy,
+  Star,
+  ArrowUpDown,
+  Filter,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
+import { cn } from '@/lib/utils';
 
 const SERVICE_TYPE_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   'event-coverage': { label: 'Cobertura de Eventos', icon: Camera, color: 'bg-purple-500/10 text-purple-600' },
@@ -64,26 +75,72 @@ const COMPLEXITY_LABELS: Record<string, { label: string; variant: 'default' | 's
   high: { label: 'Alta', variant: 'destructive' },
 };
 
+type SortOption = 'name' | 'date' | 'type' | 'favorites';
+type FilterOption = 'all' | 'favorites' | string;
+
 export function TemplateManagement() {
-  const { templates, isLoading, deleteTemplate, isDeleting, duplicateTemplate, isDuplicating } = useServiceTemplates();
+  const { templates, isLoading, deleteTemplate, isDeleting, duplicateTemplate, isDuplicating, toggleFavorite } = useServiceTemplates();
   const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState('');
   const [templateToDelete, setTemplateToDelete] = useState<ServiceTemplate | null>(null);
   const [templateToEdit, setTemplateToEdit] = useState<ServiceTemplate | null>(null);
   const [editForm, setEditForm] = useState({ name: '', description: '' });
   const [isEditing, setIsEditing] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('favorites');
+  const [filterBy, setFilterBy] = useState<FilterOption>('all');
 
   // Filter only user templates (not system templates)
   const userTemplates = templates.filter(t => !t.isSystemTemplate);
-  
-  const filteredTemplates = userTemplates.filter(template => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      template.name.toLowerCase().includes(searchLower) ||
-      (template.description?.toLowerCase().includes(searchLower)) ||
-      SERVICE_TYPE_CONFIG[template.serviceType]?.label.toLowerCase().includes(searchLower)
-    );
-  });
+
+  // Get unique service types for filter dropdown
+  const serviceTypes = useMemo(() => {
+    const types = new Set(userTemplates.map(t => t.serviceType));
+    return Array.from(types);
+  }, [userTemplates]);
+
+  // Apply filters and sorting
+  const filteredAndSortedTemplates = useMemo(() => {
+    let result = [...userTemplates];
+
+    // Apply search filter
+    if (searchQuery) {
+      const searchLower = searchQuery.toLowerCase();
+      result = result.filter(template =>
+        template.name.toLowerCase().includes(searchLower) ||
+        (template.description?.toLowerCase().includes(searchLower)) ||
+        SERVICE_TYPE_CONFIG[template.serviceType]?.label.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply category/favorites filter
+    if (filterBy === 'favorites') {
+      result = result.filter(t => t.isFavorite);
+    } else if (filterBy !== 'all') {
+      result = result.filter(t => t.serviceType === filterBy);
+    }
+
+    // Apply sorting
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'favorites':
+          // Favorites first, then by name
+          if (a.isFavorite !== b.isFavorite) {
+            return a.isFavorite ? -1 : 1;
+          }
+          return a.name.localeCompare(b.name);
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'date':
+          return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        case 'type':
+          return a.serviceType.localeCompare(b.serviceType);
+        default:
+          return 0;
+      }
+    });
+
+    return result;
+  }, [userTemplates, searchQuery, filterBy, sortBy]);
 
   const handleEditClick = (template: ServiceTemplate) => {
     setTemplateToEdit(template);
@@ -127,6 +184,10 @@ export function TemplateManagement() {
     }
   };
 
+  const handleToggleFavorite = (template: ServiceTemplate) => {
+    toggleFavorite({ templateId: template.id, isFavorite: !template.isFavorite });
+  };
+
   const getServiceTypeConfig = (serviceType: string) => {
     return SERVICE_TYPE_CONFIG[serviceType] || { 
       label: serviceType, 
@@ -152,19 +213,57 @@ export function TemplateManagement() {
         </p>
       </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Pesquisar templates..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="pl-10"
-        />
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Pesquisar templates..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        {/* Filter by category */}
+        <Select value={filterBy} onValueChange={(value) => setFilterBy(value as FilterOption)}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <Filter className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Filtrar por..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os templates</SelectItem>
+            <SelectItem value="favorites">
+              <span className="flex items-center gap-2">
+                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                Favoritos
+              </span>
+            </SelectItem>
+            {serviceTypes.map(type => (
+              <SelectItem key={type} value={type}>
+                {SERVICE_TYPE_CONFIG[type]?.label || type}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Sort by */}
+        <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <ArrowUpDown className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Ordenar por..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="favorites">Favoritos primeiro</SelectItem>
+            <SelectItem value="name">Nome (A-Z)</SelectItem>
+            <SelectItem value="date">Data de criação</SelectItem>
+            <SelectItem value="type">Tipo de serviço</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Templates Table */}
-      {filteredTemplates.length === 0 ? (
+      {filteredAndSortedTemplates.length === 0 ? (
         <div className="text-center py-12 bg-muted/30 rounded-lg border border-dashed border-border">
           <LayoutTemplate className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
           {userTemplates.length === 0 ? (
@@ -174,11 +273,18 @@ export function TemplateManagement() {
                 Guarde templates a partir dos serviços nas suas propostas multi-serviço.
               </p>
             </>
+          ) : filterBy === 'favorites' ? (
+            <>
+              <p className="text-muted-foreground font-medium">Nenhum template favorito</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Clique na estrela para marcar templates como favoritos.
+              </p>
+            </>
           ) : (
             <>
               <p className="text-muted-foreground font-medium">Nenhum resultado encontrado</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Tente ajustar a sua pesquisa.
+                Tente ajustar a sua pesquisa ou filtros.
               </p>
             </>
           )}
@@ -188,7 +294,8 @@ export function TemplateManagement() {
           <Table>
             <TableHeader>
               <TableRow className="bg-muted/50">
-                <TableHead className="w-[300px]">Template</TableHead>
+                <TableHead className="w-[40px]"></TableHead>
+                <TableHead className="w-[280px]">Template</TableHead>
                 <TableHead>Tipo de Serviço</TableHead>
                 <TableHead>Complexidade</TableHead>
                 <TableHead>Duração</TableHead>
@@ -197,13 +304,31 @@ export function TemplateManagement() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredTemplates.map((template) => {
+              {filteredAndSortedTemplates.map((template) => {
                 const serviceConfig = getServiceTypeConfig(template.serviceType);
                 const ServiceIcon = serviceConfig.icon;
                 const complexityConfig = COMPLEXITY_LABELS[template.complexity] || COMPLEXITY_LABELS.medium;
 
                 return (
                   <TableRow key={template.id}>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleToggleFavorite(template)}
+                        className="h-8 w-8"
+                        title={template.isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                      >
+                        <Star 
+                          className={cn(
+                            "w-4 h-4 transition-colors",
+                            template.isFavorite 
+                              ? "fill-amber-400 text-amber-400" 
+                              : "text-muted-foreground hover:text-amber-400"
+                          )} 
+                        />
+                      </Button>
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="font-medium text-foreground">{template.name}</p>
@@ -280,7 +405,14 @@ export function TemplateManagement() {
       {/* Stats */}
       {userTemplates.length > 0 && (
         <div className="flex items-center justify-between text-sm text-muted-foreground pt-2">
-          <span>{userTemplates.length} template(s) guardado(s)</span>
+          <span>
+            {filteredAndSortedTemplates.length} de {userTemplates.length} template(s)
+            {userTemplates.filter(t => t.isFavorite).length > 0 && (
+              <span className="ml-2">
+                • <Star className="w-3 h-3 inline fill-amber-400 text-amber-400" /> {userTemplates.filter(t => t.isFavorite).length} favorito(s)
+              </span>
+            )}
+          </span>
           <span>
             Templates de sistema disponíveis: {templates.filter(t => t.isSystemTemplate).length}
           </span>

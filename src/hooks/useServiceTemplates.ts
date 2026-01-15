@@ -162,6 +162,24 @@ export function useServiceTemplates() {
     },
   });
 
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async ({ templateId, isFavorite }: { templateId: string; isFavorite: boolean }) => {
+      const { error } = await supabase
+        .from('service_templates')
+        .update({ is_favorite: isFavorite })
+        .eq('id', templateId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-templates'] });
+    },
+    onError: (error) => {
+      console.error('Error toggling favorite:', error);
+      toast.error('Erro ao atualizar favorito');
+    },
+  });
+
   return {
     templates: templatesQuery.data || [],
     isLoading: templatesQuery.isLoading,
@@ -172,5 +190,7 @@ export function useServiceTemplates() {
     isDeleting: deleteTemplateMutation.isPending,
     duplicateTemplate: duplicateTemplateMutation.mutate,
     isDuplicating: duplicateTemplateMutation.isPending,
+    toggleFavorite: toggleFavoriteMutation.mutate,
+    isTogglingFavorite: toggleFavoriteMutation.isPending,
   };
 }
