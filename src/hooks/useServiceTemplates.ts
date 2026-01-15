@@ -109,6 +109,59 @@ export function useServiceTemplates() {
     },
   });
 
+  const duplicateTemplateMutation = useMutation({
+    mutationFn: async (template: ServiceTemplate) => {
+      if (!user) throw new Error('User not authenticated');
+      
+      const insertData = {
+        name: `${template.name} (Cópia)`,
+        description: template.description,
+        service_type: template.serviceType,
+        complexity: template.complexity,
+        estimated_duration: template.estimatedDuration,
+        duration_unit: template.durationUnit,
+        deliverables: template.deliverables,
+        event_type: template.eventType || null,
+        event_days: template.eventDays || null,
+        event_staffing: template.eventStaffing || null,
+        event_extras: template.eventExtras || null,
+        coverage_duration: template.coverageDuration || null,
+        post_production_hours: template.postProductionHours || null,
+        web_project_type: template.webProjectType || null,
+        number_of_pages: template.numberOfPages || null,
+        number_of_modules: template.numberOfModules || null,
+        has_payment_integration: template.hasPaymentIntegration || false,
+        has_crm_integration: template.hasCrmIntegration || false,
+        has_erp_integration: template.hasErpIntegration || false,
+        has_maintenance: template.hasMaintenance || false,
+        maintenance_months: template.maintenanceMonths || null,
+        number_of_concepts: template.numberOfConcepts || null,
+        number_of_revisions: template.numberOfRevisions || null,
+        includes_brand_guidelines: template.includesBrandGuidelines || false,
+        deliverable_formats: template.deliverableFormats || [],
+        is_system_template: false,
+        user_id: user.id,
+      };
+      
+      const { data, error } = await supabase
+        .from('service_templates')
+        .insert(insertData as any)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return dbRowToTemplate(data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['service-templates'] });
+      toast.success('Template duplicado com sucesso!');
+    },
+    onError: (error) => {
+      console.error('Error duplicating template:', error);
+      toast.error('Erro ao duplicar template');
+    },
+  });
+
   return {
     templates: templatesQuery.data || [],
     isLoading: templatesQuery.isLoading,
@@ -117,5 +170,7 @@ export function useServiceTemplates() {
     isCreating: createTemplateMutation.isPending,
     deleteTemplate: deleteTemplateMutation.mutate,
     isDeleting: deleteTemplateMutation.isPending,
+    duplicateTemplate: duplicateTemplateMutation.mutate,
+    isDuplicating: duplicateTemplateMutation.isPending,
   };
 }
