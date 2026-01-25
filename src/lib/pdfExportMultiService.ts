@@ -277,6 +277,13 @@ function addCoverPage(
   // Footer branding
   doc.setTextColor(150, 150, 150);
   doc.setFontSize(8);
+  
+  // Address line (if present)
+  if (branding.address) {
+    doc.text(branding.address, pageWidth / 2, pageHeight - 28, { align: 'center' });
+  }
+  
+  // Contact info line
   if (branding.website) {
     doc.text(branding.website, 20, pageHeight - 20);
   }

@@ -15,7 +15,7 @@ export function useBranding() {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('company_name, full_name, website, contact_phone, primary_color, logo_url')
+        .select('company_name, full_name, website, contact_phone, primary_color, logo_url, company_address')
         .eq('user_id', user.id)
         .single();
 
@@ -42,6 +42,7 @@ export function useBranding() {
         contactEmail: user.email || undefined,
         contactPhone: profile.contact_phone || undefined,
         website: profile.website || undefined,
+        address: profile.company_address || undefined,
       };
     },
     enabled: !!user?.id,
