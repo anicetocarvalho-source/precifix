@@ -13,7 +13,6 @@ import {
   Trash2,
   FileText,
   Plus,
-  Loader2,
   Copy,
   Pencil,
   User,
@@ -21,6 +20,7 @@ import {
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
 import { useState } from 'react';
+import { HistoryTableSkeleton } from '@/components/skeletons/HistorySkeleton';
 
 const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
   draft: { label: 'Rascunho', color: 'bg-muted text-muted-foreground' },
@@ -96,12 +96,10 @@ export default function History() {
         </div>
 
         {/* Table */}
-        <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden animate-slide-up" style={{ animationDelay: '0.2s' }}>
-          {isLoading ? (
-            <div className="p-12 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          ) : filteredProposals.length === 0 ? (
+        {isLoading ? (
+          <HistoryTableSkeleton showAuthor={canViewAllProposals} />
+        ) : filteredProposals.length === 0 ? (
+          <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden animate-slide-up" style={{ animationDelay: '0.2s' }}>
             <div className="p-12 text-center">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-8 h-8 text-muted-foreground" />
@@ -123,7 +121,9 @@ export default function History() {
                 </Link>
               )}
             </div>
-          ) : (
+          </div>
+        ) : (
+          <div className="bg-card rounded-xl border border-border shadow-card overflow-hidden animate-slide-up" style={{ animationDelay: '0.2s' }}>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -249,8 +249,8 @@ export default function History() {
                 </tbody>
               </table>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </MainLayout>
   );
