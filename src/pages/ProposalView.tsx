@@ -12,6 +12,8 @@ import { usePricingParameters } from '@/hooks/usePricingParameters';
 import { useUserRole } from '@/hooks/useUserRole';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
 import { exportProposalToPDF, exportSingleDocument } from '@/lib/pdfExport';
+import { exportMultiServiceProposalToPDF } from '@/lib/pdfExportMultiService';
+import { useBranding } from '@/hooks/useBranding';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -88,6 +90,7 @@ export default function ProposalView() {
   const { restoreVersion } = useProposalVersions(id);
   const { parameters: currentPricingParams } = usePricingParameters();
   const { canViewAllProposals, canEditAllProposals } = useUserRole();
+  const { branding } = useBranding();
   const [activeTab, setActiveTab] = useState<DocumentTab>('diagnostic');
   const [versionToRestore, setVersionToRestore] = useState<ProposalVersion | null>(null);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
@@ -280,6 +283,18 @@ export default function ProposalView() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {hasMultipleServices && (
+                  <>
+                    <DropdownMenuItem 
+                      onClick={() => exportMultiServiceProposalToPDF(proposal, proposalServices, branding)}
+                      className="font-medium"
+                    >
+                      <FileText className="w-4 h-4 mr-2" />
+                      PDF Profissional (Completo)
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
                 <DropdownMenuItem onClick={() => exportProposalToPDF(proposal, 'all', proposalServices.length > 1 ? proposalServices : undefined)}>
                   <FileText className="w-4 h-4 mr-2" />
                   Exportar Tudo
