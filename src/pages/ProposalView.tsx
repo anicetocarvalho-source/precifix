@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useProposals } from '@/hooks/useProposals';
+import { useProposal } from '@/hooks/useProposal';
 import { useProposalServices } from '@/hooks/useProposalServices';
 import { ProposalVersionHistory } from '@/components/ProposalVersionHistory';
 import { useProposalVersions, ProposalVersion } from '@/hooks/useProposalVersions';
@@ -85,7 +86,8 @@ type DocumentTab = 'diagnostic' | 'technical' | 'budget';
 export default function ProposalView() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getProposal, updateProposalStatus, duplicateProposal, isLoading } = useProposals();
+  const { updateProposalStatus, duplicateProposal } = useProposals();
+  const { data: proposal, isLoading } = useProposal(id);
   const { data: proposalServices = [], isLoading: isLoadingServices } = useProposalServices(id);
   const { restoreVersion } = useProposalVersions(id);
   const { parameters: currentPricingParams } = usePricingParameters();
@@ -97,7 +99,6 @@ export default function ProposalView() {
   const [customMessage, setCustomMessage] = useState('');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
 
-  const proposal = id ? getProposal(id) : undefined;
   const hasMultipleServices = proposalServices.length > 1;
   const [clientEmail, setClientEmail] = useState(proposal?.formData?.clientEmail || '');
 
