@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { SectorDetailsView } from '@/components/proposal/SectorDetailsView';
 import { ProposalServicesView } from '@/components/proposal/ProposalServicesView';
 import { SERVICE_LABELS, SERVICE_CATEGORIES, DurationUnit } from '@/types/proposal';
+import { ProposalViewSkeleton } from '@/components/skeletons/ProposalViewSkeleton';
 
 // Helper function to format duration in a friendly way
 const formatDuration = (duration: number, unit: DurationUnit = 'months'): string => {
@@ -105,9 +106,7 @@ export default function ProposalView() {
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-10 h-10 animate-spin text-primary" />
-        </div>
+        <ProposalViewSkeleton />
       </MainLayout>
     );
   }
