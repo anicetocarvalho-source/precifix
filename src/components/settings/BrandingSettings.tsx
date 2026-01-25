@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Save, 
   Upload, 
@@ -16,6 +17,7 @@ import {
   Palette,
   Loader2,
   ImageIcon,
+  MapPin,
 } from 'lucide-react';
 
 interface BrandingData {
@@ -24,6 +26,7 @@ interface BrandingData {
   contact_phone: string | null;
   primary_color: string | null;
   logo_url: string | null;
+  company_address: string | null;
 }
 
 const PRESET_COLORS = [
@@ -48,6 +51,7 @@ export function BrandingSettings() {
     contact_phone: '',
     primary_color: '#2563eb',
     logo_url: null,
+    company_address: '',
   });
 
   const { data: profile, isLoading } = useQuery({
@@ -57,7 +61,7 @@ export function BrandingSettings() {
       
       const { data, error } = await supabase
         .from('profiles')
-        .select('company_name, website, contact_phone, primary_color, logo_url')
+        .select('company_name, website, contact_phone, primary_color, logo_url, company_address')
         .eq('user_id', user.id)
         .single();
       
@@ -79,6 +83,7 @@ export function BrandingSettings() {
         contact_phone: profile.contact_phone || '',
         primary_color: profile.primary_color || '#2563eb',
         logo_url: profile.logo_url || null,
+        company_address: profile.company_address || '',
       });
     }
   }, [profile]);
@@ -95,6 +100,7 @@ export function BrandingSettings() {
           contact_phone: data.contact_phone || null,
           primary_color: data.primary_color || '#2563eb',
           logo_url: data.logo_url,
+          company_address: data.company_address || null,
         })
         .eq('user_id', user.id);
       
@@ -311,6 +317,25 @@ export function BrandingSettings() {
           placeholder="+244 923 456 789"
           className="max-w-md"
         />
+      </div>
+
+      {/* Company Address */}
+      <div className="space-y-2">
+        <Label htmlFor="company_address" className="flex items-center gap-2">
+          <MapPin className="w-4 h-4" />
+          Endereço da Empresa
+        </Label>
+        <Textarea
+          id="company_address"
+          value={formData.company_address || ''}
+          onChange={(e) => setFormData(prev => ({ ...prev, company_address: e.target.value }))}
+          placeholder="Ex: Rua das Flores, 123, Luanda, Angola"
+          className="max-w-md resize-none"
+          rows={2}
+        />
+        <p className="text-xs text-muted-foreground">
+          Este endereço aparecerá no rodapé dos PDFs.
+        </p>
       </div>
 
       {/* Primary Color */}
