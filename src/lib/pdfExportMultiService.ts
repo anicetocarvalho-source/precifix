@@ -130,18 +130,35 @@ function addCoverPage(
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const { formData } = proposal;
-  const colors = getMultiServiceColor(services);
+  
+  // Use branding color if available, otherwise use service category colors
+  const defaultColors = getMultiServiceColor(services);
+  const brandPrimary = branding.primaryColor || defaultColors.primary;
+  const brandSecondary = branding.primaryColor 
+    ? [
+        Math.min(255, brandPrimary[0] + 20),
+        Math.min(255, brandPrimary[1] + 20),
+        Math.min(255, brandPrimary[2] + 20),
+      ] as [number, number, number]
+    : defaultColors.secondary;
+  const brandAccent = branding.primaryColor
+    ? [
+        Math.min(255, brandPrimary[0] + 50),
+        Math.min(255, brandPrimary[1] + 50),
+        Math.min(255, brandPrimary[2] + 50),
+      ] as [number, number, number]
+    : defaultColors.accent;
   
   // Background gradient effect
-  doc.setFillColor(...colors.primary);
+  doc.setFillColor(...brandPrimary);
   doc.rect(0, 0, pageWidth, 100, 'F');
   
   // Decorative accent
-  doc.setFillColor(...colors.secondary);
+  doc.setFillColor(...brandSecondary);
   doc.rect(0, 95, pageWidth, 8, 'F');
   
   // Geometric accent shape
-  doc.setFillColor(...colors.accent);
+  doc.setFillColor(...brandAccent);
   doc.triangle(pageWidth - 60, 0, pageWidth, 0, pageWidth, 60, 'F');
   
   // Company name / Branding
@@ -180,7 +197,7 @@ function addCoverPage(
   doc.roundedRect(20, clientBoxY, pageWidth - 40, 60, 4, 4, 'F');
   
   // Left accent
-  doc.setFillColor(...colors.primary);
+  doc.setFillColor(...brandPrimary);
   doc.rect(20, clientBoxY, 4, 60, 'F');
   
   doc.setTextColor(100, 100, 100);
@@ -239,7 +256,7 @@ function addCoverPage(
   const totalValue = services.reduce((sum, s) => sum + (s.serviceValue || 0), 0);
   const valueBoxY = pageHeight - 100;
   
-  doc.setFillColor(...colors.primary);
+  doc.setFillColor(...brandPrimary);
   doc.roundedRect(20, valueBoxY, pageWidth - 40, 45, 4, 4, 'F');
   
   doc.setTextColor(255, 255, 255);

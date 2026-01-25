@@ -69,29 +69,41 @@ export type Database = {
         Row: {
           avatar_url: string | null
           company_name: string | null
+          contact_phone: string | null
           created_at: string
           full_name: string | null
           id: string
+          logo_url: string | null
+          primary_color: string | null
           updated_at: string
           user_id: string
+          website: string | null
         }
         Insert: {
           avatar_url?: string | null
           company_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          logo_url?: string | null
+          primary_color?: string | null
           updated_at?: string
           user_id: string
+          website?: string | null
         }
         Update: {
           avatar_url?: string | null
           company_name?: string | null
+          contact_phone?: string | null
           created_at?: string
           full_name?: string | null
           id?: string
+          logo_url?: string | null
+          primary_color?: string | null
           updated_at?: string
           user_id?: string
+          website?: string | null
         }
         Relationships: []
       }

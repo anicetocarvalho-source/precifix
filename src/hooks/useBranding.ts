@@ -15,7 +15,7 @@ export function useBranding() {
 
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('company_name, full_name')
+        .select('company_name, full_name, website, contact_phone, primary_color, logo_url')
         .eq('user_id', user.id)
         .single();
 
@@ -24,9 +24,24 @@ export function useBranding() {
         return { companyName: 'PRECIFIX' };
       }
 
+      // Parse primary color from hex to RGB
+      let primaryColor: [number, number, number] | undefined;
+      if (profile.primary_color) {
+        const hex = profile.primary_color.replace('#', '');
+        primaryColor = [
+          parseInt(hex.substring(0, 2), 16),
+          parseInt(hex.substring(2, 4), 16),
+          parseInt(hex.substring(4, 6), 16),
+        ];
+      }
+
       return {
         companyName: profile.company_name || profile.full_name || 'PRECIFIX',
+        companyLogo: profile.logo_url || undefined,
+        primaryColor,
         contactEmail: user.email || undefined,
+        contactPhone: profile.contact_phone || undefined,
+        website: profile.website || undefined,
       };
     },
     enabled: !!user?.id,
