@@ -11,6 +11,7 @@ import {
   FlaskConical,
   Shield,
   LayoutTemplate,
+  FileImage,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
@@ -18,14 +19,16 @@ import { PricingParametersForm } from '@/components/settings/PricingParametersFo
 import { PricingImpactSimulator } from '@/components/settings/PricingImpactSimulator';
 import { UserManagement } from '@/components/settings/UserManagement';
 import { TemplateManagement } from '@/components/settings/TemplateManagement';
+import { BrandingSettings } from '@/components/settings/BrandingSettings';
 import { useUserRole } from '@/hooks/useUserRole';
 import { Badge } from '@/components/ui/badge';
 
-type SettingsTab = 'profile' | 'company' | 'users' | 'templates' | 'pricing' | 'simulator' | 'appearance' | 'notifications' | 'integrations';
+type SettingsTab = 'profile' | 'company' | 'branding' | 'users' | 'templates' | 'pricing' | 'simulator' | 'appearance' | 'notifications' | 'integrations';
 
 const tabs = [
   { id: 'profile' as const, label: 'Perfil', icon: User },
   { id: 'company' as const, label: 'Empresa', icon: Building },
+  { id: 'branding' as const, label: 'Branding', icon: FileImage },
   { id: 'users' as const, label: 'Utilizadores', icon: Shield, adminOnly: true },
   { id: 'templates' as const, label: 'Templates', icon: LayoutTemplate },
   { id: 'pricing' as const, label: 'Precificação', icon: Calculator },
@@ -187,6 +190,8 @@ export default function Settings() {
                 </div>
               </div>
             )}
+
+            {activeTab === 'branding' && <BrandingSettings />}
 
             {activeTab === 'users' && <UserManagement />}
 
