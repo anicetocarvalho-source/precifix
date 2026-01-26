@@ -37,6 +37,7 @@ import { EventFields } from '@/components/proposal/EventFields';
 import { WebSystemsFields } from '@/components/proposal/WebSystemsFields';
 import { DesignFields } from '@/components/proposal/DesignFields';
 import { PricingPreview } from '@/components/proposal/PricingPreview';
+import { EditProposalSkeleton } from '@/components/skeletons/EditProposalSkeleton';
 
 interface QuestionOption {
   value: string;
@@ -387,9 +388,7 @@ export default function EditProposal() {
   if (isLoadingProposals || !initialized) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
+        <EditProposalSkeleton />
       </MainLayout>
     );
   }
