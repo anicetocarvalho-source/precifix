@@ -35,6 +35,7 @@ import {
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
+import { EditMultiServiceProposalSkeleton } from '@/components/skeletons/EditProposalSkeleton';
 
 type Step = 'client' | 'services' | 'locations' | 'review';
 
@@ -261,9 +262,7 @@ export default function EditMultiServiceProposal() {
   if (isLoadingProposals || isLoadingServices || !initialized) {
     return (
       <MainLayout>
-        <div className="flex items-center justify-center h-96">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
+        <EditMultiServiceProposalSkeleton />
       </MainLayout>
     );
   }
