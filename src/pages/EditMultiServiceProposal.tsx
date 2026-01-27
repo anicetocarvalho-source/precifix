@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,7 @@ import {
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { EditMultiServiceProposalSkeleton } from '@/components/skeletons/EditProposalSkeleton';
+import { AutoSaveIndicator, useAutoSave } from '@/components/proposal/AutoSaveIndicator';
 
 type Step = 'client' | 'services' | 'locations' | 'review';
 
@@ -91,6 +92,44 @@ export default function EditMultiServiceProposal() {
   
   const [services, setServices] = useState<ProposalService[]>([]);
   const [locations, setLocations] = useState<string[]>(['']);
+
+  // Prepare auto-save data
+  const autoSaveData = useMemo(() => ({
+    clientData,
+    services,
+    locations: locations.filter(Boolean),
+  }), [clientData, services, locations]);
+
+  // Auto-save handler
+  const handleAutoSave = useCallback(async (data: typeof autoSaveData) => {
+    if (!id || !initialized || data.services.length === 0) return;
+    
+    const servicesWithValues = updateServicesWithPricing(
+      data.services,
+      parameters ? toPricingParams(parameters) : DEFAULT_PRICING_PARAMS
+    );
+
+    await updateMultiServiceProposal.mutateAsync({
+      id,
+      clientData: {
+        clientName: data.clientData.clientName,
+        clientEmail: data.clientData.clientEmail || undefined,
+        clientPhone: data.clientData.clientPhone || undefined,
+        clientType: data.clientData.clientType,
+        sector: data.clientData.sector,
+      },
+      services: servicesWithValues,
+      locations: data.locations,
+    });
+  }, [id, initialized, parameters, updateMultiServiceProposal]);
+
+  // Auto-save hook
+  const { status: autoSaveStatus, lastSaved } = useAutoSave({
+    data: autoSaveData,
+    onSave: handleAutoSave,
+    debounceMs: 3000,
+    enabled: initialized && !!id && services.length > 0,
+  });
 
   // Initialize form data from existing proposal
   useEffect(() => {
@@ -284,11 +323,14 @@ export default function EditMultiServiceProposal() {
         <div className="flex-1 max-w-3xl mx-auto lg:mx-0">
           
           {/* Header */}
-          <div className="flex items-center gap-4 mb-6">
-            <Button variant="ghost" size="icon" onClick={() => navigate(`/proposta/${id}`)}>
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-            <h1 className="text-xl font-semibold">Editar Proposta Multi-Serviços</h1>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-4">
+              <Button variant="ghost" size="icon" onClick={() => navigate(`/proposta/${id}`)}>
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+              <h1 className="text-xl font-semibold">Editar Proposta Multi-Serviços</h1>
+            </div>
+            <AutoSaveIndicator status={autoSaveStatus} lastSaved={lastSaved} />
           </div>
 
           {/* Progress bar */}
