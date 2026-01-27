@@ -609,26 +609,29 @@ export default function ProposalView() {
                   <h3 className="text-lg font-semibold text-foreground mb-4">Escopo Detalhado</h3>
                   <p className="text-foreground bg-muted/50 rounded-lg p-4">
                     {serviceLabels[formData.serviceType]} para {formData.clientName}, abrangendo {formData.locations.join(', ')}, 
-                    com duração de {formatDuration(formData.estimatedDuration, formData.durationUnit)} e metodologia {methodologyLabels[formData.methodology].toLowerCase()}.
+                    com duração de {formatDuration(formData.estimatedDuration, formData.durationUnit)}{(category === 'consulting' || category === 'technology') && formData.methodology ? ` e metodologia ${methodologyLabels[formData.methodology].toLowerCase()}` : ''}.
                   </p>
                 </section>
 
-                <section>
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Metodologia</h3>
-                  <div className={cn(
-                    'rounded-lg p-4 border-l-4',
-                    formData.methodology === 'traditional' ? 'bg-blue-50 border-blue-500' :
-                    formData.methodology === 'agile' ? 'bg-green-50 border-green-500' :
-                    'bg-amber-50 border-amber-500'
-                  )}>
-                    <p className="font-semibold text-foreground">{methodologyLabels[formData.methodology]}</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {formData.methodology === 'traditional' && 'Abordagem sequencial com fases bem definidas, ideal para projectos com escopo estável.'}
-                      {formData.methodology === 'agile' && 'Abordagem iterativa com entregas incrementais, ideal para projectos com requisitos evolutivos.'}
-                      {formData.methodology === 'hybrid' && 'Combinação de métodos tradicionais para planeamento macro e ágeis para execução, oferecendo flexibilidade.'}
-                    </p>
-                  </div>
-                </section>
+                {/* Methodology section - only for consulting and technology */}
+                {(category === 'consulting' || category === 'technology') && formData.methodology && (
+                  <section>
+                    <h3 className="text-lg font-semibold text-foreground mb-4">Metodologia</h3>
+                    <div className={cn(
+                      'rounded-lg p-4 border-l-4',
+                      formData.methodology === 'traditional' ? 'bg-blue-50 border-blue-500' :
+                      formData.methodology === 'agile' ? 'bg-green-50 border-green-500' :
+                      'bg-amber-50 border-amber-500'
+                    )}>
+                      <p className="font-semibold text-foreground">{methodologyLabels[formData.methodology]}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {formData.methodology === 'traditional' && 'Abordagem sequencial com fases bem definidas, ideal para projectos com escopo estável.'}
+                        {formData.methodology === 'agile' && 'Abordagem iterativa com entregas incrementais, ideal para projectos com requisitos evolutivos.'}
+                        {formData.methodology === 'hybrid' && 'Combinação de métodos tradicionais para planeamento macro e ágeis para execução, oferecendo flexibilidade.'}
+                      </p>
+                    </div>
+                  </section>
+                )}
 
                 <section>
                   <h3 className="text-lg font-semibold text-foreground mb-4">Entregáveis por Fase</h3>
