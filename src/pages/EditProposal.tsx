@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
+import { useProposal } from '@/hooks/useProposal';
 import { useProposals } from '@/hooks/useProposals';
 import {
   ProposalFormData,
@@ -215,7 +216,8 @@ const isValidAngolanPhone = (phone: string): boolean => {
 export default function EditProposal() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getProposal, updateProposal, isLoading: isLoadingProposals } = useProposals();
+  const { data: proposal, isLoading: isLoadingProposal } = useProposal(id);
+  const { updateProposal } = useProposals();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<Partial<ProposalFormData>>({
@@ -226,8 +228,6 @@ export default function EditProposal() {
   const [initialized, setInitialized] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
-
-  const proposal = id ? getProposal(id) : undefined;
 
   useEffect(() => {
     if (proposal && !initialized) {
@@ -385,7 +385,7 @@ export default function EditProposal() {
     return SERVICE_CATEGORIES[formData.serviceType];
   };
 
-  if (isLoadingProposals || !initialized) {
+  if (isLoadingProposal || !initialized) {
     return (
       <MainLayout>
         <EditProposalSkeleton />
