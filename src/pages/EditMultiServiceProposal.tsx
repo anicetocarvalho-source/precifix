@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useProposal } from '@/hooks/useProposal';
 import { useProposals } from '@/hooks/useProposals';
 import { useProposalServices } from '@/hooks/useProposalServices';
-import { ProposalService, createDefaultService } from '@/types/proposalService';
+import { ProposalService } from '@/types/proposalService';
 import { ServicesList } from '@/components/proposal/ServicesList';
 import { ServiceFormModal } from '@/components/proposal/ServiceFormModal';
 import { MultiServicePricingPreview } from '@/components/proposal/MultiServicePricingPreview';
@@ -34,7 +35,6 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from 'sonner';
 import { EditMultiServiceProposalSkeleton } from '@/components/skeletons/EditProposalSkeleton';
 
 type Step = 'client' | 'services' | 'locations' | 'review';
@@ -66,7 +66,8 @@ interface ClientFormData {
 export default function EditMultiServiceProposal() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getProposal, updateMultiServiceProposal, isLoading: isLoadingProposals } = useProposals();
+  const { data: proposal, isLoading: isLoadingProposal } = useProposal(id);
+  const { updateMultiServiceProposal } = useProposals();
   const { data: existingServices, isLoading: isLoadingServices } = useProposalServices(id);
   const { parameters } = usePricingParameters();
   const { createTemplate, isCreating: isCreatingTemplate } = useServiceTemplates();
@@ -90,8 +91,6 @@ export default function EditMultiServiceProposal() {
   
   const [services, setServices] = useState<ProposalService[]>([]);
   const [locations, setLocations] = useState<string[]>(['']);
-
-  const proposal = id ? getProposal(id) : undefined;
 
   // Initialize form data from existing proposal
   useEffect(() => {
@@ -259,7 +258,7 @@ export default function EditMultiServiceProposal() {
     }
   };
 
-  if (isLoadingProposals || isLoadingServices || !initialized) {
+  if (isLoadingProposal || isLoadingServices || !initialized) {
     return (
       <MainLayout>
         <EditMultiServiceProposalSkeleton />
