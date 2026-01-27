@@ -256,7 +256,7 @@ const getQuestions = (formData: Partial<ProposalFormData>): Question[] => {
         : 'Qual o nível de maturidade do cliente?',
       subtitle: serviceCategory === 'technology'
         ? 'Experiência do cliente com soluções tecnológicas'
-        : 'Em termos de gestão de projectos',
+        : 'Em termos de processos organizacionais',
       options: [
         { 
           value: 'low', 

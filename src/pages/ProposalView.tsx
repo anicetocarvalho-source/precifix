@@ -198,6 +198,98 @@ export default function ProposalView() {
     hybrid: 'Híbrida',
   };
 
+  // Get service description based on category
+  const getServiceDescription = (serviceType: string, serviceCategory: string): string => {
+    switch (serviceCategory) {
+      case 'events':
+        return serviceType === 'photography' 
+          ? 'cobertura fotográfica profissional do evento'
+          : serviceType === 'video_coverage'
+          ? 'cobertura de vídeo e produção audiovisual'
+          : serviceType === 'streaming'
+          ? 'serviços de transmissão ao vivo e streaming'
+          : serviceType === 'sound_lighting'
+          ? 'serviços de som e iluminação profissional'
+          : 'serviços de cobertura e produção de eventos';
+      case 'creative':
+        return serviceType === 'graphic_design'
+          ? 'criação de materiais de design gráfico'
+          : serviceType === 'branding'
+          ? 'desenvolvimento de identidade visual e branding'
+          : serviceType === 'video_editing'
+          ? 'edição de vídeo e pós-produção audiovisual'
+          : serviceType === 'marketing_digital'
+          ? 'estratégia e execução de marketing digital'
+          : 'serviços criativos e de design';
+      case 'technology':
+        return serviceType === 'web_development'
+          ? 'desenvolvimento de soluções web'
+          : serviceType === 'systems_development'
+          ? 'desenvolvimento de sistemas e aplicações'
+          : 'desenvolvimento tecnológico e digital';
+      case 'consulting':
+      default:
+        return serviceType === 'pmo'
+          ? 'implementar um escritório de projectos (PMO)'
+          : serviceType === 'restructuring'
+          ? 'reestruturar os seus processos organizacionais'
+          : serviceType === 'monitoring'
+          ? 'estabelecer um sistema de monitorização contínua'
+          : serviceType === 'training'
+          ? 'capacitar a sua equipa'
+          : serviceType === 'audit'
+          ? 'auditar os seus processos actuais'
+          : serviceType === 'strategy'
+          ? 'definir a sua estratégia organizacional'
+          : serviceType === 'financial_consulting'
+          ? 'consultoria e optimização financeira'
+          : 'serviços de consultoria especializada';
+    }
+  };
+
+  // Get phases by service category
+  const getPhasesByCategory = (serviceCategory: string, deliverables: string[]): { phase: string; items: string[] }[] => {
+    switch (serviceCategory) {
+      case 'events':
+        return [
+          { phase: 'Fase 1 - Pré-Produção', items: ['Reunião de briefing', 'Definição de locais e horários', 'Planeamento de equipamentos'] },
+          { phase: 'Fase 2 - Produção', items: ['Cobertura do evento', 'Captação de imagem e som', 'Monitorização em tempo real'] },
+          { phase: 'Fase 3 - Pós-Produção', items: ['Selecção e edição de material', 'Tratamento de cor e áudio', 'Entrega dos ficheiros finais'] },
+        ];
+      case 'creative':
+        return [
+          { phase: 'Fase 1 - Descoberta', items: ['Análise de briefing', 'Pesquisa de referências', 'Definição de conceito'] },
+          { phase: 'Fase 2 - Criação', items: ['Desenvolvimento de conceitos', 'Apresentação de propostas', 'Refinamento com feedback'] },
+          { phase: 'Fase 3 - Finalização', items: ['Arte-final', 'Adaptações e variações', 'Entrega de ficheiros em todos os formatos'] },
+        ];
+      case 'technology':
+        return [
+          { phase: 'Fase 1 - Análise', items: ['Levantamento de requisitos', 'Análise técnica', 'Arquitectura de solução'] },
+          { phase: 'Fase 2 - Desenvolvimento', items: ['Implementação de funcionalidades', 'Testes unitários', 'Integração de sistemas'] },
+          { phase: 'Fase 3 - Deploy', items: ['Testes de aceitação', 'Configuração de ambiente', 'Go-live e monitorização'] },
+          { phase: 'Fase 4 - Suporte', items: ['Documentação técnica', 'Formação de utilizadores', 'Manutenção correctiva'] },
+        ];
+      case 'consulting':
+      default:
+        const deliverableLabels: Record<string, string> = {
+          reports: 'Relatórios de progresso',
+          dashboards: 'Dashboards de acompanhamento',
+          kpis: 'Sistema de KPIs',
+          schedules: 'Cronogramas actualizados',
+          training: 'Sessões de formação',
+          documentation: 'Documentação de processos',
+          presentations: 'Apresentações executivas',
+          action_plans: 'Planos de acção',
+        };
+        return [
+          { phase: 'Fase 1 - Diagnóstico', items: ['Análise de situação actual', 'Identificação de gaps', 'Relatório de diagnóstico'] },
+          { phase: 'Fase 2 - Planeamento', items: ['Plano de projecto detalhado', 'Cronograma', 'Matriz RACI'] },
+          { phase: 'Fase 3 - Implementação', items: deliverables.map(d => deliverableLabels[d] || d) },
+          { phase: 'Fase 4 - Encerramento', items: ['Relatório final', 'Lições aprendidas', 'Transferência de conhecimento'] },
+        ];
+    }
+  };
+
   return (
     <MainLayout>
       <div className="max-w-6xl mx-auto">
@@ -434,12 +526,14 @@ export default function ProposalView() {
                   <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                     <p className="text-foreground">
                       A <strong>{formData.clientName}</strong>, {formData.clientType === 'public' ? 'instituição pública' : formData.clientType === 'private' ? 'empresa privada' : formData.clientType === 'ngo' ? 'organização não-governamental' : 'startup'} do sector de {formData.sector}, 
-                      procura apoio especializado em gestão de projectos para {formData.serviceType === 'pmo' ? 'implementar um escritório de projectos (PMO)' : formData.serviceType === 'restructuring' ? 'reestruturar os seus processos organizacionais' : formData.serviceType === 'monitoring' ? 'estabelecer um sistema de monitorização contínua' : formData.serviceType === 'training' ? 'capacitar a sua equipa' : formData.serviceType === 'audit' ? 'auditar os seus processos actuais' : 'definir a sua estratégia organizacional'}.
+                      procura apoio especializado para {getServiceDescription(formData.serviceType, category)}.
                     </p>
                     <p className="text-foreground">
                       O projecto envolve {formData.locations.length} localização(ões): <strong>{formData.locations.join(', ')}</strong>, 
-                      com uma complexidade classificada como <strong>{complexityLabels[formData.complexity].toLowerCase()}</strong> e 
-                      maturidade do cliente considerada <strong>{complexityLabels[formData.clientMaturity].toLowerCase()}</strong> em termos de gestão de projectos.
+                      com uma complexidade classificada como <strong>{complexityLabels[formData.complexity].toLowerCase()}</strong>
+                      {category === 'consulting' && formData.clientMaturity && (
+                        <> e maturidade do cliente considerada <strong>{complexityLabels[formData.clientMaturity].toLowerCase()}</strong></>
+                      )}.
                     </p>
                   </div>
                 </section>
@@ -539,22 +633,7 @@ export default function ProposalView() {
                 <section>
                   <h3 className="text-lg font-semibold text-foreground mb-4">Entregáveis por Fase</h3>
                   <div className="grid gap-3">
-                    {[
-                      { phase: 'Fase 1 - Diagnóstico', items: ['Análise de situação actual', 'Identificação de gaps', 'Relatório de diagnóstico'] },
-                      { phase: 'Fase 2 - Planeamento', items: ['Plano de projecto detalhado', 'Cronograma', 'Matriz RACI'] },
-                      { phase: 'Fase 3 - Implementação', items: formData.deliverables.map(d => {
-                        const labels: Record<string, string> = {
-                          reports: 'Relatórios de progresso',
-                          dashboards: 'Dashboards de acompanhamento',
-                          kpis: 'Sistema de KPIs',
-                          schedules: 'Cronogramas actualizados',
-                          training: 'Sessões de formação',
-                          documentation: 'Documentação de processos',
-                        };
-                        return labels[d] || d;
-                      }) },
-                      { phase: 'Fase 4 - Encerramento', items: ['Relatório final', 'Lições aprendidas', 'Transferência de conhecimento'] },
-                    ].map((phase) => (
+                    {getPhasesByCategory(category, formData.deliverables).map((phase) => (
                       <div key={phase.phase} className="bg-muted/30 rounded-lg p-4">
                         <p className="font-semibold text-foreground mb-2">{phase.phase}</p>
                         <ul className="space-y-1">
