@@ -804,12 +804,12 @@ function addProfessionalFooter(doc: jsPDF, pageNumber: number, totalPages: numbe
   doc.text(new Date().toLocaleDateString('pt-BR'), pageWidth - 20, pageHeight - 10, { align: 'right' });
 }
 
-// ========== MAIN EXPORT FUNCTION ==========
-export function exportMultiServiceProposalToPDF(
+// ========== GENERATE PDF FUNCTION (for preview) ==========
+export function generateMultiServiceProposalPDF(
   proposal: Proposal, 
   services: ProposalService[],
   branding: BrandingConfig = {}
-): void {
+): jsPDF {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -845,6 +845,17 @@ export function exportMultiServiceProposalToPDF(
       addProfessionalFooter(doc, i, totalPages, branding);
     }
   }
+  
+  return doc;
+}
+
+// ========== MAIN EXPORT FUNCTION ==========
+export function exportMultiServiceProposalToPDF(
+  proposal: Proposal, 
+  services: ProposalService[],
+  branding: BrandingConfig = {}
+): void {
+  const doc = generateMultiServiceProposalPDF(proposal, services, branding);
   
   const { formData } = proposal;
   const filename = `Proposta_MultiServico_${formData.clientName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;

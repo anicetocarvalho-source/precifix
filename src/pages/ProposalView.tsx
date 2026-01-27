@@ -12,14 +12,15 @@ import { useProposalVersions, ProposalVersion } from '@/hooks/useProposalVersion
 import { usePricingParameters } from '@/hooks/usePricingParameters';
 import { useUserRole } from '@/hooks/useUserRole';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
-import { exportProposalToPDF, exportSingleDocument } from '@/lib/pdfExport';
-import { exportMultiServiceProposalToPDF } from '@/lib/pdfExportMultiService';
+import { exportProposalToPDF, exportSingleDocument, generateProposalPDF, generateSingleDocumentPDF, DocumentType } from '@/lib/pdfExport';
+import { exportMultiServiceProposalToPDF, generateMultiServiceProposalPDF } from '@/lib/pdfExportMultiService';
 import { useBranding } from '@/hooks/useBranding';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { SectorDetailsView } from '@/components/proposal/SectorDetailsView';
 import { ProposalServicesView } from '@/components/proposal/ProposalServicesView';
+import { PdfPreviewDialog } from '@/components/proposal/PdfPreviewDialog';
 import { SERVICE_LABELS, SERVICE_CATEGORIES, DurationUnit } from '@/types/proposal';
 import { ProposalViewSkeleton } from '@/components/skeletons/ProposalViewSkeleton';
 
@@ -53,6 +54,7 @@ import {
   Mail,
   Phone,
   User,
+  Eye,
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -99,6 +101,10 @@ export default function ProposalView() {
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [customMessage, setCustomMessage] = useState('');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  
+  // PDF Preview state
+  const [showPdfPreview, setShowPdfPreview] = useState(false);
+  const [previewType, setPreviewType] = useState<'professional' | 'all' | 'diagnostic' | 'technical' | 'budget'>('all');
 
   const hasMultipleServices = proposalServices.length > 1;
   const [clientEmail, setClientEmail] = useState(proposal?.formData?.clientEmail || '');
@@ -367,6 +373,63 @@ export default function ProposalView() {
               <Printer className="w-4 h-4" />
               Imprimir
             </Button>
+            {/* Preview Button */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Eye className="w-4 h-4" />
+                  Pré-visualizar
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {hasMultipleServices && (
+                  <>
+                    <DropdownMenuItem 
+                      onClick={() => {
+                        setPreviewType('professional');
+                        setShowPdfPreview(true);
+                      }}
+                      className="font-medium"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      PDF Profissional (Completo)
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={() => {
+                  setPreviewType('all');
+                  setShowPdfPreview(true);
+                }}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Proposta Completa
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => {
+                  setPreviewType('diagnostic');
+                  setShowPdfPreview(true);
+                }}>
+                  <Target className="w-4 h-4 mr-2" />
+                  Diagnostico
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  setPreviewType('technical');
+                  setShowPdfPreview(true);
+                }}>
+                  <FileText className="w-4 h-4 mr-2" />
+                  Proposta Tecnica
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => {
+                  setPreviewType('budget');
+                  setShowPdfPreview(true);
+                }}>
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Proposta Orcamental
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* Export Button */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-2">
@@ -961,6 +1024,36 @@ export default function ProposalView() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* PDF Preview Dialog */}
+      <PdfPreviewDialog
+        open={showPdfPreview}
+        onOpenChange={setShowPdfPreview}
+        title={
+          previewType === 'professional' ? 'PDF Profissional' :
+          previewType === 'all' ? 'Proposta Completa' :
+          previewType === 'diagnostic' ? 'Diagnóstico' :
+          previewType === 'technical' ? 'Proposta Técnica' : 'Proposta Orçamental'
+        }
+        generatePdf={() => {
+          if (previewType === 'professional') {
+            return generateMultiServiceProposalPDF(proposal, proposalServices, branding);
+          } else if (previewType === 'all') {
+            return generateProposalPDF(proposal, 'all', proposalServices.length > 1 ? proposalServices : undefined);
+          } else {
+            return generateSingleDocumentPDF(proposal, previewType, proposalServices.length > 1 ? proposalServices : undefined);
+          }
+        }}
+        onExport={() => {
+          if (previewType === 'professional') {
+            exportMultiServiceProposalToPDF(proposal, proposalServices, branding);
+          } else if (previewType === 'all') {
+            exportProposalToPDF(proposal, 'all', proposalServices.length > 1 ? proposalServices : undefined);
+          } else {
+            exportSingleDocument(proposal, previewType, proposalServices.length > 1 ? proposalServices : undefined);
+          }
+        }}
+      />
     </MainLayout>
   );
 }
