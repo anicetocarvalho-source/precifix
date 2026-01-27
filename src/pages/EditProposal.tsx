@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ import { WebSystemsFields } from '@/components/proposal/WebSystemsFields';
 import { DesignFields } from '@/components/proposal/DesignFields';
 import { PricingPreview } from '@/components/proposal/PricingPreview';
 import { EditProposalSkeleton } from '@/components/skeletons/EditProposalSkeleton';
+import { AutoSaveIndicator, useAutoSave } from '@/components/proposal/AutoSaveIndicator';
 
 interface QuestionOption {
   value: string;
@@ -229,6 +230,53 @@ export default function EditProposal() {
   const [emailTouched, setEmailTouched] = useState(false);
   const [phoneTouched, setPhoneTouched] = useState(false);
 
+  // Prepare auto-save data
+  const autoSaveData = useMemo(() => ({
+    formData,
+    locations: locations.filter(Boolean),
+  }), [formData, locations]);
+
+  // Auto-save handler
+  const handleAutoSave = useCallback(async (data: typeof autoSaveData) => {
+    if (!id || !initialized) return;
+    
+    const finalData: ProposalFormData = {
+      clientType: (data.formData.clientType as ClientType) || 'private',
+      clientName: data.formData.clientName || '',
+      clientEmail: data.formData.clientEmail || undefined,
+      clientPhone: data.formData.clientPhone || undefined,
+      sector: data.formData.sector || '',
+      serviceType: (data.formData.serviceType as ServiceType) || 'pmo',
+      estimatedDuration: data.formData.estimatedDuration || 6,
+      durationUnit: data.formData.durationUnit || 'months',
+      locations: data.locations,
+      complexity: (data.formData.complexity as Complexity) || 'medium',
+      clientMaturity: (data.formData.clientMaturity as 'low' | 'medium' | 'high') || 'medium',
+      deliverables: data.formData.deliverables || [],
+      hasExistingTeam: data.formData.hasExistingTeam === true,
+      methodology: (data.formData.methodology as Methodology) || 'hybrid',
+      eventType: data.formData.eventType,
+      coverageDuration: data.formData.coverageDuration,
+      eventDays: data.formData.eventDays,
+      eventExtras: data.formData.eventExtras,
+      eventStaffing: data.formData.eventStaffing,
+      includesPostProduction: data.formData.includesPostProduction,
+      eventDate: data.formData.eventDate,
+      webSystemsData: data.formData.webSystemsData,
+      designData: data.formData.designData,
+    };
+
+    await updateProposal.mutateAsync({ id, formData: finalData });
+  }, [id, initialized, updateProposal]);
+
+  // Auto-save hook
+  const { status: autoSaveStatus, lastSaved } = useAutoSave({
+    data: autoSaveData,
+    onSave: handleAutoSave,
+    debounceMs: 3000,
+    enabled: initialized && !!id,
+  });
+
   useEffect(() => {
     if (proposal && !initialized) {
       setFormData(proposal.formData);
@@ -411,11 +459,14 @@ export default function EditProposal() {
 
       <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate(`/proposta/${id}`)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <h1 className="text-xl font-semibold">Editar Proposta</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(`/proposta/${id}`)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <h1 className="text-xl font-semibold">Editar Proposta</h1>
+          </div>
+          <AutoSaveIndicator status={autoSaveStatus} lastSaved={lastSaved} />
         </div>
 
         {/* Progress bar */}
