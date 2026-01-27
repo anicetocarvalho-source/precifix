@@ -98,32 +98,46 @@ function addHeader(doc: jsPDF, title: string, subtitle: string, serviceType?: st
   const pageWidth = doc.internal.pageSize.getWidth();
   const colors = serviceType ? getSectorColor(serviceType) : sectorColors.consulting;
   
-  // Header background with gradient effect
+  // Modern header with gradient effect simulation
   doc.setFillColor(...colors.primary);
-  doc.rect(0, 0, pageWidth, 35, 'F');
+  doc.rect(0, 0, pageWidth, 42, 'F');
   
-  // Accent line
+  // Accent stripe for modern look
   doc.setFillColor(...colors.secondary);
-  doc.rect(0, 35, pageWidth, 2, 'F');
+  doc.rect(0, 42, pageWidth, 3, 'F');
   
-  // Title
+  // Decorative geometric element (simple version without opacity)
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(255, 255, 255);
+  // Small decorative lines instead of transparent triangle
+  for (let i = 0; i < 4; i++) {
+    doc.setLineWidth(0.5);
+    doc.line(pageWidth - 60 + i * 12, 8, pageWidth - 50 + i * 12, 18);
+  }
+  
+  // Title with better typography
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
+  doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text(title, 20, 20);
+  doc.text(title, 20, 22);
   
   // Subtitle
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text(subtitle, 20, 28);
+  doc.text(subtitle, 20, 34);
   
   // Reset text color
   doc.setTextColor(0, 0, 0);
 }
 
-function addFooter(doc: jsPDF, pageNumber: number, totalPages?: number) {
+function addFooter(doc: jsPDF, pageNumber: number, totalPages?: number, companyName?: string) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
+  
+  // Footer line
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.3);
+  doc.line(20, pageHeight - 18, pageWidth - 20, pageHeight - 18);
   
   doc.setFontSize(8);
   doc.setTextColor(128, 128, 128);
@@ -131,20 +145,36 @@ function addFooter(doc: jsPDF, pageNumber: number, totalPages?: number) {
   const pageText = totalPages ? `Pagina ${pageNumber} de ${totalPages}` : `Pagina ${pageNumber}`;
   doc.text(pageText, pageWidth / 2, pageHeight - 10, { align: 'center' });
   doc.text(new Date().toLocaleDateString('pt-BR'), pageWidth - 20, pageHeight - 10, { align: 'right' });
-  doc.text('Gerado por PRECIFIX', 20, pageHeight - 10);
+  doc.text(companyName || 'PRECIFIX', 20, pageHeight - 10);
   doc.setTextColor(0, 0, 0);
 }
 
-function addSectionTitle(doc: jsPDF, title: string, y: number, serviceType?: string): number {
+function addSectionTitle(doc: jsPDF, title: string, y: number, serviceType?: string, sectionNumber?: number): number {
   const colors = serviceType ? getSectorColor(serviceType) : sectorColors.consulting;
   
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...colors.primary);
-  doc.text(title, 20, y);
+  if (sectionNumber !== undefined) {
+    // Circle with number
+    doc.setFillColor(...colors.primary);
+    doc.circle(26, y - 2, 5, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    doc.text(String(sectionNumber), 26, y, { align: 'center' });
+    
+    // Title text
+    doc.setTextColor(...colors.primary);
+    doc.setFontSize(14);
+    doc.text(title, 35, y);
+  } else {
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...colors.primary);
+    doc.text(title, 20, y);
+  }
+  
   doc.setTextColor(0, 0, 0);
   doc.setFont('helvetica', 'normal');
-  return y + 8;
+  return y + 10;
 }
 
 function addParagraph(doc: jsPDF, text: string, y: number, maxWidth: number = 170): number {
@@ -178,38 +208,42 @@ function checkPageBreak(doc: jsPDF, currentY: number, requiredSpace: number = 40
 function addInfoBox(doc: jsPDF, items: { label: string; value: string }[], y: number, serviceType?: string): number {
   const colors = serviceType ? getSectorColor(serviceType) : sectorColors.consulting;
   const boxWidth = 170;
-  const itemHeight = 12;
+  const itemHeight = 18;
   const itemsPerRow = 2;
   const itemWidth = boxWidth / itemsPerRow;
   const rows = Math.ceil(items.length / itemsPerRow);
-  const boxHeight = rows * itemHeight + 10;
+  const boxHeight = rows * itemHeight + 16;
   
-  // Box background
+  // Box background with subtle color
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(20, y, boxWidth, boxHeight, 3, 3, 'F');
+  doc.roundedRect(20, y, boxWidth, boxHeight, 4, 4, 'F');
   
-  // Left accent
+  // Left accent bar
   doc.setFillColor(...colors.primary);
-  doc.rect(20, y, 3, boxHeight, 'F');
+  doc.roundedRect(20, y, 4, boxHeight, 2, 2, 'F');
   
   items.forEach((item, index) => {
     const row = Math.floor(index / itemsPerRow);
     const col = index % itemsPerRow;
-    const x = 28 + col * itemWidth;
-    const itemY = y + 8 + row * itemHeight;
+    const x = 32 + col * itemWidth;
+    const itemY = y + 12 + row * itemHeight;
     
+    // Label (uppercase, smaller)
     doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text(item.label, x, itemY);
+    doc.setTextColor(120, 120, 120);
+    doc.setFont('helvetica', 'normal');
+    doc.text(item.label.toUpperCase(), x, itemY);
     
-    doc.setFontSize(10);
-    doc.setTextColor(0, 0, 0);
+    // Value (larger, bold)
+    doc.setFontSize(11);
+    doc.setTextColor(30, 30, 30);
     doc.setFont('helvetica', 'bold');
-    doc.text(item.value, x, itemY + 5);
+    doc.text(item.value, x, itemY + 8);
     doc.setFont('helvetica', 'normal');
   });
   
-  return y + boxHeight + 10;
+  doc.setTextColor(0, 0, 0);
+  return y + boxHeight + 12;
 }
 
 // ========== DIAGNOSTIC DOCUMENTS ==========

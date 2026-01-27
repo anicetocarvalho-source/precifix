@@ -303,20 +303,27 @@ function addTableOfContents(
 ): void {
   const pageWidth = doc.internal.pageSize.getWidth();
   
-  // Header
+  // Modern header
   doc.setFillColor(...colors.primary);
-  doc.rect(0, 0, pageWidth, 35, 'F');
+  doc.rect(0, 0, pageWidth, 42, 'F');
   doc.setFillColor(...colors.secondary);
-  doc.rect(0, 35, pageWidth, 2, 'F');
+  doc.rect(0, 42, pageWidth, 3, 'F');
+  
+  // Decorative lines
+  doc.setDrawColor(255, 255, 255);
+  for (let i = 0; i < 4; i++) {
+    doc.setLineWidth(0.5);
+    doc.line(pageWidth - 60 + i * 12, 8, pageWidth - 50 + i * 12, 18);
+  }
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
+  doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('Indice', 20, 22);
+  doc.text('Indice', 20, 24);
   
   doc.setTextColor(0, 0, 0);
   
-  let y = 55;
+  let y = 60;
   
   const sections = [
     { title: '1. Capa', page: 1 },
@@ -372,19 +379,26 @@ function addExecutiveSummary(
   const pageWidth = doc.internal.pageSize.getWidth();
   const { formData } = proposal;
   
-  // Header
+  // Modern header
   doc.setFillColor(...colors.primary);
-  doc.rect(0, 0, pageWidth, 35, 'F');
+  doc.rect(0, 0, pageWidth, 42, 'F');
   doc.setFillColor(...colors.secondary);
-  doc.rect(0, 35, pageWidth, 2, 'F');
+  doc.rect(0, 42, pageWidth, 3, 'F');
+  
+  // Decorative lines
+  doc.setDrawColor(255, 255, 255);
+  for (let i = 0; i < 4; i++) {
+    doc.setLineWidth(0.5);
+    doc.line(pageWidth - 60 + i * 12, 8, pageWidth - 50 + i * 12, 18);
+  }
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
+  doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('Sumario Executivo', 20, 22);
+  doc.text('Sumario Executivo', 20, 24);
   
   doc.setTextColor(0, 0, 0);
-  let y = 55;
+  let y = 60;
   
   // Introduction
   doc.setFontSize(11);
@@ -503,19 +517,26 @@ function addServicesDetails(
 ): void {
   const pageWidth = doc.internal.pageSize.getWidth();
   
-  // Header
+  // Modern header
   doc.setFillColor(...colors.primary);
-  doc.rect(0, 0, pageWidth, 35, 'F');
+  doc.rect(0, 0, pageWidth, 42, 'F');
   doc.setFillColor(...colors.secondary);
-  doc.rect(0, 35, pageWidth, 2, 'F');
+  doc.rect(0, 42, pageWidth, 3, 'F');
+  
+  // Decorative lines
+  doc.setDrawColor(255, 255, 255);
+  for (let i = 0; i < 4; i++) {
+    doc.setLineWidth(0.5);
+    doc.line(pageWidth - 60 + i * 12, 8, pageWidth - 50 + i * 12, 18);
+  }
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
+  doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('Detalhes dos Servicos', 20, 22);
+  doc.text('Detalhes dos Servicos', 20, 24);
   
   doc.setTextColor(0, 0, 0);
-  let y = 50;
+  let y = 55;
   
   services.forEach((service, index) => {
     y = checkPageBreak(doc, y, 80);
@@ -610,19 +631,26 @@ function addFinancialProposal(
   const pageWidth = doc.internal.pageSize.getWidth();
   const { formData } = proposal;
   
-  // Header
+  // Modern header
   doc.setFillColor(...colors.primary);
-  doc.rect(0, 0, pageWidth, 35, 'F');
+  doc.rect(0, 0, pageWidth, 42, 'F');
   doc.setFillColor(...colors.secondary);
-  doc.rect(0, 35, pageWidth, 2, 'F');
+  doc.rect(0, 42, pageWidth, 3, 'F');
+  
+  // Decorative lines
+  doc.setDrawColor(255, 255, 255);
+  for (let i = 0; i < 4; i++) {
+    doc.setLineWidth(0.5);
+    doc.line(pageWidth - 60 + i * 12, 8, pageWidth - 50 + i * 12, 18);
+  }
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(18);
+  doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
-  doc.text('Proposta Financeira', 20, 22);
+  doc.text('Proposta Financeira', 20, 24);
   
   doc.setTextColor(0, 0, 0);
-  let y = 50;
+  let y = 55;
   
   // Client info
   doc.setFontSize(10);
