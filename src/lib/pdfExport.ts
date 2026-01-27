@@ -1710,16 +1710,15 @@ function generateMultiServiceTechnicalDocument(doc: jsPDF, proposal: Proposal, s
   });
 }
 
-// ========== EXPORT FUNCTIONS ==========
+// ========== GENERATE PDF FUNCTIONS (for preview) ==========
 
-export function exportProposalToPDF(proposal: Proposal, documentType: DocumentType = 'all', services?: ProposalService[]): void {
+export function generateProposalPDF(proposal: Proposal, documentType: DocumentType = 'all', services?: ProposalService[]): jsPDF {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
   });
   
-  const { formData } = proposal;
   const isMultiService = services && services.length > 1;
   
   if (documentType === 'diagnostic' || documentType === 'all') {
@@ -1761,15 +1760,10 @@ export function exportProposalToPDF(proposal: Proposal, documentType: DocumentTy
     addFooter(doc, i, totalPages);
   }
   
-  const suffix = isMultiService ? '_Multi-Servicos' : '';
-  const filename = documentType === 'all' 
-    ? `Proposta_Completa${suffix}_${formData.clientName.replace(/\s+/g, '_')}.pdf`
-    : `${documentType === 'diagnostic' ? 'Diagnostico' : documentType === 'technical' ? 'Proposta_Tecnica' : 'Proposta_Orcamental'}${suffix}_${formData.clientName.replace(/\s+/g, '_')}.pdf`;
-  
-  doc.save(filename);
+  return doc;
 }
 
-export function exportSingleDocument(proposal: Proposal, documentType: 'diagnostic' | 'technical' | 'budget', services?: ProposalService[]): void {
+export function generateSingleDocumentPDF(proposal: Proposal, documentType: 'diagnostic' | 'technical' | 'budget', services?: ProposalService[]): jsPDF {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -1800,7 +1794,29 @@ export function exportSingleDocument(proposal: Proposal, documentType: 'diagnost
   
   addFooter(doc, 1, 1);
   
+  return doc;
+}
+
+// ========== EXPORT FUNCTIONS ==========
+
+export function exportProposalToPDF(proposal: Proposal, documentType: DocumentType = 'all', services?: ProposalService[]): void {
+  const doc = generateProposalPDF(proposal, documentType, services);
+  
   const { formData } = proposal;
+  const isMultiService = services && services.length > 1;
+  const suffix = isMultiService ? '_Multi-Servicos' : '';
+  const filename = documentType === 'all' 
+    ? `Proposta_Completa${suffix}_${formData.clientName.replace(/\s+/g, '_')}.pdf`
+    : `${documentType === 'diagnostic' ? 'Diagnostico' : documentType === 'technical' ? 'Proposta_Tecnica' : 'Proposta_Orcamental'}${suffix}_${formData.clientName.replace(/\s+/g, '_')}.pdf`;
+  
+  doc.save(filename);
+}
+
+export function exportSingleDocument(proposal: Proposal, documentType: 'diagnostic' | 'technical' | 'budget', services?: ProposalService[]): void {
+  const doc = generateSingleDocumentPDF(proposal, documentType, services);
+  
+  const { formData } = proposal;
+  const isMultiService = services && services.length > 1;
   const suffix = isMultiService ? '_Multi-Servicos' : '';
   const docNames = {
     diagnostic: 'Diagnostico',
