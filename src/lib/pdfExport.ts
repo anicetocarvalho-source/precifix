@@ -10,6 +10,7 @@ import {
 } from '@/types/proposal';
 import { ProposalService } from '@/types/proposalService';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
+import { DEFAULT_BRANDING } from '@/lib/pdfBranding';
 
 export type DocumentType = 'diagnostic' | 'technical' | 'budget' | 'all';
 
@@ -145,7 +146,9 @@ function addFooter(doc: jsPDF, pageNumber: number, totalPages?: number, companyN
   const pageText = totalPages ? `Pagina ${pageNumber} de ${totalPages}` : `Pagina ${pageNumber}`;
   doc.text(pageText, pageWidth / 2, pageHeight - 10, { align: 'center' });
   doc.text(new Date().toLocaleDateString('pt-BR'), pageWidth - 20, pageHeight - 10, { align: 'right' });
-  doc.text(companyName || 'PRECIFIX', 20, pageHeight - 10);
+  
+  // Use provided company name or default Precifix branding
+  doc.text(companyName || DEFAULT_BRANDING.companyName, 20, pageHeight - 10);
   doc.setTextColor(0, 0, 0);
 }
 

@@ -1,6 +1,6 @@
 import jsPDF from 'jspdf';
 import { SERVICE_CATEGORIES, ServiceCategory } from '@/types/proposal';
-
+import { DEFAULT_BRANDING } from '@/lib/pdfBranding';
 // ============= COLOR SYSTEM =============
 
 export interface ColorPalette {
@@ -175,10 +175,10 @@ export function addModernFooter(doc: jsPDF, options: FooterOptions): void {
     : `Página ${options.pageNumber}`;
   doc.text(pageText, width / 2, height - 10, { align: 'center' });
   
-  // Company name on left
-  if (options.companyName) {
+  // Company name on left - use default branding if not provided
+  if (options.companyName || DEFAULT_BRANDING.companyName) {
     doc.setFont('helvetica', 'bold');
-    doc.text(options.companyName, 20, height - 10);
+    doc.text(options.companyName || DEFAULT_BRANDING.companyName, 20, height - 10);
   }
   
   // Website on right

@@ -7,6 +7,10 @@ import {
 } from '@/types/proposal';
 import { ProposalService } from '@/types/proposalService';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
+import { BrandingConfig, mergeBrandingWithDefaults } from '@/lib/pdfBranding';
+
+// Re-export BrandingConfig for backwards compatibility
+export type { BrandingConfig } from '@/lib/pdfBranding';
 
 // Extended labels
 const serviceLabels: Record<string, string> = {
@@ -74,16 +78,6 @@ const sectorColors: Record<ServiceCategory, { primary: [number, number, number];
   technology: { primary: [5, 150, 105], secondary: [16, 185, 129], accent: [52, 211, 153] },
 };
 
-export interface BrandingConfig {
-  companyName?: string;
-  companyLogo?: string; // Base64 or URL
-  primaryColor?: [number, number, number];
-  contactEmail?: string;
-  contactPhone?: string;
-  website?: string;
-  address?: string;
-}
-
 function getServiceCategory(serviceType: string): ServiceCategory {
   return SERVICE_CATEGORIES[serviceType as keyof typeof SERVICE_CATEGORIES] || 'consulting';
 }
@@ -131,17 +125,20 @@ function addCoverPage(
   const pageHeight = doc.internal.pageSize.getHeight();
   const { formData } = proposal;
   
+  // Apply default branding
+  const effectiveBranding = mergeBrandingWithDefaults(branding);
+  
   // Use branding color if available, otherwise use service category colors
   const defaultColors = getMultiServiceColor(services);
-  const brandPrimary = branding.primaryColor || defaultColors.primary;
-  const brandSecondary = branding.primaryColor 
+  const brandPrimary = effectiveBranding.primaryColor || defaultColors.primary;
+  const brandSecondary = effectiveBranding.primaryColor 
     ? [
         Math.min(255, brandPrimary[0] + 20),
         Math.min(255, brandPrimary[1] + 20),
         Math.min(255, brandPrimary[2] + 20),
       ] as [number, number, number]
     : defaultColors.secondary;
-  const brandAccent = branding.primaryColor
+  const brandAccent = effectiveBranding.primaryColor
     ? [
         Math.min(255, brandPrimary[0] + 50),
         Math.min(255, brandPrimary[1] + 50),
@@ -161,12 +158,23 @@ function addCoverPage(
   doc.setFillColor(...brandAccent);
   doc.triangle(pageWidth - 60, 0, pageWidth, 0, pageWidth, 60, 'F');
   
-  // Company name / Branding
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  const companyName = branding.companyName || 'PRECIFIX';
-  doc.text(companyName.toUpperCase(), 20, 35);
+  // Company logo or name
+  if (branding.companyLogo) {
+    try {
+      doc.addImage(branding.companyLogo, 'PNG', 15, 20, 50, 20);
+    } catch {
+      // Fallback to text if logo fails
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.text(effectiveBranding.companyName?.toUpperCase() || 'PRECIFIX', 20, 35);
+    }
+  } else {
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(effectiveBranding.companyName?.toUpperCase() || 'PRECIFIX', 20, 35);
+  }
   
   // Document type badge
   doc.setFontSize(10);
@@ -788,6 +796,9 @@ function addProfessionalFooter(doc: jsPDF, pageNumber: number, totalPages: numbe
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   
+  // Apply default branding
+  const effectiveBranding = mergeBrandingWithDefaults(branding);
+  
   // Footer line
   doc.setDrawColor(220, 220, 220);
   doc.line(20, pageHeight - 18, pageWidth - 20, pageHeight - 18);
@@ -795,13 +806,17 @@ function addProfessionalFooter(doc: jsPDF, pageNumber: number, totalPages: numbe
   doc.setFontSize(8);
   doc.setTextColor(128, 128, 128);
   
-  const companyName = branding.companyName || 'PRECIFIX';
-  doc.text(companyName, 20, pageHeight - 10);
+  doc.text(effectiveBranding.companyName || 'PRECIFIX', 20, pageHeight - 10);
   
   const pageText = `Pagina ${pageNumber} de ${totalPages}`;
   doc.text(pageText, pageWidth / 2, pageHeight - 10, { align: 'center' });
   
-  doc.text(new Date().toLocaleDateString('pt-BR'), pageWidth - 20, pageHeight - 10, { align: 'right' });
+  // Show website if available, otherwise date
+  if (effectiveBranding.website) {
+    doc.text(effectiveBranding.website, pageWidth - 20, pageHeight - 10, { align: 'right' });
+  } else {
+    doc.text(new Date().toLocaleDateString('pt-BR'), pageWidth - 20, pageHeight - 10, { align: 'right' });
+  }
 }
 
 // ========== GENERATE PDF FUNCTION (for preview) ==========
