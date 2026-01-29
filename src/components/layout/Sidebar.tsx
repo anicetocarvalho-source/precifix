@@ -11,6 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import precifixLogoWhite from '@/assets/precifix-logo-white.png';
+import precifixIcon from '@/assets/precifix-icon.svg';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
@@ -44,7 +45,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
         <img 
-          src={precifixLogoWhite} 
+          src={collapsed ? precifixIcon : precifixLogoWhite} 
           alt="Precifix" 
           className={cn(
             'object-contain transition-all duration-300',
