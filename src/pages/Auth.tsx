@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
 import precifixLogo from '@/assets/precifix-logo.png';
-import precifixLogoWhite from '@/assets/precifix-logo-white.png';
+import precifixLogoWhiteSvg from '@/assets/precifix-logo-white.svg';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -129,7 +129,7 @@ export default function Auth() {
             className="max-w-md"
           >
             <img 
-              src={precifixLogoWhite} 
+              src={precifixLogoWhiteSvg} 
               alt="Precifix" 
               className="h-16 object-contain mb-8 mx-auto"
             />
