@@ -129,7 +129,7 @@ export default function Auth() {
             className="max-w-md"
           >
             <img 
-              src={precifixLogoWhite} 
+              src={precifixLogoWhiteSvg} 
               alt="Precifix" 
               className="h-16 object-contain mb-8 mx-auto"
             />
