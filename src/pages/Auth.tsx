@@ -38,6 +38,64 @@ const signupSchema = z.object({
   path: ['confirmPassword'],
 });
 
+// Função para traduzir erros do Supabase Auth
+const translateAuthError = (errorMessage: string): string => {
+  const errorTranslations: Record<string, string> = {
+    // Erros de login
+    'Invalid login credentials': 'Email ou palavra-passe incorretos',
+    'Email not confirmed': 'Por favor, confirme o seu email antes de entrar',
+    'Invalid email or password': 'Email ou palavra-passe inválidos',
+    
+    // Erros de registo
+    'User already registered': 'Este email já está registado. Tente fazer login.',
+    'Password should be at least 6 characters': 'A palavra-passe deve ter pelo menos 6 caracteres',
+    'Signup requires a valid password': 'É necessária uma palavra-passe válida para o registo',
+    'Unable to validate email address: invalid format': 'Formato de email inválido',
+    'A user with this email address has already been registered': 'Este email já está registado',
+    
+    // Erros de rate limiting
+    'For security purposes, you can only request this once every 60 seconds': 'Por segurança, só pode fazer este pedido uma vez a cada 60 segundos',
+    'For security purposes, you can only request this after 60 seconds': 'Por segurança, aguarde 60 segundos antes de tentar novamente',
+    'Email rate limit exceeded': 'Limite de envio de emails excedido. Tente novamente mais tarde.',
+    'Too many requests': 'Demasiados pedidos. Aguarde um momento e tente novamente.',
+    
+    // Erros de token/sessão
+    'Invalid Refresh Token': 'Sessão expirada. Por favor, faça login novamente.',
+    'Refresh Token Not Found': 'Sessão expirada. Por favor, faça login novamente.',
+    'Invalid token': 'Token inválido. Por favor, faça login novamente.',
+    'Token has expired': 'A sessão expirou. Por favor, faça login novamente.',
+    
+    // Erros de rede
+    'Network request failed': 'Erro de ligação. Verifique a sua internet e tente novamente.',
+    'Failed to fetch': 'Erro de ligação. Verifique a sua internet e tente novamente.',
+    
+    // Erros de password
+    'New password should be different from the old password': 'A nova palavra-passe deve ser diferente da anterior',
+    'Password is too weak': 'A palavra-passe é demasiado fraca. Use letras, números e símbolos.',
+    'Password has been pwned': 'Esta palavra-passe foi comprometida. Por favor, escolha outra.',
+    
+    // Erros gerais
+    'Email link is invalid or has expired': 'O link de email é inválido ou expirou',
+    'User not found': 'Utilizador não encontrado',
+    'Invalid authentication credentials': 'Credenciais de autenticação inválidas',
+  };
+
+  // Procura correspondência exata primeiro
+  if (errorTranslations[errorMessage]) {
+    return errorTranslations[errorMessage];
+  }
+
+  // Procura correspondência parcial
+  for (const [key, translation] of Object.entries(errorTranslations)) {
+    if (errorMessage.toLowerCase().includes(key.toLowerCase())) {
+      return translation;
+    }
+  }
+
+  // Fallback: retorna mensagem original se não houver tradução
+  return errorMessage;
+};
+
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signIn, signUp } = useAuth();
@@ -90,13 +148,7 @@ export default function Auth() {
 
         const { error } = await signIn(formData.email, formData.password);
         if (error) {
-          if (error.message.includes('Invalid login credentials')) {
-            setError('Email ou palavra-passe incorretos');
-          } else if (error.message.includes('Email not confirmed')) {
-            setError('Por favor, confirme o seu email antes de entrar');
-          } else {
-            setError(error.message);
-          }
+          setError(translateAuthError(error.message));
         }
       } else {
         // Validate signup
@@ -115,11 +167,7 @@ export default function Auth() {
 
         const { error } = await signUp(formData.email, formData.password, formData.fullName);
         if (error) {
-          if (error.message.includes('User already registered')) {
-            setError('Este email já está registado. Tente fazer login.');
-          } else {
-            setError(error.message);
-          }
+          setError(translateAuthError(error.message));
         }
       }
     } catch (err) {
