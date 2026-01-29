@@ -6,11 +6,11 @@ import {
   Clock,
   Settings,
   LogOut,
-  FileText,
   Menu,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import precifixLogoWhite from '@/assets/precifix-logo-white.png';
 
 const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
@@ -43,15 +43,14 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-sidebar-border">
-        <div className="flex items-center justify-center w-10 h-10 rounded-lg gradient-brand shadow-brand">
-          <FileText className="w-5 h-5 text-primary-foreground" />
-        </div>
-        {!collapsed && (
-          <div className="animate-fade-in">
-            <h1 className="text-lg font-bold text-primary-foreground">PRECIFIX</h1>
-            <p className="text-[10px] text-sidebar-foreground/60 -mt-0.5">by Nodix</p>
-          </div>
-        )}
+        <img 
+          src={precifixLogoWhite} 
+          alt="Precifix" 
+          className={cn(
+            'object-contain transition-all duration-300',
+            collapsed ? 'h-8 w-8' : 'h-10 max-w-[160px]'
+          )}
+        />
         <Button
           variant="ghost"
           size="icon"
