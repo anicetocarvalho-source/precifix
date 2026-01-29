@@ -5,7 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
-import { FileText, Mail, Lock, User, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import precifixLogo from '@/assets/precifix-logo.png';
+import precifixLogoWhite from '@/assets/precifix-logo-white.png';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -126,10 +128,11 @@ export default function Auth() {
             transition={{ duration: 0.6 }}
             className="max-w-md"
           >
-            <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center mb-8 mx-auto">
-              <FileText className="w-10 h-10 text-white" />
-            </div>
-            <h1 className="text-4xl font-bold text-white mb-4">PRECIFIX</h1>
+            <img 
+              src={precifixLogoWhite} 
+              alt="Precifix" 
+              className="h-16 object-contain mb-8 mx-auto"
+            />
             <p className="text-xl text-white/90 mb-6">
               A inteligência por trás das tuas propostas
             </p>
@@ -155,10 +158,11 @@ export default function Auth() {
         >
           {/* Mobile logo */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-16 h-16 rounded-xl gradient-brand flex items-center justify-center mb-4 mx-auto shadow-brand">
-              <FileText className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-foreground">PRECIFIX</h1>
+            <img 
+              src={precifixLogo} 
+              alt="Precifix" 
+              className="h-12 object-contain mx-auto"
+            />
           </div>
 
           <div className="bg-card rounded-2xl border border-border p-8 shadow-card">
