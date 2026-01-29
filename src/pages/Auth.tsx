@@ -11,15 +11,28 @@ import precifixLogoWhiteSvg from '@/assets/precifix-logo-white.svg';
 import { z } from 'zod';
 
 const loginSchema = z.object({
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'A palavra-passe deve ter pelo menos 6 caracteres'),
+  email: z.string()
+    .min(1, 'O email é obrigatório')
+    .email('Email inválido'),
+  password: z.string()
+    .min(1, 'A palavra-passe é obrigatória')
+    .min(6, 'A palavra-passe deve ter pelo menos 6 caracteres'),
 });
 
 const signupSchema = z.object({
-  fullName: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
-  email: z.string().email('Email inválido'),
-  password: z.string().min(6, 'A palavra-passe deve ter pelo menos 6 caracteres'),
-  confirmPassword: z.string(),
+  fullName: z.string()
+    .min(1, 'O nome é obrigatório')
+    .min(2, 'O nome deve ter pelo menos 2 caracteres')
+    .max(100, 'O nome deve ter no máximo 100 caracteres'),
+  email: z.string()
+    .min(1, 'O email é obrigatório')
+    .email('Email inválido')
+    .max(255, 'O email deve ter no máximo 255 caracteres'),
+  password: z.string()
+    .min(1, 'A palavra-passe é obrigatória')
+    .min(6, 'A palavra-passe deve ter pelo menos 6 caracteres'),
+  confirmPassword: z.string()
+    .min(1, 'Confirme a palavra-passe'),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'As palavras-passe não coincidem',
   path: ['confirmPassword'],
