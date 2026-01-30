@@ -26,6 +26,12 @@ import { DashboardCharts } from '@/components/DashboardCharts';
 import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { DashboardStatsSkeleton, DashboardTableSkeleton } from '@/components/skeletons/DashboardSkeleton';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
   draft: { label: 'Rascunho', color: 'bg-muted text-muted-foreground' },
@@ -96,18 +102,44 @@ export default function Dashboard() {
               <BarChart3 className="w-5 h-5" />
               {showCharts ? 'Ocultar Gráficos' : 'Ver Gráficos'}
             </Button>
-            <Link to="/nova-proposta">
-              <Button variant="outline" size="lg" className="gap-2">
-                <Plus className="w-5 h-5" />
-                Nova Cotação
-              </Button>
-            </Link>
-            <Link to="/nova-proposta-multi">
-              <Button size="lg" className="gap-2">
-                <Layers className="w-5 h-5" />
-                Proposta Multi-Serviços
-              </Button>
-            </Link>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to="/nova-proposta">
+                    <Button variant="outline" size="lg" className="gap-2">
+                      <Plus className="w-5 h-5" />
+                      Nova Cotação
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs p-3">
+                  <p className="font-medium mb-1">Cotação Simples (Diagnóstico)</p>
+                  <p className="text-xs text-muted-foreground">
+                    Ideal para orçamentos rápidos de um único serviço. 
+                    Responda algumas perguntas e obtenha uma cotação precisa em minutos.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to="/nova-proposta-multi">
+                    <Button size="lg" className="gap-2">
+                      <Layers className="w-5 h-5" />
+                      Proposta Multi-Serviços
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs p-3">
+                  <p className="font-medium mb-1">Proposta Técnica Completa</p>
+                  <p className="text-xs text-muted-foreground">
+                    Crie propostas profissionais com múltiplos serviços independentes, 
+                    preços detalhados e documentação completa para projectos complexos.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
         </div>
 
