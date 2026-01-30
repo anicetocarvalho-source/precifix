@@ -8,6 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import NewProposal from "./pages/NewProposal";
 import NewMultiServiceProposal from "./pages/NewMultiServiceProposal";
+import QuickQuote from "./pages/QuickQuote";
 import EditProposal from "./pages/EditProposal";
 import EditMultiServiceProposal from "./pages/EditMultiServiceProposal";
 import ProposalView from "./pages/ProposalView";
@@ -48,6 +49,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <NewMultiServiceProposal />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/orcamento-rapido"
+              element={
+                <ProtectedRoute>
+                  <QuickQuote />
                 </ProtectedRoute>
               }
             />

@@ -19,6 +19,7 @@ import {
   BarChart3,
   User,
   Layers,
+  Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
@@ -102,6 +103,25 @@ export default function Dashboard() {
               <BarChart3 className="w-5 h-5" />
               {showCharts ? 'Ocultar Gráficos' : 'Ver Gráficos'}
             </Button>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to="/orcamento-rapido">
+                    <Button variant="ghost" size="lg" className="gap-2">
+                      <Zap className="w-5 h-5" />
+                      Orçamento Rápido
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="max-w-xs p-3">
+                  <p className="font-medium mb-1">Orçamento Rápido</p>
+                  <p className="text-xs text-muted-foreground">
+                    Para cotações instantâneas sem detalhes técnicos. 
+                    Apenas cliente, serviço e valor — pronto em segundos.
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <TooltipProvider delayDuration={200}>
               <Tooltip>
                 <TooltipTrigger asChild>
