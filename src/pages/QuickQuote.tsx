@@ -4,19 +4,33 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { SERVICE_LABELS, ServiceType } from '@/types/proposal';
 import { formatCurrency } from '@/lib/pricing';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Zap, ArrowLeft, Save, FileText } from 'lucide-react';
+import { Zap, ArrowLeft, Save, Mail, Loader2, Check } from 'lucide-react';
 
 export default function QuickQuote() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdProposalId, setCreatedProposalId] = useState<string | null>(null);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
+  const [clientEmail, setClientEmail] = useState('');
+  const [customMessage, setCustomMessage] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   
   const [formData, setFormData] = useState({
     clientName: '',
@@ -72,12 +86,64 @@ export default function QuickQuote() {
       if (error) throw error;
 
       toast.success('Orçamento criado com sucesso!');
-      navigate(`/proposta/${data.id}`);
+      setCreatedProposalId(data.id);
+      setShowEmailDialog(true);
     } catch (error) {
       console.error('Error creating quick quote:', error);
       toast.error('Erro ao criar orçamento');
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!clientEmail) {
+      toast.error('Por favor, introduza o email do cliente');
+      return;
+    }
+
+    if (!createdProposalId) return;
+
+    setIsSendingEmail(true);
+    try {
+      const numValue = parseFloat(formData.value.replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+      
+      const { error } = await supabase.functions.invoke('send-proposal-email', {
+        body: {
+          clientEmail,
+          clientName: formData.clientName,
+          proposalId: createdProposalId,
+          serviceType: formData.serviceType,
+          sector: 'Geral',
+          totalValue: numValue,
+          duration: 1,
+          deliverables: [],
+          methodology: 'traditional',
+          customMessage: customMessage || undefined,
+        },
+      });
+
+      if (error) throw error;
+
+      // Update proposal status to sent
+      await supabase
+        .from('proposals')
+        .update({ status: 'sent' })
+        .eq('id', createdProposalId);
+
+      toast.success('Orçamento enviado com sucesso!');
+      navigate(`/proposta/${createdProposalId}`);
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      toast.error(error.message || 'Erro ao enviar orçamento');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  const handleSkipEmail = () => {
+    if (createdProposalId) {
+      navigate(`/proposta/${createdProposalId}`);
     }
   };
 
@@ -184,6 +250,69 @@ export default function QuickQuote() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Email Dialog */}
+      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
+              <Check className="w-6 h-6 text-green-600 dark:text-green-400" />
+            </div>
+            <DialogTitle className="text-center">Orçamento Criado!</DialogTitle>
+            <DialogDescription className="text-center">
+              Deseja enviar o orçamento por email ao cliente?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="clientEmail">Email do Cliente</Label>
+              <Input
+                id="clientEmail"
+                type="email"
+                placeholder="cliente@exemplo.com"
+                value={clientEmail}
+                onChange={(e) => setClientEmail(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="customMessage">Mensagem Personalizada (opcional)</Label>
+              <Textarea
+                id="customMessage"
+                placeholder="Adicione uma mensagem personalizada ao email..."
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                rows={3}
+              />
+            </div>
+          </div>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={handleSkipEmail}
+              className="w-full sm:w-auto"
+            >
+              Saltar
+            </Button>
+            <Button
+              onClick={handleSendEmail}
+              disabled={isSendingEmail || !clientEmail}
+              className="w-full sm:w-auto gap-2"
+            >
+              {isSendingEmail ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4" />
+                  Enviar por Email
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 }
