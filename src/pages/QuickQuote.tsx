@@ -36,6 +36,7 @@ export default function QuickQuote() {
     clientName: '',
     serviceType: '' as ServiceType | '',
     value: '',
+    notes: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -79,6 +80,7 @@ export default function QuickQuote() {
           deliverables: [],
           total_value: numericValue,
           status: 'draft',
+          objectives: formData.notes || null,
         })
         .select()
         .single();
@@ -210,6 +212,17 @@ export default function QuickQuote() {
                   placeholder="Ex: 150000"
                   value={formData.value}
                   onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notas / Observações (opcional)</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Adicione contexto adicional, requisitos especiais ou notas para referência..."
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={3}
                 />
               </div>
 
