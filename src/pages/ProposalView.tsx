@@ -21,6 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { SectorDetailsView } from '@/components/proposal/SectorDetailsView';
 import { ProposalServicesView } from '@/components/proposal/ProposalServicesView';
 import { PdfPreviewDialog } from '@/components/proposal/PdfPreviewDialog';
+import { DuplicateProposalDialog } from '@/components/proposal/DuplicateProposalDialog';
 import { SERVICE_LABELS, SERVICE_CATEGORIES, DurationUnit } from '@/types/proposal';
 import { ProposalViewSkeleton } from '@/components/skeletons/ProposalViewSkeleton';
 
@@ -105,6 +106,9 @@ export default function ProposalView() {
   // PDF Preview state
   const [showPdfPreview, setShowPdfPreview] = useState(false);
   const [previewType, setPreviewType] = useState<'professional' | 'all' | 'diagnostic' | 'technical' | 'budget'>('all');
+
+  // Duplicate dialog state
+  const [showDuplicateDialog, setShowDuplicateDialog] = useState(false);
 
   const hasMultipleServices = proposalServices.length > 1;
   const [clientEmail, setClientEmail] = useState(proposal?.formData?.clientEmail || '');
@@ -360,7 +364,7 @@ export default function ProposalView() {
             <Button
               variant="outline" 
               className="gap-2"
-              onClick={() => duplicateProposal.mutate(proposal.id)}
+              onClick={() => setShowDuplicateDialog(true)}
             >
               <Copy className="w-4 h-4" />
               Duplicar
@@ -1053,6 +1057,24 @@ export default function ProposalView() {
             exportSingleDocument(proposal, previewType, proposalServices.length > 1 ? proposalServices : undefined);
           }
         }}
+      />
+
+      {/* Duplicate Proposal Dialog */}
+      <DuplicateProposalDialog
+        open={showDuplicateDialog}
+        onOpenChange={setShowDuplicateDialog}
+        originalName={formData.clientName}
+        onConfirm={(newName) => {
+          duplicateProposal.mutate(
+            { id: proposal.id, newClientName: newName },
+            {
+              onSuccess: () => {
+                setShowDuplicateDialog(false);
+              },
+            }
+          );
+        }}
+        isPending={duplicateProposal.isPending}
       />
     </MainLayout>
   );
