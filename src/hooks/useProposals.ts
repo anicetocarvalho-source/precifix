@@ -328,7 +328,7 @@ export function useProposals() {
   });
 
   const duplicateProposal = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, newClientName }: { id: string; newClientName?: string }) => {
       if (!user) throw new Error('User not authenticated');
 
       const proposal = proposals.find((p) => p.id === id);
@@ -356,11 +356,14 @@ export function useProposals() {
         marginPercentage: safeParams.marginPercentage,
       };
 
+      // Use custom name if provided, otherwise append (Cópia)
+      const clientName = newClientName || `${formData.clientName} (Cópia)`;
+
       const { data, error } = await supabase
         .from('proposals')
         .insert([{
           user_id: user.id,
-          client_name: `${formData.clientName} (Cópia)`,
+          client_name: clientName,
           client_email: formData.clientEmail || null,
           client_phone: formData.clientPhone || null,
           client_type: formData.clientType,

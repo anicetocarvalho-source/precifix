@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useProposals } from '@/hooks/useProposals';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -19,8 +20,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
-import { useState } from 'react';
 import { HistoryTableSkeleton } from '@/components/skeletons/HistorySkeleton';
+import { DuplicateProposalDialog } from '@/components/proposal/DuplicateProposalDialog';
 
 const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
   draft: { label: 'Rascunho', color: 'bg-muted text-muted-foreground' },
@@ -36,6 +37,7 @@ export default function History() {
   const { canViewAllProposals, canEditAllProposals } = useUserRole();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProposalStatus | 'all'>('all');
+  const [duplicateDialogData, setDuplicateDialogData] = useState<{ id: string; name: string } | null>(null);
 
   const filteredProposals = proposals.filter((proposal) => {
     const matchesSearch = proposal.formData.clientName
@@ -225,7 +227,10 @@ export default function History() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                onClick={() => duplicateProposal.mutate(proposal.id)}
+                                onClick={() => setDuplicateDialogData({ 
+                                  id: proposal.id, 
+                                  name: proposal.formData.clientName 
+                                })}
                                 className="text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
                                 title="Duplicar proposta"
                               >
@@ -251,6 +256,26 @@ export default function History() {
             </div>
           </div>
         )}
+
+        {/* Duplicate Proposal Dialog */}
+        <DuplicateProposalDialog
+          open={!!duplicateDialogData}
+          onOpenChange={(open) => !open && setDuplicateDialogData(null)}
+          originalName={duplicateDialogData?.name || ''}
+          onConfirm={(newName) => {
+            if (duplicateDialogData) {
+              duplicateProposal.mutate(
+                { id: duplicateDialogData.id, newClientName: newName },
+                {
+                  onSuccess: () => {
+                    setDuplicateDialogData(null);
+                  },
+                }
+              );
+            }
+          }}
+          isPending={duplicateProposal.isPending}
+        />
       </div>
     </MainLayout>
   );
