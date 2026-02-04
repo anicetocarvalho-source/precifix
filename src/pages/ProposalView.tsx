@@ -22,6 +22,7 @@ import { SectorDetailsView } from '@/components/proposal/SectorDetailsView';
 import { ProposalServicesView } from '@/components/proposal/ProposalServicesView';
 import { PdfPreviewDialog } from '@/components/proposal/PdfPreviewDialog';
 import { DuplicateProposalDialog } from '@/components/proposal/DuplicateProposalDialog';
+import { SendEmailDialog } from '@/components/proposal/SendEmailDialog';
 import { SERVICE_LABELS, SERVICE_CATEGORIES, DurationUnit } from '@/types/proposal';
 import { ProposalViewSkeleton } from '@/components/skeletons/ProposalViewSkeleton';
 
@@ -968,66 +969,26 @@ export default function ProposalView() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Send Email Dialog */}
-      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Enviar Proposta por Email</DialogTitle>
-            <DialogDescription>
-              Envie a proposta diretamente para o email do cliente.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="clientEmail">Email do Cliente *</Label>
-              <Input
-                id="clientEmail"
-                type="email"
-                placeholder="cliente@empresa.com"
-                value={clientEmail}
-                onChange={(e) => setClientEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="customMessage">Mensagem Personalizada (opcional)</Label>
-              <Textarea
-                id="customMessage"
-                placeholder="Adicione uma mensagem personalizada para o cliente..."
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-                rows={4}
-              />
-            </div>
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <p className="text-sm font-medium text-foreground">Resumo da Proposta</p>
-              <div className="text-sm text-muted-foreground space-y-1">
-                <p><strong>Cliente:</strong> {formData.clientName}</p>
-                <p><strong>Serviço:</strong> {serviceLabels[formData.serviceType]}</p>
-                <p><strong>Valor:</strong> {formatCurrency(pricing.finalPrice)}</p>
-                <p><strong>Duração:</strong> {formData.estimatedDuration} meses</p>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowEmailDialog(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSendEmail} disabled={isSendingEmail} className="gap-2">
-              {isSendingEmail ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  A enviar...
-                </>
-              ) : (
-                <>
-                  <Send className="w-4 h-4" />
-                  Enviar Proposta
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Send Email Dialog with Preview */}
+      <SendEmailDialog
+        open={showEmailDialog}
+        onOpenChange={setShowEmailDialog}
+        clientName={formData.clientName}
+        serviceType={formData.serviceType}
+        sector={formData.sector}
+        totalValue={pricing.finalPrice}
+        duration={formData.estimatedDuration}
+        deliverables={formData.deliverables}
+        methodology={formData.methodology}
+        clientEmail={clientEmail}
+        onClientEmailChange={setClientEmail}
+        customMessage={customMessage}
+        onCustomMessageChange={setCustomMessage}
+        onSend={handleSendEmail}
+        isSending={isSendingEmail}
+        title="Enviar Proposta por Email"
+        description="Pré-visualize e envie a proposta diretamente para o email do cliente."
+      />
 
       {/* PDF Preview Dialog */}
       <PdfPreviewDialog

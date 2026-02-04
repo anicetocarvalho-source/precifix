@@ -7,20 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { SendEmailDialog } from '@/components/proposal/SendEmailDialog';
 import { SERVICE_LABELS, ServiceType } from '@/types/proposal';
 import { formatCurrency } from '@/lib/pricing';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Zap, ArrowLeft, Save, Mail, Loader2, Check } from 'lucide-react';
+import { Zap, ArrowLeft, Save } from 'lucide-react';
 
 export default function QuickQuote() {
   const navigate = useNavigate();
@@ -264,68 +257,28 @@ export default function QuickQuote() {
         </Card>
       </div>
 
-      {/* Email Dialog */}
-      <Dialog open={showEmailDialog} onOpenChange={setShowEmailDialog}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
-              <Check className="w-6 h-6 text-green-600 dark:text-green-400" />
-            </div>
-            <DialogTitle className="text-center">Orçamento Criado!</DialogTitle>
-            <DialogDescription className="text-center">
-              Deseja enviar o orçamento por email ao cliente?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="clientEmail">Email do Cliente</Label>
-              <Input
-                id="clientEmail"
-                type="email"
-                placeholder="cliente@exemplo.com"
-                value={clientEmail}
-                onChange={(e) => setClientEmail(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="customMessage">Mensagem Personalizada (opcional)</Label>
-              <Textarea
-                id="customMessage"
-                placeholder="Adicione uma mensagem personalizada ao email..."
-                value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
-                rows={3}
-              />
-            </div>
-          </div>
-          <DialogFooter className="flex-col sm:flex-row gap-2">
-            <Button
-              variant="outline"
-              onClick={handleSkipEmail}
-              className="w-full sm:w-auto"
-            >
-              Saltar
-            </Button>
-            <Button
-              onClick={handleSendEmail}
-              disabled={isSendingEmail || !clientEmail}
-              className="w-full sm:w-auto gap-2"
-            >
-              {isSendingEmail ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Enviando...
-                </>
-              ) : (
-                <>
-                  <Mail className="w-4 h-4" />
-                  Enviar por Email
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Email Dialog with Preview */}
+      <SendEmailDialog
+        open={showEmailDialog}
+        onOpenChange={setShowEmailDialog}
+        clientName={formData.clientName}
+        serviceType={formData.serviceType as ServiceType}
+        sector="Geral"
+        totalValue={numericValue}
+        duration={1}
+        deliverables={[]}
+        methodology="traditional"
+        clientEmail={clientEmail}
+        onClientEmailChange={setClientEmail}
+        customMessage={customMessage}
+        onCustomMessageChange={setCustomMessage}
+        onSend={handleSendEmail}
+        onSkip={handleSkipEmail}
+        isSending={isSendingEmail}
+        showSkipButton={true}
+        title="Orçamento Criado!"
+        description="Deseja enviar o orçamento por email ao cliente? Pode pré-visualizar o email antes de enviar."
+      />
     </MainLayout>
   );
 }
