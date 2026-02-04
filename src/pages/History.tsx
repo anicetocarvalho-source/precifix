@@ -20,7 +20,16 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
 import { HistoryTableSkeleton } from '@/components/skeletons/HistorySkeleton';
@@ -46,6 +55,8 @@ export default function History() {
   const [duplicateDialogData, setDuplicateDialogData] = useState<{ id: string; name: string } | null>(null);
   const [sortColumn, setSortColumn] = useState<SortColumn>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   const handleSort = (column: SortColumn) => {
     if (sortColumn === column) {
@@ -65,13 +76,26 @@ export default function History() {
       : <ArrowDown className="w-3 h-3 ml-1" />;
   };
 
-  const filteredProposals = proposals.filter((proposal) => {
-    const matchesSearch = proposal.formData.clientName
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || proposal.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredProposals = useMemo(() => {
+    return proposals.filter((proposal) => {
+      const matchesSearch = proposal.formData.clientName
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || proposal.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [proposals, searchTerm, statusFilter]);
+
+  // Reset to first page when filters change
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setCurrentPage(1);
+  };
+
+  const handleStatusChange = (value: ProposalStatus | 'all') => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
 
   const sortedProposals = useMemo(() => {
     const sorted = [...filteredProposals].sort((a, b) => {
@@ -107,6 +131,21 @@ export default function History() {
     return sorted;
   }, [filteredProposals, sortColumn, sortDirection]);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(sortedProposals.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProposals = sortedProposals.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(Math.max(1, Math.min(page, totalPages)));
+  };
+
+  const handleItemsPerPageChange = (value: string) => {
+    setItemsPerPage(Number(value));
+    setCurrentPage(1);
+  };
+
   const totalValue = filteredProposals.reduce((sum, p) => sum + p.pricing.finalPrice, 0);
 
   return (
@@ -136,7 +175,7 @@ export default function History() {
               type="text"
               placeholder="Buscar por nome do cliente..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
           </div>
@@ -144,7 +183,7 @@ export default function History() {
             <Filter className="w-4 h-4 text-muted-foreground" />
             <select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as ProposalStatus | 'all')}
+              onChange={(e) => handleStatusChange(e.target.value as ProposalStatus | 'all')}
               className="px-3 py-2 rounded-lg border border-border bg-card text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="all">Todos os status</option>
@@ -154,6 +193,21 @@ export default function History() {
               <option value="approved">Aprovada</option>
               <option value="rejected">Rejeitada</option>
             </select>
+          </div>
+          <div className="flex items-center gap-2 ml-auto">
+            <span className="text-sm text-muted-foreground">Mostrar:</span>
+            <Select value={String(itemsPerPage)} onValueChange={handleItemsPerPageChange}>
+              <SelectTrigger className="w-[80px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="25">25</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           </div>
         </div>
 
@@ -259,7 +313,7 @@ export default function History() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedProposals.map((proposal) => (
+                  {paginatedProposals.map((proposal) => (
                     <tr key={proposal.id} className="border-b border-border hover:bg-muted/30 transition-colors group">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
@@ -370,6 +424,58 @@ export default function History() {
                 </tbody>
               </table>
             </div>
+            
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-6 py-4 border-t border-border">
+                <div className="text-sm text-muted-foreground">
+                  A mostrar {startIndex + 1}-{Math.min(endIndex, sortedProposals.length)} de {sortedProposals.length} propostas
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </Button>
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum: number;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      return (
+                        <Button
+                          key={pageNum}
+                          variant={currentPage === pageNum ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(pageNum)}
+                          className="w-8"
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
