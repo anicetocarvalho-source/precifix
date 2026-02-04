@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { useProposals } from '@/hooks/useProposals';
 import { useUserRole } from '@/hooks/useUserRole';
@@ -17,11 +17,17 @@ import {
   Copy,
   Pencil,
   User,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
 import { HistoryTableSkeleton } from '@/components/skeletons/HistorySkeleton';
 import { DuplicateProposalDialog } from '@/components/proposal/DuplicateProposalDialog';
+
+type SortColumn = 'clientName' | 'author' | 'serviceType' | 'duration' | 'value' | 'status' | 'date';
+type SortDirection = 'asc' | 'desc';
 
 const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
   draft: { label: 'Rascunho', color: 'bg-muted text-muted-foreground' },
@@ -38,6 +44,26 @@ export default function History() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<ProposalStatus | 'all'>('all');
   const [duplicateDialogData, setDuplicateDialogData] = useState<{ id: string; name: string } | null>(null);
+  const [sortColumn, setSortColumn] = useState<SortColumn>('date');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+
+  const handleSort = (column: SortColumn) => {
+    if (sortColumn === column) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (column: SortColumn) => {
+    if (sortColumn !== column) {
+      return <ArrowUpDown className="w-3 h-3 ml-1 opacity-50" />;
+    }
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="w-3 h-3 ml-1" /> 
+      : <ArrowDown className="w-3 h-3 ml-1" />;
+  };
 
   const filteredProposals = proposals.filter((proposal) => {
     const matchesSearch = proposal.formData.clientName
@@ -46,6 +72,40 @@ export default function History() {
     const matchesStatus = statusFilter === 'all' || proposal.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
+
+  const sortedProposals = useMemo(() => {
+    const sorted = [...filteredProposals].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortColumn) {
+        case 'clientName':
+          comparison = a.formData.clientName.localeCompare(b.formData.clientName);
+          break;
+        case 'author':
+          comparison = (a.authorName || '').localeCompare(b.authorName || '');
+          break;
+        case 'serviceType':
+          comparison = a.formData.serviceType.localeCompare(b.formData.serviceType);
+          break;
+        case 'duration':
+          comparison = a.formData.estimatedDuration - b.formData.estimatedDuration;
+          break;
+        case 'value':
+          comparison = a.pricing.finalPrice - b.pricing.finalPrice;
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+        case 'date':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
+    return sorted;
+  }, [filteredProposals, sortColumn, sortDirection]);
 
   const totalValue = filteredProposals.reduce((sum, p) => sum + p.pricing.finalPrice, 0);
 
@@ -130,20 +190,76 @@ export default function History() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Cliente</th>
+                    <th 
+                      className="text-left py-4 px-6 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                      onClick={() => handleSort('clientName')}
+                    >
+                      <div className="flex items-center">
+                        Cliente
+                        {getSortIcon('clientName')}
+                      </div>
+                    </th>
                     {canViewAllProposals && (
-                      <th className="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Autor</th>
+                      <th 
+                        className="text-left py-4 px-6 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                        onClick={() => handleSort('author')}
+                      >
+                        <div className="flex items-center">
+                          Autor
+                          {getSortIcon('author')}
+                        </div>
+                      </th>
                     )}
-                    <th className="text-left py-4 px-6 text-sm font-medium text-muted-foreground">Serviço</th>
-                    <th className="text-center py-4 px-6 text-sm font-medium text-muted-foreground">Duração</th>
-                    <th className="text-right py-4 px-6 text-sm font-medium text-muted-foreground">Valor</th>
-                    <th className="text-center py-4 px-6 text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="text-center py-4 px-6 text-sm font-medium text-muted-foreground">Data</th>
+                    <th 
+                      className="text-left py-4 px-6 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                      onClick={() => handleSort('serviceType')}
+                    >
+                      <div className="flex items-center">
+                        Serviço
+                        {getSortIcon('serviceType')}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-center py-4 px-6 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                      onClick={() => handleSort('duration')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Duração
+                        {getSortIcon('duration')}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-right py-4 px-6 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                      onClick={() => handleSort('value')}
+                    >
+                      <div className="flex items-center justify-end">
+                        Valor
+                        {getSortIcon('value')}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-center py-4 px-6 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                      onClick={() => handleSort('status')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Status
+                        {getSortIcon('status')}
+                      </div>
+                    </th>
+                    <th 
+                      className="text-center py-4 px-6 text-sm font-medium text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+                      onClick={() => handleSort('date')}
+                    >
+                      <div className="flex items-center justify-center">
+                        Data
+                        {getSortIcon('date')}
+                      </div>
+                    </th>
                     <th className="text-right py-4 px-6 text-sm font-medium text-muted-foreground">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProposals.map((proposal) => (
+                  {sortedProposals.map((proposal) => (
                     <tr key={proposal.id} className="border-b border-border hover:bg-muted/30 transition-colors group">
                       <td className="py-4 px-6">
                         <div className="flex items-center gap-3">
