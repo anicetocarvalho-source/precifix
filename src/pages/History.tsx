@@ -208,7 +208,6 @@ export default function History() {
               </SelectContent>
             </Select>
           </div>
-          </div>
         </div>
 
         {/* Table */}
