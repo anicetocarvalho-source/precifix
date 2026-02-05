@@ -1,5 +1,6 @@
 import { ProposalService } from '@/types/proposalService';
-import { SERVICE_LABELS, SERVICE_CATEGORIES, SERVICE_ICONS, ServiceType, DurationUnit } from '@/types/proposal';
+import { SERVICE_CATEGORIES, SERVICE_ICONS, ServiceType, DurationUnit } from '@/types/proposal';
+import { getServiceLabel } from '@/lib/serviceLabels';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -93,7 +94,7 @@ export function ServiceCard({
   const iconName = SERVICE_ICONS[service.serviceType];
   const IconComponent = ICON_MAP[iconName] || Briefcase;
   const category = SERVICE_CATEGORIES[service.serviceType];
-  const label = SERVICE_LABELS[service.serviceType];
+  const label = getServiceLabel(service.serviceType);
   
   const formatDuration = (duration: number, unit: DurationUnit) => {
     const unitLabel = duration === 1 ? DURATION_LABELS[unit].singular : DURATION_LABELS[unit].plural;
