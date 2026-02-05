@@ -4,6 +4,7 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { useProposals } from '@/hooks/useProposals';
 import { useUserRole } from '@/hooks/useUserRole';
 import { formatCurrency } from '@/lib/pricing';
+import { getServiceLabel } from '@/lib/serviceLabels';
 import {
   Plus,
   TrendingUp,
@@ -280,20 +281,7 @@ export default function Dashboard() {
                         {proposal.servicesCount > 1 ? (
                           'Multi-serviços'
                         ) : (
-                          <>
-                            {proposal.formData.serviceType === 'pmo' && 'PMO'}
-                            {proposal.formData.serviceType === 'restructuring' && 'Reestruturação'}
-                            {proposal.formData.serviceType === 'monitoring' && 'Acompanhamento'}
-                            {proposal.formData.serviceType === 'training' && 'Formação'}
-                            {proposal.formData.serviceType === 'audit' && 'Auditoria'}
-                            {proposal.formData.serviceType === 'strategy' && 'Estratégia'}
-                            {proposal.formData.serviceType === 'video_coverage' && 'Cobertura Vídeo'}
-                            {proposal.formData.serviceType === 'photography' && 'Fotografia'}
-                            {proposal.formData.serviceType === 'graphic_design' && 'Design Gráfico'}
-                            {proposal.formData.serviceType === 'systems_development' && 'Desenvolvimento'}
-                            {proposal.formData.serviceType === 'web_development' && 'Web'}
-                            {!['pmo', 'restructuring', 'monitoring', 'training', 'audit', 'strategy', 'video_coverage', 'photography', 'graphic_design', 'systems_development', 'web_development'].includes(proposal.formData.serviceType) && proposal.formData.serviceType}
-                          </>
+                          getServiceLabel(proposal.formData.serviceType)
                         )}
                         {' • '}
                         {proposal.formData.estimatedDuration} meses
