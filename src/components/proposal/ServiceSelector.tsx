@@ -1,4 +1,5 @@
-import { ServiceType, SERVICE_LABELS, SERVICE_CATEGORIES, SERVICE_CATEGORY_LABELS, ServiceCategory } from '@/types/proposal';
+import { ServiceType, SERVICE_CATEGORIES, SERVICE_CATEGORY_LABELS, ServiceCategory } from '@/types/proposal';
+import { getServiceLabel } from '@/lib/serviceLabels';
 import { cn } from '@/lib/utils';
 import { CheckCircle, Briefcase, Camera, Video, Radio, Film, Palette, Globe, Code, Volume2, Megaphone, Sparkles, Calculator, MoreHorizontal, Eye, GraduationCap, ClipboardCheck, Target, RefreshCw } from 'lucide-react';
 
@@ -112,7 +113,7 @@ export function ServiceSelector({ value, onChange }: ServiceSelectorProps) {
                     "text-sm font-medium flex-1",
                     isSelected ? 'text-primary' : 'text-foreground'
                   )}>
-                    {SERVICE_LABELS[serviceType]}
+                    {getServiceLabel(serviceType)}
                   </span>
                   {isSelected && (
                     <CheckCircle className="w-4 h-4 text-primary shrink-0" />
