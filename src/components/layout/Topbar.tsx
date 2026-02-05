@@ -9,17 +9,36 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export function Topbar() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  // Fetch profile name from database for consistency
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
   };
 
-  const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilizador';
+  // Priority: 1. DB profile name, 2. Auth metadata, 3. Email prefix
+  const userName = profile?.full_name || user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Utilizador';
 
   return (
     <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between sticky top-0 z-40">

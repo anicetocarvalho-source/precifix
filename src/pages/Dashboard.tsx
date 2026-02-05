@@ -64,9 +64,13 @@ export default function Dashboard() {
     },
     {
       label: 'Taxa de aprovação',
-      value: proposals.length > 0 
-        ? `${Math.round((proposals.filter(p => p.status === 'approved').length / proposals.length) * 100)}%`
-        : '0%',
+      value: (() => {
+        // Only count finalized proposals (approved + rejected) for conversion rate
+        const finalized = proposals.filter(p => p.status === 'approved' || p.status === 'rejected');
+        if (finalized.length === 0) return 'N/A';
+        const approved = proposals.filter(p => p.status === 'approved').length;
+        return `${Math.round((approved / finalized.length) * 100)}%`;
+      })(),
       icon: CheckCircle,
       change: '+5%',
       changeType: 'positive',
@@ -283,6 +287,12 @@ export default function Dashboard() {
                             {proposal.formData.serviceType === 'training' && 'Formação'}
                             {proposal.formData.serviceType === 'audit' && 'Auditoria'}
                             {proposal.formData.serviceType === 'strategy' && 'Estratégia'}
+                            {proposal.formData.serviceType === 'video_coverage' && 'Cobertura Vídeo'}
+                            {proposal.formData.serviceType === 'photography' && 'Fotografia'}
+                            {proposal.formData.serviceType === 'graphic_design' && 'Design Gráfico'}
+                            {proposal.formData.serviceType === 'systems_development' && 'Desenvolvimento'}
+                            {proposal.formData.serviceType === 'web_development' && 'Web'}
+                            {!['pmo', 'restructuring', 'monitoring', 'training', 'audit', 'strategy', 'video_coverage', 'photography', 'graphic_design', 'systems_development', 'web_development'].includes(proposal.formData.serviceType) && proposal.formData.serviceType}
                           </>
                         )}
                         {' • '}

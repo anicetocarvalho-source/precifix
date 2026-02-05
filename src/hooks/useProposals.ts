@@ -196,7 +196,7 @@ export function useProposals() {
           status: row.status as ProposalStatus,
           createdAt: new Date(row.created_at),
           updatedAt: new Date(row.updated_at),
-          authorName: profilesMap.get(row.user_id) || 'Utilizador desconhecido',
+          authorName: profilesMap.get(row.user_id) || row.client_name?.split(' ')[0] || 'Desconhecido',
           authorId: row.user_id,
           isOwner: row.user_id === user.id,
           servicesCount: servicesCountMap.get(row.id) || 0,
