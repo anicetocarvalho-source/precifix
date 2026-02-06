@@ -23,7 +23,8 @@ import { ProposalServicesView } from '@/components/proposal/ProposalServicesView
 import { PdfPreviewDialog } from '@/components/proposal/PdfPreviewDialog';
 import { DuplicateProposalDialog } from '@/components/proposal/DuplicateProposalDialog';
 import { SendEmailDialog } from '@/components/proposal/SendEmailDialog';
-import { SERVICE_LABELS, SERVICE_CATEGORIES, DurationUnit } from '@/types/proposal';
+import { SERVICE_CATEGORIES, DurationUnit } from '@/types/proposal';
+import { getServiceLabel } from '@/lib/serviceLabels';
 import { ProposalViewSkeleton } from '@/components/skeletons/ProposalViewSkeleton';
 
 // Helper function to format duration in a friendly way
@@ -193,8 +194,6 @@ export default function ProposalView() {
     { id: 'budget' as const, label: 'Proposta Orçamental', icon: TrendingUp },
   ];
 
-  // Use SERVICE_LABELS from types
-  const serviceLabels = SERVICE_LABELS;
   const category = SERVICE_CATEGORIES[formData.serviceType];
 
   const complexityLabels: Record<string, string> = {
@@ -341,7 +340,7 @@ export default function ProposalView() {
                 )}
               </div>
               <p className="text-muted-foreground">
-                {serviceLabels[formData.serviceType]} • {formatDuration(formData.estimatedDuration, formData.durationUnit)}
+                {getServiceLabel(formData.serviceType)} • {formatDuration(formData.estimatedDuration, formData.durationUnit)}
               </p>
             </div>
           </div>
@@ -613,7 +612,7 @@ export default function ProposalView() {
                   </h3>
                   <ul className="space-y-2">
                     {[
-                      `Implementar ${serviceLabels[formData.serviceType]} ao longo de ${formatDuration(formData.estimatedDuration, formData.durationUnit)}`,
+                      `Implementar ${getServiceLabel(formData.serviceType)} ao longo de ${formatDuration(formData.estimatedDuration, formData.durationUnit)}`,
                       `Garantir entregáveis de alta qualidade: ${formData.deliverables.join(', ')}`,
                       `Utilizar metodologia ${methodologyLabels[formData.methodology]}`,
                       formData.hasExistingTeam ? 'Trabalhar em colaboração com a equipa existente do cliente' : 'Fornecer equipa completa de consultoria',
@@ -676,7 +675,7 @@ export default function ProposalView() {
                 <section>
                   <h3 className="text-lg font-semibold text-foreground mb-4">Escopo Detalhado</h3>
                   <p className="text-foreground bg-muted/50 rounded-lg p-4">
-                    {serviceLabels[formData.serviceType]} para {formData.clientName}, abrangendo {formData.locations.join(', ')}, 
+                    {getServiceLabel(formData.serviceType)} para {formData.clientName}, abrangendo {formData.locations.join(', ')}, 
                     com duração de {formatDuration(formData.estimatedDuration, formData.durationUnit)}{(category === 'consulting' || category === 'technology') && formData.methodology ? ` e metodologia ${methodologyLabels[formData.methodology].toLowerCase()}` : ''}.
                   </p>
                 </section>

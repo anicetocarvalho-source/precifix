@@ -1,10 +1,10 @@
 import jsPDF from 'jspdf';
 import { 
   Proposal, 
-  SERVICE_LABELS, 
   SERVICE_CATEGORIES,
   ServiceCategory,
 } from '@/types/proposal';
+import { getAllServiceLabels } from '@/lib/serviceLabels';
 import { ProposalService } from '@/types/proposalService';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
 import { BrandingConfig, mergeBrandingWithDefaults } from '@/lib/pdfBranding';
@@ -14,7 +14,7 @@ export type { BrandingConfig } from '@/lib/pdfBranding';
 
 // Extended labels
 const serviceLabels: Record<string, string> = {
-  ...SERVICE_LABELS,
+  ...getAllServiceLabels(),
   pmo: 'PMO - Gestao de Portfolio de Projectos',
   restructuring: 'Reestruturacao Organizacional',
   monitoring: 'Acompanhamento e Monitorizacao',

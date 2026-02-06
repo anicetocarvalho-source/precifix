@@ -1,4 +1,4 @@
-import { ProposalFormData, SERVICE_LABELS, SERVICE_CATEGORIES } from '@/types/proposal';
+import { ProposalFormData, SERVICE_CATEGORIES } from '@/types/proposal';
 import { formatCurrency } from '@/lib/pricing';
 import { 
   Camera, Video, Users, Music, Settings, Calendar, Clock, 
