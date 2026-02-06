@@ -12,8 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ServiceTemplate, templateToService } from '@/types/serviceTemplate';
 import { ProposalService } from '@/types/proposalService';
-import { SERVICE_CATEGORIES, SERVICE_ICONS } from '@/types/proposal';
 import { getServiceLabel } from '@/lib/serviceLabels';
+import { COMPLEXITY_LABELS } from '@/lib/statusLabels';
+import { getServiceTypeConfig, CATEGORY_COLORS } from '@/lib/serviceCategoryConfig';
+import { SERVICE_CATEGORIES } from '@/types/proposal';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import { cn } from '@/lib/utils';
 import { 
@@ -24,24 +26,8 @@ import {
   Star,
   Clock,
   Briefcase,
-  Camera,
-  Video,
-  Radio,
-  Film,
-  Palette,
-  Globe,
-  Code,
-  Volume2,
-  Megaphone,
-  Sparkles,
-  Calculator,
-  MoreHorizontal,
-  Eye,
-  GraduationCap,
-  ClipboardCheck,
-  Target,
-  RefreshCw,
 } from 'lucide-react';
+import { formatDuration } from '@/lib/statusLabels';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface TemplatePickerDialogProps {
@@ -49,46 +35,6 @@ interface TemplatePickerDialogProps {
   onClose: () => void;
   onSelect: (service: ProposalService) => void;
 }
-
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  Briefcase,
-  Camera,
-  Video,
-  Radio,
-  Film,
-  Palette,
-  Globe,
-  Code,
-  Volume2,
-  Megaphone,
-  Sparkles,
-  Calculator,
-  MoreHorizontal,
-  Eye,
-  GraduationCap,
-  ClipboardCheck,
-  Target,
-  RefreshCw,
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  consulting: 'bg-blue-500/10 text-blue-600 border-blue-200',
-  creative: 'bg-purple-500/10 text-purple-600 border-purple-200',
-  technology: 'bg-green-500/10 text-green-600 border-green-200',
-  events: 'bg-orange-500/10 text-orange-600 border-orange-200',
-};
-
-const COMPLEXITY_LABELS: Record<string, string> = {
-  low: 'Baixa',
-  medium: 'Média',
-  high: 'Alta',
-};
-
-const DURATION_LABELS: Record<string, { singular: string; plural: string }> = {
-  days: { singular: 'dia', plural: 'dias' },
-  weeks: { singular: 'semana', plural: 'semanas' },
-  months: { singular: 'mês', plural: 'meses' },
-};
 
 export function TemplatePickerDialog({
   isOpen,
@@ -114,11 +60,6 @@ export function TemplatePickerDialog({
     const service = templateToService(template);
     onSelect(service);
     onClose();
-  };
-
-  const formatDuration = (duration: number, unit: string) => {
-    const labels = DURATION_LABELS[unit] || { singular: unit, plural: unit };
-    return `${duration} ${duration === 1 ? labels.singular : labels.plural}`;
   };
 
   return (
@@ -175,7 +116,6 @@ export function TemplatePickerDialog({
                           key={template.id}
                           template={template}
                           onSelect={handleSelect}
-                          formatDuration={formatDuration}
                         />
                       ))}
                     </AnimatePresence>
@@ -199,7 +139,6 @@ export function TemplatePickerDialog({
                           onSelect={handleSelect}
                           onDelete={deleteTemplate}
                           isDeleting={isDeleting}
-                          formatDuration={formatDuration}
                         />
                       ))}
                     </AnimatePresence>
@@ -219,7 +158,6 @@ interface TemplateCardProps {
   onSelect: (template: ServiceTemplate) => void;
   onDelete?: (id: string) => void;
   isDeleting?: boolean;
-  formatDuration: (duration: number, unit: string) => string;
 }
 
 function TemplateCard({ 
@@ -227,11 +165,9 @@ function TemplateCard({
   onSelect, 
   onDelete, 
   isDeleting, 
-  formatDuration 
 }: TemplateCardProps) {
-  const iconName = SERVICE_ICONS[template.serviceType];
-  const IconComponent = ICON_MAP[iconName] || Briefcase;
-  const category = SERVICE_CATEGORIES[template.serviceType];
+  const config = getServiceTypeConfig(template.serviceType);
+  const IconComponent = config.icon;
 
   return (
     <motion.div
@@ -246,7 +182,7 @@ function TemplateCard({
       <div className="flex items-start gap-3">
         <div className={cn(
           "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
-          CATEGORY_COLORS[category]
+          config.color
         )}>
           <IconComponent className="w-5 h-5" />
         </div>
