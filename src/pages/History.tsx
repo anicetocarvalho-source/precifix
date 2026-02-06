@@ -35,17 +35,10 @@ import { cn } from '@/lib/utils';
 import { ProposalStatus } from '@/types/proposal';
 import { HistoryTableSkeleton } from '@/components/skeletons/HistorySkeleton';
 import { DuplicateProposalDialog } from '@/components/proposal/DuplicateProposalDialog';
+import { STATUS_CONFIG, formatDuration } from '@/lib/statusLabels';
 
 type SortColumn = 'clientName' | 'author' | 'serviceType' | 'duration' | 'value' | 'status' | 'date';
 type SortDirection = 'asc' | 'desc';
-
-const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
-  draft: { label: 'Rascunho', color: 'bg-muted text-muted-foreground' },
-  pending: { label: 'Pendente', color: 'bg-warning/10 text-warning' },
-  sent: { label: 'Enviada', color: 'bg-info/10 text-info' },
-  approved: { label: 'Aprovada', color: 'bg-success/10 text-success' },
-  rejected: { label: 'Rejeitada', color: 'bg-destructive/10 text-destructive' },
-};
 
 export default function History() {
   const navigate = useNavigate();
@@ -347,7 +340,7 @@ export default function History() {
                         {getServiceLabel(proposal.formData.serviceType)}
                       </td>
                       <td className="py-4 px-6 text-center text-foreground">
-                        {proposal.formData.estimatedDuration} meses
+                        {formatDuration(proposal.formData.estimatedDuration, proposal.formData.durationUnit)}
                       </td>
                       <td className="py-4 px-6 text-right font-semibold text-foreground">
                         {formatCurrency(proposal.pricing.finalPrice)}
@@ -356,10 +349,10 @@ export default function History() {
                         <span
                           className={cn(
                             'px-3 py-1 rounded-full text-xs font-medium',
-                            statusConfig[proposal.status].color
+                            STATUS_CONFIG[proposal.status].color
                           )}
                         >
-                          {statusConfig[proposal.status].label}
+                          {STATUS_CONFIG[proposal.status].label}
                         </span>
                       </td>
                       <td className="py-4 px-6 text-center">

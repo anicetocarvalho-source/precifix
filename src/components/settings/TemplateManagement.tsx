@@ -62,17 +62,13 @@ import { toast } from 'sonner';
 import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
-const SERVICE_TYPE_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  'event-coverage': { label: 'Cobertura de Eventos', icon: Camera, color: 'bg-purple-500/10 text-purple-600' },
-  'web-development': { label: 'Desenvolvimento Web', icon: Globe, color: 'bg-blue-500/10 text-blue-600' },
-  'branding': { label: 'Branding', icon: Palette, color: 'bg-amber-500/10 text-amber-600' },
-  'packaging-design': { label: 'Design de Embalagem', icon: Package, color: 'bg-green-500/10 text-green-600' },
-};
+import { getServiceLabel } from '@/lib/serviceLabels';
+import { COMPLEXITY_LABELS } from '@/lib/statusLabels';
 
-const COMPLEXITY_LABELS: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' }> = {
-  low: { label: 'Baixa', variant: 'secondary' },
-  medium: { label: 'Média', variant: 'default' },
-  high: { label: 'Alta', variant: 'destructive' },
+const COMPLEXITY_BADGE_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive'> = {
+  low: 'secondary',
+  medium: 'default',
+  high: 'destructive',
 };
 
 type SortOption = 'name' | 'date' | 'type' | 'favorites';
@@ -108,7 +104,7 @@ export function TemplateManagement() {
       result = result.filter(template =>
         template.name.toLowerCase().includes(searchLower) ||
         (template.description?.toLowerCase().includes(searchLower)) ||
-        SERVICE_TYPE_CONFIG[template.serviceType]?.label.toLowerCase().includes(searchLower)
+        getServiceLabel(template.serviceType).toLowerCase().includes(searchLower)
       );
     }
 
@@ -189,8 +185,8 @@ export function TemplateManagement() {
   };
 
   const getServiceTypeConfig = (serviceType: string) => {
-    return SERVICE_TYPE_CONFIG[serviceType] || { 
-      label: serviceType, 
+    return { 
+      label: getServiceLabel(serviceType), 
       icon: FileText, 
       color: 'bg-muted text-muted-foreground' 
     };
@@ -241,7 +237,7 @@ export function TemplateManagement() {
             </SelectItem>
             {serviceTypes.map(type => (
               <SelectItem key={type} value={type}>
-                {SERVICE_TYPE_CONFIG[type]?.label || type}
+                {getServiceLabel(type)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -307,7 +303,7 @@ export function TemplateManagement() {
               {filteredAndSortedTemplates.map((template) => {
                 const serviceConfig = getServiceTypeConfig(template.serviceType);
                 const ServiceIcon = serviceConfig.icon;
-                const complexityConfig = COMPLEXITY_LABELS[template.complexity] || COMPLEXITY_LABELS.medium;
+                const complexityConfig = { label: COMPLEXITY_LABELS[template.complexity as keyof typeof COMPLEXITY_LABELS] || 'Média', variant: (COMPLEXITY_BADGE_VARIANTS[template.complexity] || 'default') as 'default' | 'secondary' | 'destructive' };
 
                 return (
                   <TableRow key={template.id}>
