@@ -23,67 +23,117 @@ import {
   Zap,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { ProposalStatus } from '@/types/proposal';
 import { DashboardCharts } from '@/components/DashboardCharts';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { DashboardStatsSkeleton, DashboardTableSkeleton } from '@/components/skeletons/DashboardSkeleton';
+import { STATUS_CONFIG, formatDuration } from '@/lib/statusLabels';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-
-const statusConfig: Record<ProposalStatus, { label: string; color: string }> = {
-  draft: { label: 'Rascunho', color: 'bg-muted text-muted-foreground' },
-  pending: { label: 'Pendente', color: 'bg-warning/10 text-warning' },
-  sent: { label: 'Enviada', color: 'bg-info/10 text-info' },
-  approved: { label: 'Aprovada', color: 'bg-success/10 text-success' },
-  rejected: { label: 'Rejeitada', color: 'bg-destructive/10 text-destructive' },
-};
+import { startOfMonth, endOfMonth, subMonths, isWithinInterval, differenceInDays } from 'date-fns';
 
 export default function Dashboard() {
   const { proposals, isLoading } = useProposals();
   const { canViewAllProposals } = useUserRole();
   const [showCharts, setShowCharts] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const stats = [
-    {
-      label: 'Propostas este mês',
-      value: proposals.length,
-      icon: FileText,
-      change: '+12%',
-      changeType: 'positive',
-    },
-    {
-      label: 'Valor total',
-      value: formatCurrency(proposals.reduce((sum, p) => sum + p.pricing.finalPrice, 0)),
-      icon: TrendingUp,
-      change: '+8%',
-      changeType: 'positive',
-    },
-    {
-      label: 'Taxa de aprovação',
-      value: (() => {
-        // Only count finalized proposals (approved + rejected) for conversion rate
-        const finalized = proposals.filter(p => p.status === 'approved' || p.status === 'rejected');
-        if (finalized.length === 0) return 'N/A';
-        const approved = proposals.filter(p => p.status === 'approved').length;
-        return `${Math.round((approved / finalized.length) * 100)}%`;
-      })(),
-      icon: CheckCircle,
-      change: '+5%',
-      changeType: 'positive',
-    },
-    {
-      label: 'Tempo médio',
-      value: '2.4 dias',
-      icon: Clock,
-      change: '-15%',
-      changeType: 'positive',
-    },
-  ];
+  // Filter proposals by search
+  const filteredProposals = useMemo(() => {
+    if (!searchTerm.trim()) return proposals;
+    const term = searchTerm.toLowerCase();
+    return proposals.filter(p =>
+      p.formData.clientName.toLowerCase().includes(term) ||
+      getServiceLabel(p.formData.serviceType).toLowerCase().includes(term)
+    );
+  }, [proposals, searchTerm]);
+
+  // Dynamic stats calculation
+  const stats = useMemo(() => {
+    const now = new Date();
+    const thisMonthStart = startOfMonth(now);
+    const thisMonthEnd = endOfMonth(now);
+    const lastMonthStart = startOfMonth(subMonths(now, 1));
+    const lastMonthEnd = endOfMonth(subMonths(now, 1));
+
+    const thisMonthProposals = proposals.filter(p =>
+      isWithinInterval(new Date(p.createdAt), { start: thisMonthStart, end: thisMonthEnd })
+    );
+    const lastMonthProposals = proposals.filter(p =>
+      isWithinInterval(new Date(p.createdAt), { start: lastMonthStart, end: lastMonthEnd })
+    );
+
+    // Count change
+    const countChange = lastMonthProposals.length > 0
+      ? Math.round(((thisMonthProposals.length - lastMonthProposals.length) / lastMonthProposals.length) * 100)
+      : thisMonthProposals.length > 0 ? 100 : 0;
+
+    // Value change
+    const thisMonthValue = thisMonthProposals.reduce((sum, p) => sum + p.pricing.finalPrice, 0);
+    const lastMonthValue = lastMonthProposals.reduce((sum, p) => sum + p.pricing.finalPrice, 0);
+    const valueChange = lastMonthValue > 0
+      ? Math.round(((thisMonthValue - lastMonthValue) / lastMonthValue) * 100)
+      : thisMonthValue > 0 ? 100 : 0;
+
+    // Approval rate (only finalized)
+    const finalized = proposals.filter(p => p.status === 'approved' || p.status === 'rejected');
+    const approved = proposals.filter(p => p.status === 'approved').length;
+    const approvalRate = finalized.length > 0 ? Math.round((approved / finalized.length) * 100) : null;
+
+    const lastMonthFinalized = lastMonthProposals.filter(p => p.status === 'approved' || p.status === 'rejected');
+    const lastMonthApproved = lastMonthProposals.filter(p => p.status === 'approved').length;
+    const lastApprovalRate = lastMonthFinalized.length > 0 ? Math.round((lastMonthApproved / lastMonthFinalized.length) * 100) : null;
+    const approvalChange = approvalRate !== null && lastApprovalRate !== null
+      ? approvalRate - lastApprovalRate
+      : 0;
+
+    // Average time from creation to approval
+    const approvedProposals = proposals.filter(p => p.status === 'approved' || p.status === 'sent');
+    let avgDays = 0;
+    if (approvedProposals.length > 0) {
+      const totalDays = approvedProposals.reduce((sum, p) => {
+        return sum + differenceInDays(new Date(p.updatedAt), new Date(p.createdAt));
+      }, 0);
+      avgDays = Math.round((totalDays / approvedProposals.length) * 10) / 10;
+    }
+
+    const formatChange = (val: number) => val >= 0 ? `+${val}%` : `${val}%`;
+
+    return [
+      {
+        label: 'Propostas este mês',
+        value: thisMonthProposals.length,
+        icon: FileText,
+        change: formatChange(countChange),
+        changeType: countChange >= 0 ? 'positive' : 'negative',
+      },
+      {
+        label: 'Valor total (mês)',
+        value: formatCurrency(thisMonthValue),
+        icon: TrendingUp,
+        change: formatChange(valueChange),
+        changeType: valueChange >= 0 ? 'positive' : 'negative',
+      },
+      {
+        label: 'Taxa de aprovação',
+        value: approvalRate !== null ? `${approvalRate}%` : 'N/A',
+        icon: CheckCircle,
+        change: formatChange(approvalChange),
+        changeType: approvalChange >= 0 ? 'positive' : 'negative',
+      },
+      {
+        label: 'Tempo médio',
+        value: avgDays > 0 ? `${avgDays} dias` : 'N/A',
+        icon: Clock,
+        change: '',
+        changeType: 'positive' as const,
+      },
+    ];
+  }, [proposals]);
 
   return (
     <MainLayout>
@@ -191,7 +241,7 @@ export default function Dashboard() {
                         : 'bg-destructive/10 text-destructive'
                     )}
                   >
-                    {stat.change}
+                    {stat.change || '—'}
                   </span>
                 </div>
                 <div className="mt-4">
@@ -221,17 +271,15 @@ export default function Dashboard() {
                   <input
                     type="text"
                     placeholder="Buscar propostas..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 pr-4 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-64"
                   />
                 </div>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Filter className="w-4 h-4" />
-                  Filtros
-                </Button>
               </div>
             </div>
 
-            {proposals.length === 0 ? (
+            {filteredProposals.length === 0 ? (
             <div className="p-12 text-center">
               <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
                 <FileText className="w-8 h-8 text-muted-foreground" />
@@ -251,7 +299,7 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="divide-y divide-border">
-              {proposals.map((proposal) => (
+              {filteredProposals.map((proposal) => (
                 <Link
                   key={proposal.id}
                   to={`/proposta/${proposal.id}`}
@@ -284,7 +332,7 @@ export default function Dashboard() {
                           getServiceLabel(proposal.formData.serviceType)
                         )}
                         {' • '}
-                        {proposal.formData.estimatedDuration} meses
+                        {formatDuration(proposal.formData.estimatedDuration, proposal.formData.durationUnit)}
                       </p>
                       {/* Author indicator for admins/gestores */}
                       {canViewAllProposals && !proposal.isOwner && (
@@ -310,10 +358,10 @@ export default function Dashboard() {
                     <span
                       className={cn(
                         'px-3 py-1 rounded-full text-xs font-medium',
-                        statusConfig[proposal.status].color
+                        STATUS_CONFIG[proposal.status].color
                       )}
                     >
-                      {statusConfig[proposal.status].label}
+                      {STATUS_CONFIG[proposal.status].label}
                     </span>
                     <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 transition-opacity">
                       <MoreHorizontal className="w-4 h-4" />

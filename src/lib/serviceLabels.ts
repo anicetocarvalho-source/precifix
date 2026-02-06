@@ -1,4 +1,4 @@
-import { SERVICE_LABELS, ServiceType } from '@/types/proposal';
+import { SERVICE_LABELS, SERVICE_CATEGORIES, SERVICE_CATEGORY_LABELS, ServiceType, ServiceCategory } from '@/types/proposal';
 
 /**
  * Get the full map of service type → readable label.
@@ -25,4 +25,20 @@ export function getServiceLabelShort(serviceType: string | undefined | null, max
   const label = getServiceLabel(serviceType);
   if (label.length <= maxLength) return label;
   return label.substring(0, maxLength - 1) + '…';
+}
+
+/**
+ * Get the category for a service type.
+ */
+export function getServiceCategory(serviceType: string | undefined | null): ServiceCategory {
+  if (!serviceType) return 'consulting';
+  return SERVICE_CATEGORIES[serviceType as ServiceType] || 'consulting';
+}
+
+/**
+ * Get a readable label for a service category.
+ */
+export function getServiceCategoryLabel(category: string | undefined | null): string {
+  if (!category) return 'Consultoria';
+  return SERVICE_CATEGORY_LABELS[category as ServiceCategory] || category;
 }
