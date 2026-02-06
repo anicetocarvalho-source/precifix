@@ -1,63 +1,13 @@
 import { ServiceType, SERVICE_CATEGORIES, SERVICE_CATEGORY_LABELS, ServiceCategory } from '@/types/proposal';
 import { getServiceLabel } from '@/lib/serviceLabels';
+import { getServiceIcon, CATEGORY_COLORS, CATEGORY_ORDER } from '@/lib/serviceCategoryConfig';
 import { cn } from '@/lib/utils';
-import { CheckCircle, Briefcase, Camera, Video, Radio, Film, Palette, Globe, Code, Volume2, Megaphone, Sparkles, Calculator, MoreHorizontal, Eye, GraduationCap, ClipboardCheck, Target, RefreshCw } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
 
 interface ServiceSelectorProps {
   value: ServiceType | undefined;
   onChange: (value: ServiceType) => void;
 }
-
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  Briefcase,
-  Camera,
-  Video,
-  Radio,
-  Film,
-  Palette,
-  Globe,
-  Code,
-  Volume2,
-  Megaphone,
-  Sparkles,
-  Calculator,
-  MoreHorizontal,
-  Eye,
-  GraduationCap,
-  ClipboardCheck,
-  Target,
-  RefreshCw,
-};
-
-const SERVICE_ICON_MAP: Record<ServiceType, React.ComponentType<{ className?: string }>> = {
-  pmo: Briefcase,
-  restructuring: RefreshCw,
-  monitoring: Eye,
-  training: GraduationCap,
-  audit: ClipboardCheck,
-  strategy: Target,
-  photography: Camera,
-  video_coverage: Video,
-  streaming: Radio,
-  video_editing: Film,
-  graphic_design: Palette,
-  web_development: Globe,
-  systems_development: Code,
-  sound_lighting: Volume2,
-  marketing_digital: Megaphone,
-  branding: Sparkles,
-  financial_consulting: Calculator,
-  other: MoreHorizontal,
-};
-
-const CATEGORY_COLORS: Record<ServiceCategory, string> = {
-  consulting: 'bg-blue-500/10 text-blue-600 border-blue-200',
-  creative: 'bg-purple-500/10 text-purple-600 border-purple-200',
-  technology: 'bg-green-500/10 text-green-600 border-green-200',
-  events: 'bg-orange-500/10 text-orange-600 border-orange-200',
-};
-
-const CATEGORY_ORDER: ServiceCategory[] = ['consulting', 'events', 'creative', 'technology'];
 
 export function ServiceSelector({ value, onChange }: ServiceSelectorProps) {
   // Group services by category
@@ -81,7 +31,7 @@ export function ServiceSelector({ value, onChange }: ServiceSelectorProps) {
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {servicesByCategory[category].map((serviceType) => {
-              const IconComponent = SERVICE_ICON_MAP[serviceType];
+              const IconComponent = getServiceIcon(serviceType);
               const isSelected = value === serviceType;
 
               return (

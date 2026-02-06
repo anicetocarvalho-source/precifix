@@ -44,12 +44,7 @@ import {
   Trash2,
   Edit,
   LayoutTemplate,
-  Camera,
-  Globe,
-  Palette,
-  Package,
   Loader2,
-  FileText,
   Copy,
   Star,
   ArrowUpDown,
@@ -63,7 +58,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 
 import { getServiceLabel } from '@/lib/serviceLabels';
-import { COMPLEXITY_LABELS } from '@/lib/statusLabels';
+import { COMPLEXITY_LABELS, formatDuration } from '@/lib/statusLabels';
+import { getServiceTypeConfig } from '@/lib/serviceCategoryConfig';
 
 const COMPLEXITY_BADGE_VARIANTS: Record<string, 'default' | 'secondary' | 'destructive'> = {
   low: 'secondary',
@@ -184,13 +180,6 @@ export function TemplateManagement() {
     toggleFavorite({ templateId: template.id, isFavorite: !template.isFavorite });
   };
 
-  const getServiceTypeConfig = (serviceType: string) => {
-    return { 
-      label: getServiceLabel(serviceType), 
-      icon: FileText, 
-      color: 'bg-muted text-muted-foreground' 
-    };
-  };
 
   if (isLoading) {
     return (
@@ -301,8 +290,8 @@ export function TemplateManagement() {
             </TableHeader>
             <TableBody>
               {filteredAndSortedTemplates.map((template) => {
-                const serviceConfig = getServiceTypeConfig(template.serviceType);
-                const ServiceIcon = serviceConfig.icon;
+                const categoryConfig = getServiceTypeConfig(template.serviceType);
+                const ServiceIcon = categoryConfig.icon;
                 const complexityConfig = { label: COMPLEXITY_LABELS[template.complexity as keyof typeof COMPLEXITY_LABELS] || 'Média', variant: (COMPLEXITY_BADGE_VARIANTS[template.complexity] || 'default') as 'default' | 'secondary' | 'destructive' };
 
                 return (
@@ -337,10 +326,10 @@ export function TemplateManagement() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <div className={`p-1.5 rounded ${serviceConfig.color}`}>
+                        <div className={cn("p-1.5 rounded-md", categoryConfig.color)}>
                           <ServiceIcon className="w-3.5 h-3.5" />
                         </div>
-                        <span className="text-sm">{serviceConfig.label}</span>
+                        <span className="text-sm">{getServiceLabel(template.serviceType)}</span>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -350,7 +339,7 @@ export function TemplateManagement() {
                     </TableCell>
                     <TableCell>
                       <span className="text-sm text-muted-foreground">
-                        {template.estimatedDuration} {template.durationUnit === 'months' ? 'meses' : template.durationUnit === 'weeks' ? 'semanas' : 'dias'}
+                        {formatDuration(template.estimatedDuration, template.durationUnit)}
                       </span>
                     </TableCell>
                     <TableCell>
