@@ -1,13 +1,13 @@
 import jsPDF from 'jspdf';
 import { 
   Proposal, 
-  SERVICE_LABELS, 
   SERVICE_CATEGORIES,
   ServiceCategory,
   EventType,
   CoverageDuration,
   ProjectType,
 } from '@/types/proposal';
+import { getAllServiceLabels } from '@/lib/serviceLabels';
 import { ProposalService } from '@/types/proposalService';
 import { formatCurrency, formatNumber } from '@/lib/pricing';
 import { DEFAULT_BRANDING } from '@/lib/pdfBranding';
@@ -16,7 +16,7 @@ export type DocumentType = 'diagnostic' | 'technical' | 'budget' | 'all';
 
 // Extended labels for all service types
 const serviceLabels: Record<string, string> = {
-  ...SERVICE_LABELS,
+  ...getAllServiceLabels(),
   pmo: 'PMO - Gestao de Portfolio de Projectos',
   restructuring: 'Reestruturacao Organizacional',
   monitoring: 'Acompanhamento e Monitorizacao',

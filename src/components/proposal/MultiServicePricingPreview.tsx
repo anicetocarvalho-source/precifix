@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ProposalService } from '@/types/proposalService';
-import { SERVICE_LABELS, SERVICE_CATEGORIES } from '@/types/proposal';
+import { SERVICE_CATEGORIES } from '@/types/proposal';
+import { getServiceLabel } from '@/lib/serviceLabels';
 import { calculateMultiServicePricing } from '@/lib/pricingMultiService';
 import { formatCurrency, DEFAULT_PRICING_PARAMS } from '@/lib/pricing';
 import { usePricingParameters, toPricingParams } from '@/hooks/usePricingParameters';
@@ -150,7 +151,7 @@ export function MultiServicePricingPreview({ services }: MultiServicePricingPrev
                                 CATEGORY_COLORS[category]
                               )} />
                               <span className="text-sm text-foreground truncate max-w-[150px]">
-                                {SERVICE_LABELS[servicePricing.serviceType]}
+                                {getServiceLabel(servicePricing.serviceType)}
                               </span>
                             </div>
                             <span className="text-sm font-medium text-foreground">

@@ -1,6 +1,14 @@
 import { SERVICE_LABELS, ServiceType } from '@/types/proposal';
 
 /**
+ * Get the full map of service type → readable label.
+ * Use this when you need to iterate over all service types (e.g. for select dropdowns).
+ */
+export function getAllServiceLabels(): Record<ServiceType, string> {
+  return SERVICE_LABELS;
+}
+
+/**
  * Get a readable label for a service type.
  * Falls back to the raw value if not found in the map.
  */

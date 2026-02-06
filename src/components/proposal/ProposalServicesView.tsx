@@ -1,5 +1,6 @@
 import { ProposalService } from '@/types/proposalService';
-import { SERVICE_LABELS, SERVICE_CATEGORIES } from '@/types/proposal';
+import { SERVICE_CATEGORIES } from '@/types/proposal';
+import { getServiceLabel } from '@/lib/serviceLabels';
 import { formatCurrency } from '@/lib/pricing';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -238,7 +239,7 @@ export function ProposalServicesView({ services }: ProposalServicesViewProps) {
                 <div>
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-foreground">
-                      {SERVICE_LABELS[service.serviceType] || service.serviceType}
+                      {getServiceLabel(service.serviceType)}
                     </h4>
                     <Badge variant="outline" className="text-xs">
                       {COMPLEXITY_LABELS[service.complexity]} complexidade

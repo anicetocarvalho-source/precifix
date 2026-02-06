@@ -5,8 +5,8 @@ import {
   ServiceType,
   Complexity,
   SERVICE_CATEGORIES,
-  SERVICE_LABELS,
 } from '@/types/proposal';
+import { getServiceLabel } from '@/lib/serviceLabels';
 import { calculatePricing, formatCurrency, DEFAULT_PRICING_PARAMS } from '@/lib/pricing';
 import { usePricingParameters, toPricingParams } from '@/hooks/usePricingParameters';
 import {
@@ -64,7 +64,7 @@ export function PricingPreview({ formData }: PricingPreviewProps) {
   }
 
   const category = SERVICE_CATEGORIES[formData.serviceType];
-  const serviceLabel = SERVICE_LABELS[formData.serviceType];
+  const serviceLabel = getServiceLabel(formData.serviceType);
   
   // Calculate completion percentage for visual feedback
   const getCompletionPercentage = () => {

@@ -8,7 +8,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { SendEmailDialog } from '@/components/proposal/SendEmailDialog';
-import { SERVICE_LABELS, ServiceType } from '@/types/proposal';
+import { ServiceType } from '@/types/proposal';
+import { getAllServiceLabels } from '@/lib/serviceLabels';
 import { formatCurrency } from '@/lib/pricing';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -188,7 +189,7 @@ export default function QuickQuote() {
                     <SelectValue placeholder="Selecione o serviço" />
                   </SelectTrigger>
                   <SelectContent>
-                    {Object.entries(SERVICE_LABELS).map(([key, label]) => (
+                    {Object.entries(getAllServiceLabels()).map(([key, label]) => (
                       <SelectItem key={key} value={key}>
                         {label}
                       </SelectItem>

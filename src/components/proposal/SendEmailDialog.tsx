@@ -14,7 +14,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency } from '@/lib/pricing';
-import { SERVICE_LABELS, ServiceType } from '@/types/proposal';
+import { ServiceType } from '@/types/proposal';
+import { getServiceLabel } from '@/lib/serviceLabels';
 import { Mail, Loader2, Send, Eye, Pencil } from 'lucide-react';
 
 interface SendEmailDialogProps {
@@ -82,7 +83,7 @@ export function SendEmailDialog({
 }: SendEmailDialogProps) {
   const [activeTab, setActiveTab] = useState<'edit' | 'preview'>('edit');
 
-  const serviceLabel = SERVICE_LABELS[serviceType] || serviceType;
+  const serviceLabel = getServiceLabel(serviceType);
   const formattedDeliverables = deliverables.map(d => deliverableLabels[d] || d);
 
   return (

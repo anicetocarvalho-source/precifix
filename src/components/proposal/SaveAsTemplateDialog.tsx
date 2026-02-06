@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ProposalService } from '@/types/proposalService';
-import { SERVICE_LABELS } from '@/types/proposal';
+import { getServiceLabel } from '@/lib/serviceLabels';
 import { Save, Loader2 } from 'lucide-react';
 
 interface SaveAsTemplateDialogProps {
@@ -47,7 +47,7 @@ export function SaveAsTemplateDialog({
     onClose();
   };
 
-  const serviceLabel = service ? SERVICE_LABELS[service.serviceType] : '';
+  const serviceLabel = service ? getServiceLabel(service.serviceType) : '';
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

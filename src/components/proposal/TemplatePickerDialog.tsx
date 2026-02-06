@@ -12,7 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { ServiceTemplate, templateToService } from '@/types/serviceTemplate';
 import { ProposalService } from '@/types/proposalService';
-import { SERVICE_LABELS, SERVICE_CATEGORIES, SERVICE_ICONS } from '@/types/proposal';
+import { SERVICE_CATEGORIES, SERVICE_ICONS } from '@/types/proposal';
+import { getServiceLabel } from '@/lib/serviceLabels';
 import { useServiceTemplates } from '@/hooks/useServiceTemplates';
 import { cn } from '@/lib/utils';
 import { 
@@ -102,7 +103,7 @@ export function TemplatePickerDialog({
     return (
       template.name.toLowerCase().includes(searchLower) ||
       template.description?.toLowerCase().includes(searchLower) ||
-      SERVICE_LABELS[template.serviceType].toLowerCase().includes(searchLower)
+      getServiceLabel(template.serviceType).toLowerCase().includes(searchLower)
     );
   });
 
@@ -279,7 +280,7 @@ function TemplateCard({
 
           <div className="flex items-center gap-2 mt-2 flex-wrap">
             <Badge variant="secondary" className="text-xs">
-              {SERVICE_LABELS[template.serviceType]}
+              {getServiceLabel(template.serviceType)}
             </Badge>
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Clock className="w-3 h-3" />
