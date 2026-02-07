@@ -1,8 +1,13 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ProposalService } from '@/types/proposalService';
-import { SERVICE_CATEGORIES, SERVICE_ICONS, DurationUnit } from '@/types/proposal';
 import { getServiceLabel } from '@/lib/serviceLabels';
+import {
+  getServiceIcon,
+  getServiceCategoryColor,
+  formatDuration,
+  COMPLEXITY_LABELS,
+} from '@/lib/serviceCategoryConfig';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -12,24 +17,6 @@ import {
   ChevronDown, 
   ChevronUp,
   GripVertical,
-  Briefcase,
-  Camera,
-  Video,
-  Radio,
-  Film,
-  Palette,
-  Globe,
-  Code,
-  Volume2,
-  Megaphone,
-  Sparkles,
-  Calculator,
-  MoreHorizontal,
-  Eye,
-  GraduationCap,
-  ClipboardCheck,
-  Target,
-  RefreshCw,
   Clock,
   Copy,
   Save,
@@ -47,46 +34,6 @@ interface SortableServiceCardProps {
   onSaveAsTemplate?: () => void;
   canRemove: boolean;
 }
-
-const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  Briefcase,
-  Camera,
-  Video,
-  Radio,
-  Film,
-  Palette,
-  Globe,
-  Code,
-  Volume2,
-  Megaphone,
-  Sparkles,
-  Calculator,
-  MoreHorizontal,
-  Eye,
-  GraduationCap,
-  ClipboardCheck,
-  Target,
-  RefreshCw,
-};
-
-const DURATION_LABELS: Record<DurationUnit, { singular: string; plural: string }> = {
-  days: { singular: 'dia', plural: 'dias' },
-  weeks: { singular: 'semana', plural: 'semanas' },
-  months: { singular: 'mês', plural: 'meses' },
-};
-
-const COMPLEXITY_LABELS: Record<string, string> = {
-  low: 'Baixa',
-  medium: 'Média',
-  high: 'Alta',
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  consulting: 'bg-blue-500/10 text-blue-600 border-blue-200',
-  creative: 'bg-purple-500/10 text-purple-600 border-purple-200',
-  technology: 'bg-green-500/10 text-green-600 border-green-200',
-  events: 'bg-orange-500/10 text-orange-600 border-orange-200',
-};
 
 export function SortableServiceCard({
   service,
@@ -114,15 +61,9 @@ export function SortableServiceCard({
     zIndex: isDragging ? 50 : undefined,
   };
 
-  const iconName = SERVICE_ICONS[service.serviceType];
-  const IconComponent = ICON_MAP[iconName] || Briefcase;
-  const category = SERVICE_CATEGORIES[service.serviceType];
+  const IconComponent = getServiceIcon(service.serviceType);
+  const categoryColor = getServiceCategoryColor(service.serviceType);
   const label = getServiceLabel(service.serviceType);
-  
-  const formatDuration = (duration: number, unit: DurationUnit) => {
-    const unitLabel = duration === 1 ? DURATION_LABELS[unit].singular : DURATION_LABELS[unit].plural;
-    return `${duration} ${unitLabel}`;
-  };
 
   return (
     <motion.div
@@ -157,7 +98,7 @@ export function SortableServiceCard({
         >
           <div className={cn(
             "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
-            CATEGORY_COLORS[category]
+            categoryColor
           )}>
             <IconComponent className="w-5 h-5" />
           </div>

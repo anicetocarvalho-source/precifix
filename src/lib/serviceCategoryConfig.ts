@@ -18,7 +18,7 @@ import {
   Target,
   RefreshCw,
 } from 'lucide-react';
-import { ServiceType, ServiceCategory, SERVICE_CATEGORIES, SERVICE_ICONS } from '@/types/proposal';
+import { ServiceType, ServiceCategory, DurationUnit, SERVICE_CATEGORIES, SERVICE_ICONS } from '@/types/proposal';
 
 /**
  * Centralized icon map — maps icon name strings to Lucide components.
@@ -56,9 +56,35 @@ export const CATEGORY_COLORS: Record<ServiceCategory, string> = {
 };
 
 /**
+ * Duration labels — localized singular/plural for duration units.
+ */
+export const DURATION_LABELS: Record<DurationUnit, { singular: string; plural: string }> = {
+  days: { singular: 'dia', plural: 'dias' },
+  weeks: { singular: 'semana', plural: 'semanas' },
+  months: { singular: 'mês', plural: 'meses' },
+};
+
+/**
+ * Complexity labels — localized display names.
+ */
+export const COMPLEXITY_LABELS: Record<string, string> = {
+  low: 'Baixa',
+  medium: 'Média',
+  high: 'Alta',
+};
+
+/**
  * Standard category display order.
  */
 export const CATEGORY_ORDER: ServiceCategory[] = ['consulting', 'events', 'creative', 'technology'];
+
+/**
+ * Format a duration value with its localized unit label.
+ */
+export function formatDuration(duration: number, unit: DurationUnit): string {
+  const unitLabel = duration === 1 ? DURATION_LABELS[unit].singular : DURATION_LABELS[unit].plural;
+  return `${duration} ${unitLabel}`;
+}
 
 /**
  * Get the Lucide icon component for a given service type.
