@@ -3,6 +3,7 @@ import {
   PricingResult,
   TeamMember,
   ExtraItem,
+  DurationUnit,
   HOURLY_RATES,
   CREATIVE_HOURLY_RATES,
   EXTRAS_PRICING,
@@ -11,6 +12,22 @@ import {
   MARGIN_PERCENTAGE,
   SERVICE_CATEGORIES,
 } from '@/types/proposal';
+
+/**
+ * Convert a duration value from any unit (days, weeks, months) to months equivalent.
+ * Uses 22 working days per month and ~4.33 weeks per month.
+ */
+export function durationToMonths(duration: number, unit: DurationUnit = 'months'): number {
+  switch (unit) {
+    case 'days':
+      return duration / 22;
+    case 'weeks':
+      return duration / 4.33;
+    case 'months':
+    default:
+      return duration;
+  }
+}
 
 export interface PricingParams {
   hourlyRates: {
@@ -81,6 +98,7 @@ export const DEFAULT_PRICING_PARAMS: PricingParams = {
 function calculateConsultingPricing(formData: ProposalFormData, params: PricingParams): { teamMembers: TeamMember[], totalHours: number, baseCost: number } {
   const teamMembers: TeamMember[] = [];
   const hoursPerMonth = 160;
+  const durationInMonths = durationToMonths(formData.estimatedDuration, formData.durationUnit);
   
   // Always include a Senior Manager
   teamMembers.push({
@@ -130,7 +148,7 @@ function calculateConsultingPricing(formData: ProposalFormData, params: PricingP
   }
   
   // Projects > 3 months require minimum 3 profiles
-  if (formData.estimatedDuration > 3 && teamMembers.length < 3) {
+  if (durationInMonths > 3 && teamMembers.length < 3) {
     teamMembers.push({
       role: 'Consultor Adicional',
       hourlyRate: params.hourlyRates.consultant,
@@ -140,10 +158,10 @@ function calculateConsultingPricing(formData: ProposalFormData, params: PricingP
   }
   
   const totalHoursPerMonth = teamMembers.reduce((sum, m) => sum + m.hoursPerMonth, 0);
-  const totalHours = totalHoursPerMonth * formData.estimatedDuration;
+  const totalHours = totalHoursPerMonth * durationInMonths;
   
   const baseCost = teamMembers.reduce(
-    (sum, m) => sum + m.hourlyRate * m.hoursPerMonth * formData.estimatedDuration,
+    (sum, m) => sum + m.hourlyRate * m.hoursPerMonth * durationInMonths,
     0
   );
   
@@ -295,6 +313,7 @@ function calculateEventPricing(formData: ProposalFormData, params: PricingParams
 function calculateCreativePricing(formData: ProposalFormData, params: PricingParams): { teamMembers: TeamMember[], totalHours: number, baseCost: number } {
   const teamMembers: TeamMember[] = [];
   const hoursPerMonth = 160;
+  const durationInMonths = durationToMonths(formData.estimatedDuration, formData.durationUnit);
   
   switch (formData.serviceType) {
     case 'graphic_design':
@@ -380,10 +399,10 @@ function calculateCreativePricing(formData: ProposalFormData, params: PricingPar
   }
   
   const totalHoursPerMonth = teamMembers.reduce((sum, m) => sum + m.hoursPerMonth, 0);
-  const totalHours = totalHoursPerMonth * formData.estimatedDuration;
+  const totalHours = totalHoursPerMonth * durationInMonths;
   
   const baseCost = teamMembers.reduce(
-    (sum, m) => sum + m.hourlyRate * m.hoursPerMonth * formData.estimatedDuration,
+    (sum, m) => sum + m.hourlyRate * m.hoursPerMonth * durationInMonths,
     0
   );
   
@@ -394,6 +413,7 @@ function calculateCreativePricing(formData: ProposalFormData, params: PricingPar
 function calculateTechnologyPricing(formData: ProposalFormData, params: PricingParams): { teamMembers: TeamMember[], totalHours: number, baseCost: number } {
   const teamMembers: TeamMember[] = [];
   const hoursPerMonth = 160;
+  const durationInMonths = durationToMonths(formData.estimatedDuration, formData.durationUnit);
   
   const webData = formData.webSystemsData || {};
   
@@ -459,10 +479,10 @@ function calculateTechnologyPricing(formData: ProposalFormData, params: PricingP
   }
   
   const totalHoursPerMonth = teamMembers.reduce((sum, m) => sum + m.hoursPerMonth, 0);
-  const totalHours = totalHoursPerMonth * formData.estimatedDuration;
+  const totalHours = totalHoursPerMonth * durationInMonths;
   
   const baseCost = teamMembers.reduce(
-    (sum, m) => sum + m.hourlyRate * m.hoursPerMonth * formData.estimatedDuration,
+    (sum, m) => sum + m.hourlyRate * m.hoursPerMonth * durationInMonths,
     0
   );
   
