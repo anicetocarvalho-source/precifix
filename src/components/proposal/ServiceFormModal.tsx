@@ -36,11 +36,7 @@ interface ServiceFormModalProps {
 
 type Step = 'service' | 'details' | 'sector' | 'deliverables';
 
-const DURATION_UNIT_LABELS: Record<DurationUnit, { singular: string; plural: string }> = {
-  days: { singular: 'dia', plural: 'dias' },
-  weeks: { singular: 'semana', plural: 'semanas' },
-  months: { singular: 'mês', plural: 'meses' },
-};
+import { DURATION_LABELS } from '@/lib/serviceCategoryConfig';
 
 const COMPLEXITY_OPTIONS = [
   { value: 'low', label: 'Baixa', description: 'Projeto simples, escopo definido' },
@@ -264,7 +260,7 @@ export function ServiceFormModal({
                           size="sm"
                           onClick={() => setFormData({ ...formData, durationUnit: unit })}
                         >
-                          {DURATION_UNIT_LABELS[unit].plural}
+                          {DURATION_LABELS[unit].plural}
                         </Button>
                       ))}
                     </div>
@@ -281,8 +277,8 @@ export function ServiceFormModal({
                     />
                     <span className="text-muted-foreground self-center">
                       {formData.estimatedDuration === 1 
-                        ? DURATION_UNIT_LABELS[formData.durationUnit].singular
-                        : DURATION_UNIT_LABELS[formData.durationUnit].plural
+                        ? DURATION_LABELS[formData.durationUnit].singular
+                        : DURATION_LABELS[formData.durationUnit].plural
                       }
                     </span>
                   </div>
