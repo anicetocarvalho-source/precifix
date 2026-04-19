@@ -107,7 +107,7 @@ interface UseAutoSaveOptions<T> {
 export function useAutoSave<T>({ data, onSave, debounceMs = 2000, enabled = true }: UseAutoSaveOptions<T>) {
   const [status, setStatus] = useState<AutoSaveStatus>('idle');
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout>();
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const lastDataRef = useRef<string>('');
   const isFirstRender = useRef(true);
 
