@@ -13,6 +13,7 @@ import {
   LayoutTemplate,
   FileImage,
   Loader2,
+  CreditCard,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect } from 'react';
@@ -21,6 +22,7 @@ import { PricingImpactSimulator } from '@/components/settings/PricingImpactSimul
 import { UserManagement } from '@/components/settings/UserManagement';
 import { TemplateManagement } from '@/components/settings/TemplateManagement';
 import { BrandingSettings } from '@/components/settings/BrandingSettings';
+import { BillingSettings } from '@/components/settings/BillingSettings';
 import { useUserRole } from '@/hooks/useUserRole';
 import { useAuth } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
@@ -28,7 +30,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-type SettingsTab = 'profile' | 'company' | 'branding' | 'users' | 'templates' | 'pricing' | 'simulator' | 'appearance' | 'notifications' | 'integrations';
+type SettingsTab = 'profile' | 'company' | 'branding' | 'users' | 'templates' | 'pricing' | 'simulator' | 'appearance' | 'notifications' | 'integrations' | 'billing';
 
 const tabs = [
   { id: 'profile' as const, label: 'Perfil', icon: User },
@@ -41,6 +43,7 @@ const tabs = [
   { id: 'appearance' as const, label: 'Aparência', icon: Palette },
   { id: 'notifications' as const, label: 'Notificações', icon: Bell },
   { id: 'integrations' as const, label: 'Integrações', icon: LinkIcon },
+  { id: 'billing' as const, label: 'Billing', icon: CreditCard },
 ];
 
 export default function Settings() {
@@ -424,6 +427,13 @@ export default function Settings() {
                     </select>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'billing' && (
+              <div className="animate-fade-in">
+                <h2 className="text-lg font-semibold text-foreground mb-6">Subscrição & Pagamentos</h2>
+                <BillingSettings />
               </div>
             )}
 

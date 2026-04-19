@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SubscriptionGate } from "@/components/SubscriptionGate";
+import PagamentoPendente from "./pages/PagamentoPendente";
 import Dashboard from "./pages/Dashboard";
 import NewProposal from "./pages/NewProposal";
 import NewMultiServiceProposal from "./pages/NewMultiServiceProposal";
@@ -29,10 +31,20 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route
+              path="/pagamento-pendente"
+              element={
+                <ProtectedRoute>
+                  <PagamentoPendente />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <SubscriptionGate>
+                    <Dashboard />
+                  </SubscriptionGate>
                 </ProtectedRoute>
               }
             />
@@ -40,7 +52,9 @@ const App = () => (
               path="/nova-proposta"
               element={
                 <ProtectedRoute>
-                  <NewProposal />
+                  <SubscriptionGate>
+                    <NewProposal />
+                  </SubscriptionGate>
                 </ProtectedRoute>
               }
             />
@@ -48,7 +62,9 @@ const App = () => (
               path="/nova-proposta-multi"
               element={
                 <ProtectedRoute>
-                  <NewMultiServiceProposal />
+                  <SubscriptionGate>
+                    <NewMultiServiceProposal />
+                  </SubscriptionGate>
                 </ProtectedRoute>
               }
             />
@@ -56,7 +72,9 @@ const App = () => (
               path="/orcamento-rapido"
               element={
                 <ProtectedRoute>
-                  <QuickQuote />
+                  <SubscriptionGate>
+                    <QuickQuote />
+                  </SubscriptionGate>
                 </ProtectedRoute>
               }
             />
@@ -64,7 +82,9 @@ const App = () => (
               path="/proposta/:id"
               element={
                 <ProtectedRoute>
-                  <ProposalView />
+                  <SubscriptionGate>
+                    <ProposalView />
+                  </SubscriptionGate>
                 </ProtectedRoute>
               }
             />
@@ -72,7 +92,9 @@ const App = () => (
               path="/proposta/:id/editar"
               element={
                 <ProtectedRoute>
-                  <EditProposal />
+                  <SubscriptionGate>
+                    <EditProposal />
+                  </SubscriptionGate>
                 </ProtectedRoute>
               }
             />
@@ -80,7 +102,9 @@ const App = () => (
               path="/proposta/:id/editar-multi"
               element={
                 <ProtectedRoute>
-                  <EditMultiServiceProposal />
+                  <SubscriptionGate>
+                    <EditMultiServiceProposal />
+                  </SubscriptionGate>
                 </ProtectedRoute>
               }
             />
@@ -88,7 +112,9 @@ const App = () => (
               path="/historico"
               element={
                 <ProtectedRoute>
-                  <History />
+                  <SubscriptionGate>
+                    <History />
+                  </SubscriptionGate>
                 </ProtectedRoute>
               }
             />
