@@ -105,6 +105,26 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [resetting, setResetting] = useState(false);
+
+  const handleResetTestPasswords = async () => {
+    setResetting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-test-passwords');
+      if (error) throw error;
+      const failed = (data?.results ?? []).filter((r: { success: boolean }) => !r.success);
+      if (failed.length > 0) {
+        toast.error(`Alguns utilizadores falharam: ${failed.map((f: { email: string }) => f.email).join(', ')}`);
+      } else {
+        toast.success('Utilizadores de teste prontos. Password: teste123');
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      toast.error(`Falha ao repor utilizadores: ${msg}`);
+    } finally {
+      setResetting(false);
+    }
+  };
   
   const [formData, setFormData] = useState({
     fullName: '',
