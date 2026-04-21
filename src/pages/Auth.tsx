@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import precifixLogo from '@/assets/precifix-logo.png';
 import precifixLogoWhiteSvg from '@/assets/precifix-logo-white.svg';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string()
