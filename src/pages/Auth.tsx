@@ -401,7 +401,7 @@ export default function Auth() {
                       setFormData({
                         ...formData,
                         email: 'aniceto@precifix.pt',
-                        password: '',
+                        password: 'teste123',
                       });
                     }
                   }}
@@ -437,7 +437,7 @@ export default function Auth() {
                       setFormData({
                         ...formData,
                         email: 'maria.gestor@precifix.pt',
-                        password: '',
+                        password: 'teste123',
                       });
                     }
                   }}
@@ -469,7 +469,7 @@ export default function Auth() {
                       setFormData({
                         ...formData,
                         email: 'joao.comercial@precifix.pt',
-                        password: '',
+                        password: 'teste123',
                       });
                     }
                   }}
@@ -487,9 +487,28 @@ export default function Auth() {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground text-center mt-3">
-                {isLogin 
-                  ? 'Clique para preencher • Palavra-passe de teste: teste123'
+                {isLogin
+                  ? 'Clique para preencher email + password • Depois clique "Entrar"'
                   : 'Clique para pré-preencher • Depois clique "Criar conta"'}
+              </p>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResetTestPasswords}
+                disabled={resetting}
+                className="w-full mt-3 gap-2"
+              >
+                {resetting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                {resetting ? 'A preparar...' : 'Repor utilizadores de teste'}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Cria os utilizadores de teste se não existirem e repõe a password para <strong>teste123</strong>
               </p>
               {!isLogin && (
                 <p className="text-xs text-amber-600 text-center mt-2">
