@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import precifixLogo from '@/assets/precifix-logo.png';
 import precifixLogoWhiteSvg from '@/assets/precifix-logo-white.svg';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string()
@@ -103,6 +105,26 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [resetting, setResetting] = useState(false);
+
+  const handleResetTestPasswords = async () => {
+    setResetting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('reset-test-passwords');
+      if (error) throw error;
+      const failed = (data?.results ?? []).filter((r: { success: boolean }) => !r.success);
+      if (failed.length > 0) {
+        toast.error(`Alguns utilizadores falharam: ${failed.map((f: { email: string }) => f.email).join(', ')}`);
+      } else {
+        toast.success('Utilizadores de teste prontos. Password: teste123');
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Erro desconhecido';
+      toast.error(`Falha ao repor utilizadores: ${msg}`);
+    } finally {
+      setResetting(false);
+    }
+  };
   
   const [formData, setFormData] = useState({
     fullName: '',
@@ -379,7 +401,7 @@ export default function Auth() {
                       setFormData({
                         ...formData,
                         email: 'aniceto@precifix.pt',
-                        password: '',
+                        password: 'teste123',
                       });
                     }
                   }}
@@ -415,7 +437,7 @@ export default function Auth() {
                       setFormData({
                         ...formData,
                         email: 'maria.gestor@precifix.pt',
-                        password: '',
+                        password: 'teste123',
                       });
                     }
                   }}
@@ -447,7 +469,7 @@ export default function Auth() {
                       setFormData({
                         ...formData,
                         email: 'joao.comercial@precifix.pt',
-                        password: '',
+                        password: 'teste123',
                       });
                     }
                   }}
@@ -465,9 +487,28 @@ export default function Auth() {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground text-center mt-3">
-                {isLogin 
-                  ? 'Clique para preencher • Palavra-passe de teste: teste123'
+                {isLogin
+                  ? 'Clique para preencher email + password • Depois clique "Entrar"'
                   : 'Clique para pré-preencher • Depois clique "Criar conta"'}
+              </p>
+
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleResetTestPasswords}
+                disabled={resetting}
+                className="w-full mt-3 gap-2"
+              >
+                {resetting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+                {resetting ? 'A preparar...' : 'Repor utilizadores de teste'}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center mt-2">
+                Cria os utilizadores de teste se não existirem e repõe a password para <strong>teste123</strong>
               </p>
               {!isLogin && (
                 <p className="text-xs text-amber-600 text-center mt-2">

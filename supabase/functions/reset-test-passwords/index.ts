@@ -5,12 +5,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Test accounts that can have their passwords reset
-const TEST_ACCOUNTS = [
-  'aniceto@precifix.pt',
-  'maria.gestor@precifix.pt',
-  'joao.comercial@precifix.pt',
+// Test accounts that can be created/reset
+const TEST_ACCOUNTS: { email: string; full_name: string }[] = [
+  { email: 'aniceto@precifix.pt', full_name: 'Aniceto de Carvalho' },
+  { email: 'maria.gestor@precifix.pt', full_name: 'Maria Santos' },
+  { email: 'joao.comercial@precifix.pt', full_name: 'João Comercial' },
 ];
+
+const TEST_PASSWORD = 'teste123';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -29,54 +31,64 @@ Deno.serve(async (req) => {
       }
     );
 
-    const results: { email: string; success: boolean; error?: string }[] = [];
+    const results: { email: string; success: boolean; action?: string; error?: string }[] = [];
 
-    for (const email of TEST_ACCOUNTS) {
-      // Get user by email
-      const { data: users, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-      
-      if (listError) {
-        results.push({ email, success: false, error: listError.message });
-        continue;
-      }
+    // Fetch all users once
+    const { data: usersData, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (listError) {
+      throw new Error(`Erro ao listar utilizadores: ${listError.message}`);
+    }
 
-      const user = users.users.find(u => u.email === email);
-      
-      if (!user) {
-        results.push({ email, success: false, error: 'Utilizador não encontrado' });
-        continue;
-      }
+    for (const account of TEST_ACCOUNTS) {
+      const existing = usersData.users.find((u) => u.email === account.email);
 
-      // Update password
-      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-        user.id,
-        { password: 'teste123' }
-      );
+      if (!existing) {
+        // Create the user with email auto-confirmed
+        const { error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email: account.email,
+          password: TEST_PASSWORD,
+          email_confirm: true,
+          user_metadata: { full_name: account.full_name },
+        });
 
-      if (updateError) {
-        results.push({ email, success: false, error: updateError.message });
+        if (createError) {
+          results.push({ email: account.email, success: false, error: createError.message });
+        } else {
+          results.push({ email: account.email, success: true, action: 'created' });
+        }
       } else {
-        results.push({ email, success: true });
+        // Reset password and ensure email is confirmed
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+          existing.id,
+          { password: TEST_PASSWORD, email_confirm: true }
+        );
+
+        if (updateError) {
+          results.push({ email: account.email, success: false, error: updateError.message });
+        } else {
+          results.push({ email: account.email, success: true, action: 'reset' });
+        }
       }
     }
 
     return new Response(
-      JSON.stringify({ 
-        message: 'Reset de passwords concluído',
-        results 
+      JSON.stringify({
+        message: 'Utilizadores de teste prontos',
+        password: TEST_PASSWORD,
+        results,
       }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200 
+        status: 200,
       }
     );
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     return new Response(
       JSON.stringify({ error: errorMessage }),
-      { 
+      {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
+        status: 500,
       }
     );
   }
